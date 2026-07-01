@@ -730,7 +730,7 @@ beforeAll(async () => { strapi = await setupStrapi(); });
 afterAll(async () => { await teardownStrapi(); });
 
 async function setRate(rate: number) {
-  const existing = await docs('api::system-settings.system-settings').find();
+  const existing = await docs('api::system-settings.system-settings').findFirst();
   if (existing) await docs('api::system-settings.system-settings').update({ data: { exchangeRate: rate } } as any);
   else await docs('api::system-settings.system-settings').create({ data: { exchangeRate: rate } } as any);
 }
@@ -786,7 +786,7 @@ import { errors } from '@strapi/utils';
 
 const pricing = ({ strapi }: { strapi: Core.Strapi }) => ({
   async suggest(input: { priceListDocumentId: string; costPriceUsd: number; quantity: number }) {
-    const settings = await strapi.documents('api::system-settings.system-settings' as any).find();
+    const settings = await strapi.documents('api::system-settings.system-settings' as any).findFirst();
     const exchangeRate = settings ? Number(settings.exchangeRate) : 0;
 
     const priceList = await strapi.documents('api::price-list.price-list' as any).findOne({
@@ -988,7 +988,7 @@ const orders = ({ strapi }: { strapi: Core.Strapi }) => ({
     } as any);
     if (!order) throw new errors.NotFoundError('Order not found');
 
-    const settings = await strapi.documents(SETTINGS as any).find();
+    const settings = await strapi.documents(SETTINGS as any).findFirst();
     const exchangeRate = settings ? Number(settings.exchangeRate) : 0;
 
     const lines = (order.lines ?? []).map((l: any) => {

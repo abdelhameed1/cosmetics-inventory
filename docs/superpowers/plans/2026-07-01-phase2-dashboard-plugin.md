@@ -635,7 +635,7 @@ const UID = 'api::system-settings.system-settings';
 
 const settings = ({ strapi }: { strapi: Core.Strapi }) => ({
   async get(ctx) {
-    const row = await strapi.documents(UID as any).find();
+    const row = await strapi.documents(UID as any).findFirst();
     ctx.body = {
       exchangeRate: row ? Number(row.exchangeRate) : null,
       exchangeRateUpdatedAt: row?.exchangeRateUpdatedAt ?? null,
@@ -824,7 +824,7 @@ function parseLocalDate(value: string): Date {
 
 const overview = ({ strapi }: { strapi: Core.Strapi }) => ({
   async getOverview() {
-    const settingsRow = await strapi.documents('api::system-settings.system-settings' as any).find();
+    const settingsRow = await strapi.documents('api::system-settings.system-settings' as any).findFirst();
     const exchangeRate = settingsRow ? Number(settingsRow.exchangeRate) : 0;
 
     const counts: Record<string, number> = {};
