@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import {
   Box, Flex, Grid, Typography, NumberInput, Field, Button,
   Table, Thead, Tbody, Tr, Th, Td,
-  Card, CardBody, CardContent, CardHeader, CardTitle, CardSubtitle,
+  Card, CardBody, CardContent, CardTitle, CardSubtitle,
 } from '@strapi/design-system';
 import { useOverview } from '../hooks/useOverview';
 import { useSettings } from '../hooks/useSettings';
@@ -19,15 +19,17 @@ export default function Overview() {
 
   const onSaveRate = async () => {
     setSaveError(null);
+    if (rateInput == null || Number.isNaN(rateInput)) {
+      setSaveError('Enter a valid exchange rate');
+      return;
+    }
     try {
-      await save(Number(rateInput));
+      await save(rateInput);
       reload();
     } catch (e: any) {
       setSaveError(e?.response?.data?.error?.message ?? 'Could not save rate');
     }
   };
-
-  if (loading || !data) return <Box padding={8}><Typography>Loading…</Typography></Box>;
 
   if (error) {
     return (
@@ -36,6 +38,8 @@ export default function Overview() {
       </Box>
     );
   }
+
+  if (loading || !data) return <Box padding={8}><Typography>Loading…</Typography></Box>;
 
   return (
     <Box padding={8}>
