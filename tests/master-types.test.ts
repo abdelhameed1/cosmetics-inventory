@@ -59,6 +59,41 @@ describe('Variant → non-default variant must have a type', () => {
   });
 });
 
+describe('Variant → guard on update (merged state)', () => {
+  it('rejects flipping a default variant to non-default without a type', async () => {
+    const { brand, category } = await makeBrandCategory();
+    const product = await docs('api::product.product').create({
+      data: { name: 'FlipGuard', brand: brand.documentId, category: category.documentId },
+    });
+    // product afterCreate created a default variant with no variantType
+    const [def] = await docs('api::variant.variant').findMany({
+      filters: { product: { documentId: product.documentId } },
+    });
+    await expect(
+      docs('api::variant.variant').update({
+        documentId: def.documentId,
+        data: { isDefault: false } as any,
+      })
+    ).rejects.toThrow(/non-default variant must have a variant type/i);
+  });
+
+  it('allows updating a scalar field on a typed non-default variant', async () => {
+    const { brand, category } = await makeBrandCategory();
+    const product = await docs('api::product.product').create({
+      data: { name: 'UpdOk', brand: brand.documentId, category: category.documentId },
+    });
+    const vt = await docs('api::variant-type.variant-type').create({ data: { name: `Shade-${Math.random()}` } });
+    const variant = await docs('api::variant.variant').create({
+      data: { label: 'V', isDefault: false, product: product.documentId, variantType: vt.documentId },
+    });
+    const updated = await docs('api::variant.variant').update({
+      documentId: variant.documentId,
+      data: { label: 'V2' } as any,
+    });
+    expect(updated.label).toBe('V2');
+  });
+});
+
 describe('Stock Batch → seed remaining quantity', () => {
   it('seeds quantityRemaining from quantityPurchased when omitted', async () => {
     const { brand, category } = await makeBrandCategory();
