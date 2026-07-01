@@ -1068,7 +1068,7 @@ describe('seed', () => {
       expect(found).toHaveLength(1);
     }
 
-    const settings = await strapi.documents('api::system-settings.system-settings').find();
+    const settings = await strapi.documents('api::system-settings.system-settings').findFirst();
     expect(settings).toBeTruthy();
     expect(Number(settings.exchangeRate)).toBeGreaterThan(0);
   });
@@ -1109,7 +1109,7 @@ export default async function seed(strapi: Core.Strapi): Promise<void> {
     }
   }
 
-  const settings = await strapi.documents('api::system-settings.system-settings').find();
+  const settings = await strapi.documents('api::system-settings.system-settings').findFirst();
   if (!settings) {
     await strapi.documents('api::system-settings.system-settings').create({
       data: { exchangeRate: 1, exchangeRateUpdatedAt: new Date().toISOString() },
