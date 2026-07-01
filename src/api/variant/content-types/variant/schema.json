@@ -1,0 +1,29 @@
+{
+  "kind": "collectionType",
+  "collectionName": "variants",
+  "info": { "singularName": "variant", "pluralName": "variants", "displayName": "Variant" },
+  "options": { "draftAndPublish": false },
+  "attributes": {
+    "label": { "type": "string" },
+    "lowStockThreshold": { "type": "integer", "min": 0 },
+    "isDefault": { "type": "boolean", "default": false },
+    "product": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::product.product",
+      "inversedBy": "variants"
+    },
+    "variantType": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::variant-type.variant-type",
+      "inversedBy": "variants"
+    },
+    "batches": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::stock-batch.stock-batch",
+      "mappedBy": "variant"
+    }
+  }
+}

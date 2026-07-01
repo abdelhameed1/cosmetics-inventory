@@ -1,0 +1,27 @@
+{
+  "kind": "collectionType",
+  "collectionName": "stock_batches",
+  "info": { "singularName": "stock-batch", "pluralName": "stock-batches", "displayName": "Stock Batch" },
+  "options": { "draftAndPublish": false },
+  "attributes": {
+    "quantityPurchased": { "type": "integer", "min": 0, "required": true },
+    "quantityRemaining": { "type": "integer", "min": 0 },
+    "costPriceUsd": { "type": "decimal", "min": 0, "required": true },
+    "purchaseDate": { "type": "date", "required": true },
+    "productionDate": { "type": "date" },
+    "expiryDate": { "type": "date" },
+    "notes": { "type": "text" },
+    "variant": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::variant.variant",
+      "inversedBy": "batches"
+    },
+    "supplier": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::supplier.supplier",
+      "inversedBy": "batches"
+    }
+  }
+}
