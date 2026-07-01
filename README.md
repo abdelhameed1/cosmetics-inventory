@@ -56,6 +56,17 @@ Feel free to check out the [Strapi GitHub repository](https://github.com/strapi/
 - [Forum](https://forum.strapi.io/) - Place to discuss, ask questions and find answers, show your Strapi project and get feedback or just talk with other Community members.
 - [Awesome Strapi](https://github.com/strapi/awesome-strapi) - A curated list of awesome things related to Strapi.
 
+## Quality gate (Phase 1)
+
+From the app root (`d:\7meed\cosmtic`):
+
+    npm run develop   # start Strapi with auto-reload
+    npm run build     # build the admin
+    npm test          # Jest suites (require the cosmetics_test database)
+    npx tsc --noEmit  # whole-app type check
+
+Databases: runtime `cosmetics`, tests `cosmetics_test`. Create both with utf8mb4 before running.
+
 ---
 
 <sub>🤫 Psst! [Strapi is hiring](https://strapi.io/careers).</sub>
