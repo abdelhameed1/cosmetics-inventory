@@ -18,6 +18,17 @@ const plugin: StrapiApp["appPlugins"][string] = {
       permissions: [],
     });
 
+    app.addMenuLink({
+      to: `plugins/${PLUGIN_ID}/stock-purchase`,
+      icon: PluginIcon,
+      intlLabel: {
+        id: `${PLUGIN_ID}.menu.stock-purchase`,
+        defaultMessage: 'Stock purchase',
+      },
+      Component: () => import("./pages/App"),
+      permissions: [],
+    });
+
     app.registerPlugin({
       id: PLUGIN_ID,
       initializer: Initializer,
