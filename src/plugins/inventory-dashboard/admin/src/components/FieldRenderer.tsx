@@ -5,6 +5,17 @@ import {
 import { type FieldMeta } from '../utils/api';
 import { RelationSelect } from './RelationSelect';
 
+function parseLocalDate(value: string): Date {
+  const [y, m, d] = value.split('-').map(Number);
+  return new Date(y, (m ?? 1) - 1, d ?? 1);
+}
+
+function formatLocalDate(d: Date): string {
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  return `${d.getFullYear()}-${mm}-${dd}`;
+}
+
 export function FieldRenderer({
   field, value, onChange,
 }: { field: FieldMeta; value: any; onChange: (v: any) => void }) {
@@ -51,8 +62,8 @@ export function FieldRenderer({
         <Field.Root name={field.name} required={field.required}>
           <Field.Label>{field.name}</Field.Label>
           <DatePicker
-            onChange={(d: Date | undefined) => onChange(d ? d.toISOString().slice(0, 10) : null)}
-            value={value ? new Date(value) : undefined}
+            onChange={(d: Date | undefined) => onChange(d ? formatLocalDate(d) : null)}
+            value={value ? parseLocalDate(value) : undefined}
           />
         </Field.Root>
       );
