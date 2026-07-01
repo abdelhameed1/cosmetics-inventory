@@ -10,6 +10,8 @@ export default {
       { method: 'POST', path: '/resources/:resource', handler: 'resource.create', config: { policies: [] } },
       { method: 'PUT', path: '/resources/:resource/:documentId', handler: 'resource.update', config: { policies: [] } },
       { method: 'DELETE', path: '/resources/:resource/:documentId', handler: 'resource.remove', config: { policies: [] } },
+      { method: 'GET', path: '/settings', handler: 'settings.get', config: { policies: [] } },
+      { method: 'PUT', path: '/settings', handler: 'settings.update', config: { policies: [] } },
     ],
   },
 };
