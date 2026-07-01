@@ -1,0 +1,17 @@
+{
+  "kind": "collectionType",
+  "collectionName": "suppliers",
+  "info": { "singularName": "supplier", "pluralName": "suppliers", "displayName": "Supplier" },
+  "options": { "draftAndPublish": false },
+  "attributes": {
+    "name": { "type": "string", "required": true },
+    "phone": { "type": "string" },
+    "notes": { "type": "text" },
+    "batches": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::stock-batch.stock-batch",
+      "mappedBy": "supplier"
+    }
+  }
+}

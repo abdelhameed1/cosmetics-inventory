@@ -1,0 +1,15 @@
+{
+  "kind": "collectionType",
+  "collectionName": "variant_types",
+  "info": { "singularName": "variant-type", "pluralName": "variant-types", "displayName": "Variant Type" },
+  "options": { "draftAndPublish": false },
+  "attributes": {
+    "name": { "type": "string", "required": true, "unique": true },
+    "variants": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::variant.variant",
+      "mappedBy": "variantType"
+    }
+  }
+}
