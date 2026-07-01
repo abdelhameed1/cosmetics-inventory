@@ -1,0 +1,20 @@
+{
+  "kind": "collectionType",
+  "collectionName": "price_lists",
+  "info": { "singularName": "price-list", "pluralName": "price-lists", "displayName": "Price List" },
+  "options": { "draftAndPublish": false },
+  "attributes": {
+    "name": { "type": "string", "required": true, "unique": true },
+    "type": { "type": "enumeration", "enum": ["retail", "wholesale", "vip"], "required": true },
+    "marginPercent": { "type": "decimal" },
+    "wholesaleMinQty": { "type": "integer" },
+    "vipDiscountPercent": { "type": "decimal" },
+    "notes": { "type": "text" },
+    "customers": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::customer.customer",
+      "mappedBy": "priceList"
+    }
+  }
+}

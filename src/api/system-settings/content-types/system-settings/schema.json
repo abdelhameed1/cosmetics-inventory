@@ -1,0 +1,10 @@
+{
+  "kind": "singleType",
+  "collectionName": "system_settings",
+  "info": { "singularName": "system-settings", "pluralName": "system-settings-list", "displayName": "System Settings" },
+  "options": { "draftAndPublish": false },
+  "attributes": {
+    "exchangeRate": { "type": "decimal", "required": true },
+    "exchangeRateUpdatedAt": { "type": "datetime" }
+  }
+}
