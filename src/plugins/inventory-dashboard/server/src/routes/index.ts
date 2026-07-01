@@ -12,6 +12,7 @@ export default {
       { method: 'DELETE', path: '/resources/:resource/:documentId', handler: 'resource.remove', config: { policies: [] } },
       { method: 'GET', path: '/settings', handler: 'settings.get', config: { policies: [] } },
       { method: 'PUT', path: '/settings', handler: 'settings.update', config: { policies: [] } },
+      { method: 'GET', path: '/overview', handler: 'overview.index', config: { policies: [] } },
     ],
   },
 };
