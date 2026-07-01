@@ -12,7 +12,7 @@ const plugin: StrapiApp["appPlugins"][string] = {
       icon: PluginIcon,
       intlLabel: {
         id: `${PLUGIN_ID}.plugin.name`,
-        defaultMessage: PLUGIN_ID,
+        defaultMessage: 'Inventory',
       },
       Component: () => import("./pages/App"),
       permissions: [],
