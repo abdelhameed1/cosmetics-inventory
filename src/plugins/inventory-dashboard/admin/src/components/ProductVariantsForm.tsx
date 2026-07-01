@@ -36,6 +36,16 @@ export default function ProductVariantsForm({ onDone }: { onDone: () => void }) 
 
   const save = async () => {
     setError(null);
+    // Only submit rows the user actually filled in. A non-default variant must
+    // have a variant type (enforced by the variant lifecycle), so reject any
+    // partially-filled row up front — otherwise the POST would throw mid-loop,
+    // after the product and earlier variants are already persisted, leaving a
+    // half-built product behind with no rollback.
+    const explicitVariants = rows.filter((r) => r.label.trim() || r.variantTypeId);
+    if (explicitVariants.some((r) => !r.variantTypeId)) {
+      setError('Each variant needs a type.');
+      return;
+    }
     try {
       // 1) create product (auto-creates one default variant)
       const product = await api.post<any>('/resources/products', {
@@ -44,10 +54,10 @@ export default function ProductVariantsForm({ onDone }: { onDone: () => void }) 
       });
 
       // 2) create explicit variants
-      for (const row of rows) {
+      for (const row of explicitVariants) {
         await api.post('/resources/variants', {
           label: row.label,
-          variantType: row.variantTypeId || undefined,
+          variantType: row.variantTypeId,
           lowStockThreshold: row.lowStockThreshold,
           isDefault: false,
           product: product.documentId,
@@ -55,7 +65,7 @@ export default function ProductVariantsForm({ onDone }: { onDone: () => void }) 
       }
 
       // 3) if explicit variants exist, delete the auto-created default
-      if (rows.length > 0) {
+      if (explicitVariants.length > 0) {
         const all = await api.get<{ results: any[] }>('/resources/variants', { pageSize: 100 });
         const auto = all.results.find(
           (v) => v.product?.documentId === product.documentId && v.isDefault
