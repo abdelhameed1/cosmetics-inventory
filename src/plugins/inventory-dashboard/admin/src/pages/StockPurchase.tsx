@@ -73,7 +73,7 @@ export default function StockPurchase() {
           <Grid.Item col={4}>
             <Field.Root name="product">
               <Field.Label>Product</Field.Label>
-              <SingleSelect value={productId} onChange={(v) => setProductId(String(v))}>
+              <SingleSelect value={productId} onChange={(v: string | number) => setProductId(String(v))}>
                 {products.map((p) => <SingleSelectOption key={p.documentId} value={p.documentId}>{p.name}</SingleSelectOption>)}
               </SingleSelect>
             </Field.Root>
@@ -81,7 +81,7 @@ export default function StockPurchase() {
           <Grid.Item col={4}>
             <Field.Root name="variant">
               <Field.Label>Variant</Field.Label>
-              <SingleSelect value={variantId} onChange={(v) => setVariantId(String(v))} disabled={!productId}>
+              <SingleSelect value={variantId} onChange={(v: string | number) => setVariantId(String(v))} disabled={!productId}>
                 {variants.map((v) => <SingleSelectOption key={v.documentId} value={v.documentId}>{v.label ?? 'Default'}</SingleSelectOption>)}
               </SingleSelect>
             </Field.Root>
@@ -89,7 +89,7 @@ export default function StockPurchase() {
           <Grid.Item col={4}>
             <Field.Root name="supplier">
               <Field.Label>Supplier</Field.Label>
-              <SingleSelect value={supplierId} onChange={(v) => setSupplierId(String(v))}>
+              <SingleSelect value={supplierId} onChange={(v: string | number) => setSupplierId(String(v))}>
                 {suppliers.map((s) => <SingleSelectOption key={s.documentId} value={s.documentId}>{s.name}</SingleSelectOption>)}
               </SingleSelect>
             </Field.Root>

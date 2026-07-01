@@ -94,7 +94,7 @@ export default function ProductVariantsForm({ onDone }: { onDone: () => void }) 
           <Grid.Item col={4} direction="column" alignItems="stretch">
             <Field.Root name="brand">
               <Field.Label>Brand</Field.Label>
-              <SingleSelect value={brandId} onChange={(v) => setBrandId(String(v))}>
+              <SingleSelect value={brandId} onChange={(v: string | number) => setBrandId(String(v))}>
                 {brands.map((b) => <SingleSelectOption key={b.documentId} value={b.documentId}>{b.name}</SingleSelectOption>)}
               </SingleSelect>
             </Field.Root>
@@ -102,7 +102,7 @@ export default function ProductVariantsForm({ onDone }: { onDone: () => void }) 
           <Grid.Item col={4} direction="column" alignItems="stretch">
             <Field.Root name="category">
               <Field.Label>Category</Field.Label>
-              <SingleSelect value={categoryId} onChange={(v) => setCategoryId(String(v))}>
+              <SingleSelect value={categoryId} onChange={(v: string | number) => setCategoryId(String(v))}>
                 {categories.map((c) => <SingleSelectOption key={c.documentId} value={c.documentId}>{c.name}</SingleSelectOption>)}
               </SingleSelect>
             </Field.Root>
@@ -129,7 +129,7 @@ export default function ProductVariantsForm({ onDone }: { onDone: () => void }) 
             <Grid.Item col={4} direction="column" alignItems="stretch">
               <Field.Root name={`type-${i}`}>
                 <Field.Label>Type</Field.Label>
-                <SingleSelect value={row.variantTypeId} onChange={(v) => updateRow(i, { variantTypeId: String(v) })}>
+                <SingleSelect value={row.variantTypeId} onChange={(v: string | number) => updateRow(i, { variantTypeId: String(v) })}>
                   {variantTypes.map((t) => <SingleSelectOption key={t.documentId} value={t.documentId}>{t.name}</SingleSelectOption>)}
                 </SingleSelect>
               </Field.Root>
@@ -158,7 +158,7 @@ export default function ProductVariantsForm({ onDone }: { onDone: () => void }) 
           <Field.Label>Add related product</Field.Label>
           <SingleSelect
             value=""
-            onChange={(v) => setRelatedIds((ids) => (ids.includes(String(v)) ? ids : [...ids, String(v)]))}
+            onChange={(v: string | number) => setRelatedIds((ids) => (ids.includes(String(v)) ? ids : [...ids, String(v)]))}
           >
             {products.map((p) => <SingleSelectOption key={p.documentId} value={p.documentId}>{p.name}</SingleSelectOption>)}
           </SingleSelect>

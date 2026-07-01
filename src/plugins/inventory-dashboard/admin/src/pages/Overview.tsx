@@ -51,7 +51,7 @@ export default function Overview() {
             <Field.Label>Exchange rate (EGP per USD)</Field.Label>
             <NumberInput
               value={rateInput}
-              onValueChange={(value) => setRateInput(value)}
+              onValueChange={(value: number | undefined) => setRateInput(value)}
             />
           </Field.Root>
           <Button onClick={onSaveRate}>Save rate</Button>
