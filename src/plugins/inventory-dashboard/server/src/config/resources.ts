@@ -16,6 +16,9 @@ export const RESOURCES: Record<string, ResourceDef> = {
   },
   variants: { uid: 'api::variant.variant', populate: ['product', 'variantType', 'batches'] },
   'stock-batches': { uid: 'api::stock-batch.stock-batch', populate: ['variant', 'supplier'] },
+  orders: { uid: 'api::order.order', populate: ['customer', 'priceList', 'lines', 'payments'] },
+  'order-lines': { uid: 'api::order-line.order-line', populate: ['order', 'stockBatch'] },
+  payments: { uid: 'api::payment.payment', populate: ['order'] },
 };
 
 export function resolveResource(slug: string): ResourceDef | null {

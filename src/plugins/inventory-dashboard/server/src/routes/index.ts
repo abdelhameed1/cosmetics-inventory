@@ -13,6 +13,9 @@ export default {
       { method: 'GET', path: '/settings', handler: 'settings.get', config: { policies: [] } },
       { method: 'PUT', path: '/settings', handler: 'settings.update', config: { policies: [] } },
       { method: 'GET', path: '/overview', handler: 'overview.index', config: { policies: [] } },
+      { method: 'GET', path: '/fifo/:variantDocumentId', handler: 'orders.fifo', config: { policies: [] } },
+      { method: 'GET', path: '/orders/:documentId', handler: 'orders.findOne', config: { policies: [] } },
+      { method: 'POST', path: '/orders/:documentId/confirm', handler: 'orders.confirm', config: { policies: [] } },
     ],
   },
 };

@@ -3,6 +3,7 @@ import metadata from './metadata';
 import overview from './overview';
 import fifo from './fifo';
 import pricing from './pricing';
+import orders from './orders';
 
 export default {
   resource,
@@ -10,4 +11,5 @@ export default {
   overview,
   fifo,
   pricing,
+  orders,
 };
