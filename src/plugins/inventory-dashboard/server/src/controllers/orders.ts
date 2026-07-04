@@ -14,6 +14,9 @@ const orders = ({ strapi }: { strapi: Core.Strapi }) => ({
     const quantity = Number(ctx.query.quantity) || 0;
     ctx.body = await strapi.plugin('inventory-dashboard').service('fifo').resolve(variantDocumentId, quantity);
   },
+  async suggest(ctx) {
+    ctx.body = await strapi.plugin('inventory-dashboard').service('pricing').suggest(ctx.request.body?.data ?? ctx.request.body);
+  },
 });
 
 export default orders;

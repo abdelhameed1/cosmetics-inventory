@@ -29,6 +29,17 @@ const plugin: StrapiApp["appPlugins"][string] = {
       permissions: [],
     });
 
+    app.addMenuLink({
+      to: `plugins/${PLUGIN_ID}/orders/new`,
+      icon: PluginIcon,
+      intlLabel: {
+        id: `${PLUGIN_ID}.menu.orders`,
+        defaultMessage: 'New Order',
+      },
+      Component: () => import("./pages/App"),
+      permissions: [],
+    });
+
     app.registerPlugin({
       id: PLUGIN_ID,
       initializer: Initializer,

@@ -16,6 +16,7 @@ export default {
       { method: 'GET', path: '/fifo/:variantDocumentId', handler: 'orders.fifo', config: { policies: [] } },
       { method: 'GET', path: '/orders/:documentId', handler: 'orders.findOne', config: { policies: [] } },
       { method: 'POST', path: '/orders/:documentId/confirm', handler: 'orders.confirm', config: { policies: [] } },
+      { method: 'POST', path: '/pricing/suggest', handler: 'orders.suggest', config: { policies: [] } },
     ],
   },
 };
