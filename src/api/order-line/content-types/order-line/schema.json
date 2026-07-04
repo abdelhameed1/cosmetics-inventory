@@ -1,0 +1,24 @@
+{
+  "kind": "collectionType",
+  "collectionName": "order_lines",
+  "info": { "singularName": "order-line", "pluralName": "order-lines", "displayName": "Order Line" },
+  "options": { "draftAndPublish": false },
+  "attributes": {
+    "quantitySold": { "type": "integer", "min": 1, "required": true },
+    "costPriceUsdSnapshot": { "type": "decimal" },
+    "sellPrice": { "type": "decimal", "required": true },
+    "referenceRetailPrice": { "type": "decimal" },
+    "lineNotes": { "type": "text" },
+    "order": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::order.order",
+      "inversedBy": "lines"
+    },
+    "stockBatch": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::stock-batch.stock-batch"
+    }
+  }
+}

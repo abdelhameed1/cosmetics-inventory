@@ -1,0 +1,18 @@
+{
+  "kind": "collectionType",
+  "collectionName": "payments",
+  "info": { "singularName": "payment", "pluralName": "payments", "displayName": "Payment" },
+  "options": { "draftAndPublish": false },
+  "attributes": {
+    "amount": { "type": "decimal", "required": true },
+    "paymentDate": { "type": "date", "required": true },
+    "method": { "type": "enumeration", "enum": ["cash", "transfer"] },
+    "notes": { "type": "text" },
+    "order": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::order.order",
+      "inversedBy": "payments"
+    }
+  }
+}
