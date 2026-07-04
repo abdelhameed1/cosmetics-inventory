@@ -58,18 +58,22 @@ const orders = ({ strapi }: { strapi: Core.Strapi }) => ({
     }
 
     // aggregate quantity per batch
-    const perBatch = new Map<string, { remaining: number; qty: number }>();
+    const perBatch = new Map<string, { batchId: number; remaining: number; qty: number }>();
     for (const line of lines) {
       if (!line.stockBatch) {
         throw new errors.ApplicationError('Every order line must have a stock batch before confirming.');
       }
       const key = line.stockBatch.documentId;
-      const entry = perBatch.get(key) ?? { remaining: Number(line.stockBatch.quantityRemaining), qty: 0 };
+      const entry = perBatch.get(key) ?? {
+        batchId: line.stockBatch.id,
+        remaining: Number(line.stockBatch.quantityRemaining),
+        qty: 0,
+      };
       entry.qty += Number(line.quantitySold);
       perBatch.set(key, entry);
     }
 
-    // validate availability
+    // fast-fail on the common case (no concurrent activity) before mutating anything
     for (const [batchDocId, { remaining, qty }] of perBatch) {
       if (qty > remaining) {
         throw new errors.ApplicationError(
@@ -78,26 +82,39 @@ const orders = ({ strapi }: { strapi: Core.Strapi }) => ({
       }
     }
 
-    // decrement each batch
-    for (const [batchDocId, { remaining, qty }] of perBatch) {
-      await strapi.documents(BATCH as any).update({
-        documentId: batchDocId,
-        data: { quantityRemaining: remaining - qty },
-      } as any);
-    }
+    // Mutate atomically: each decrement is itself a conditional UPDATE (guards
+    // against a concurrent confirm winning the same batch), and the whole set
+    // is wrapped in one transaction so a losing race rolls back any batches
+    // already decremented instead of leaving a half-confirmed order.
+    const batchMeta = strapi.db.metadata.get(BATCH);
+    const quantityRemainingColumn = (batchMeta.attributes as any).quantityRemaining?.columnName ?? 'quantityRemaining';
 
-    // snapshot cost per line
-    for (const line of lines) {
-      await strapi.documents(LINE as any).update({
-        documentId: line.documentId,
-        data: { costPriceUsdSnapshot: Number(line.stockBatch.costPriceUsd) },
-      } as any);
-    }
+    await strapi.db.transaction(async () => {
+      for (const [batchDocId, { batchId, qty }] of perBatch) {
+        const affected = await strapi.db
+          .queryBuilder(BATCH)
+          .where({ id: batchId, quantityRemaining: { $gte: qty } })
+          .decrement(quantityRemainingColumn, qty)
+          .execute();
+        if (!affected) {
+          throw new errors.ApplicationError(
+            `Insufficient stock on batch ${batchDocId}: stock changed before this order could be confirmed.`
+          );
+        }
+      }
 
-    await strapi.documents(ORDER as any).update({
-      documentId,
-      data: { status: 'confirmed' },
-    } as any);
+      for (const line of lines) {
+        await strapi.documents(LINE as any).update({
+          documentId: line.documentId,
+          data: { costPriceUsdSnapshot: Number(line.stockBatch.costPriceUsd) },
+        } as any);
+      }
+
+      await strapi.documents(ORDER as any).update({
+        documentId,
+        data: { status: 'confirmed', __trusted: true },
+      } as any);
+    });
 
     return this.getWithTotals(documentId);
   },

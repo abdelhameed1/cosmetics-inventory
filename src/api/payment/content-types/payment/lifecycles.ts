@@ -30,7 +30,7 @@ async function recomputeOrderStatus(orderEntityId: number | undefined, orderDocu
   if (nextStatus !== order.status) {
     await strapi.documents('api::order.order').update({
       documentId: order.documentId,
-      data: { status: nextStatus } as any,
+      data: { status: nextStatus, __trusted: true } as any,
     });
   }
 }

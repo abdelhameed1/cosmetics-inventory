@@ -75,8 +75,11 @@ export default function OrderForm() {
     const variant = variants.find((v) => v.documentId === addVariantId);
     const newLines: DraftLine[] = [];
     for (const seg of fifo.segments) {
-      // suggested sell price via the pricing endpoint (POST /pricing/suggest)
-      const priced = await getSuggestedPrice(api, priceListId, seg.costPriceUsd, seg.quantityFromBatch);
+      // suggested sell price via the pricing endpoint (POST /pricing/suggest).
+      // Pass the TOTAL requested quantity (not this segment's own quantityFromBatch)
+      // so a wholesale minQty threshold is evaluated against the whole order, not
+      // artificially failed when FIFO happens to split it across several batches.
+      const priced = await getSuggestedPrice(api, priceListId, seg.costPriceUsd, addQty ?? 1);
       newLines.push({
         variantDocumentId: addVariantId,
         variantLabel: variant?.label ?? 'Default',
