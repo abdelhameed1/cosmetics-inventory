@@ -1,15 +1,15 @@
 import { getTranslation } from "./utils/getTranslation";
 import { PLUGIN_ID } from "./pluginId";
 import { Initializer } from "./components/Initializer";
-import { PluginIcon } from "./components/PluginIcon";
+import { Database, Briefcase, ShoppingCart } from "@strapi/icons";
 
 import type { StrapiApp } from "@strapi/strapi/admin";
 
 const plugin: StrapiApp["appPlugins"][string] = {
   register(app) {
     app.addMenuLink({
-      to: `plugins/${PLUGIN_ID}`,
-      icon: PluginIcon,
+      to: `/plugins/${PLUGIN_ID}`,
+      icon: Database,
       intlLabel: {
         id: `${PLUGIN_ID}.plugin.name`,
         defaultMessage: 'Inventory',
@@ -19,24 +19,24 @@ const plugin: StrapiApp["appPlugins"][string] = {
     });
 
     app.addMenuLink({
-      to: `plugins/${PLUGIN_ID}/stock-purchase`,
-      icon: PluginIcon,
+      to: `/plugins/inventory-stock`,
+      icon: Briefcase,
       intlLabel: {
         id: `${PLUGIN_ID}.menu.stock-purchase`,
         defaultMessage: 'Stock purchase',
       },
-      Component: () => import("./pages/App"),
+      Component: () => import("./pages/StockPurchase"),
       permissions: [],
     });
 
     app.addMenuLink({
-      to: `plugins/${PLUGIN_ID}/orders/new`,
-      icon: PluginIcon,
+      to: `/plugins/inventory-orders`,
+      icon: ShoppingCart,
       intlLabel: {
         id: `${PLUGIN_ID}.menu.orders`,
         defaultMessage: 'New Order',
       },
-      Component: () => import("./pages/App"),
+      Component: () => import("./pages/OrderForm"),
       permissions: [],
     });
 
