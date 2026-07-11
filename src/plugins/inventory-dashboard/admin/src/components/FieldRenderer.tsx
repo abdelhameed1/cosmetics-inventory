@@ -1,20 +1,9 @@
 import {
-  Field, TextInput, Textarea, NumberInput, Toggle, DatePicker, DateTimePicker,
-  SingleSelect, SingleSelectOption,
-} from '@strapi/design-system';
-import { type FieldMeta } from '../utils/api';
+  Input, Textarea, NumberInput, NumberInputField, Switch, Select,
+} from '@chakra-ui/react';
+import { FormField } from './ui/FormField';
 import { RelationSelect } from './RelationSelect';
-
-function parseLocalDate(value: string): Date {
-  const [y, m, d] = value.split('-').map(Number);
-  return new Date(y, (m ?? 1) - 1, d ?? 1);
-}
-
-function formatLocalDate(d: Date): string {
-  const mm = String(d.getMonth() + 1).padStart(2, '0');
-  const dd = String(d.getDate()).padStart(2, '0');
-  return `${d.getFullYear()}-${mm}-${dd}`;
-}
+import { type FieldMeta } from '../utils/api';
 
 export function FieldRenderer({
   field, value, onChange,
@@ -24,81 +13,87 @@ export function FieldRenderer({
   switch (field.type) {
     case 'text':
       return (
-        <Field.Root name={field.name} required={field.required}>
-          <Field.Label>{field.name}</Field.Label>
+        <FormField label={field.name} required={field.required}>
           <Textarea
+            bg="white"
             value={value ?? ''}
             onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => onChange(e.target.value)}
           />
-        </Field.Root>
+        </FormField>
       );
     case 'integer':
     case 'decimal':
     case 'biginteger':
     case 'float':
       return (
-        <Field.Root name={field.name} required={field.required}>
-          <Field.Label>{field.name}</Field.Label>
+        <FormField label={field.name} required={field.required}>
           <NumberInput
-            value={value ?? undefined}
-            onValueChange={(v: number | undefined) => onChange(v)}
-          />
-        </Field.Root>
+            value={value ?? ''}
+            onChange={(_, valueAsNumber) => onChange(Number.isNaN(valueAsNumber) ? undefined : valueAsNumber)}
+          >
+            <NumberInputField bg="white" />
+          </NumberInput>
+        </FormField>
       );
     case 'boolean':
       return (
-        <Field.Root name={field.name} required={field.required}>
-          <Field.Label>{field.name}</Field.Label>
-          <Toggle
-            checked={Boolean(value)}
+        <FormField label={field.name} required={field.required}>
+          <Switch
+            isChecked={Boolean(value)}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) => onChange(e.target.checked)}
-            onLabel="Yes"
-            offLabel="No"
           />
-        </Field.Root>
+        </FormField>
       );
     case 'date':
       return (
-        <Field.Root name={field.name} required={field.required}>
-          <Field.Label>{field.name}</Field.Label>
-          <DatePicker
-            onChange={(d: Date | undefined) => onChange(d ? formatLocalDate(d) : null)}
-            value={value ? parseLocalDate(value) : undefined}
+        <FormField label={field.name} required={field.required}>
+          <Input
+            bg="white"
+            type="date"
+            value={value ?? ''}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => onChange(e.target.value || null)}
           />
-        </Field.Root>
+        </FormField>
       );
     case 'datetime':
       return (
-        <Field.Root name={field.name} required={field.required}>
-          <Field.Label>{field.name}</Field.Label>
-          <DateTimePicker
-            onChange={(d: Date | undefined) => onChange(d ? d.toISOString() : null)}
-            value={value ? new Date(value) : undefined}
+        <FormField label={field.name} required={field.required}>
+          <Input
+            bg="white"
+            type="datetime-local"
+            value={value ? toDateTimeLocal(value) : ''}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+              onChange(e.target.value ? new Date(e.target.value).toISOString() : null)}
           />
-        </Field.Root>
+        </FormField>
       );
     case 'enumeration':
       return (
-        <Field.Root name={field.name} required={field.required}>
-          <Field.Label>{field.name}</Field.Label>
-          <SingleSelect value={value ?? ''} onChange={(v: string | number) => onChange(v)}>
+        <FormField label={field.name} required={field.required}>
+          <Select bg="white" value={value ?? ''} onChange={(e) => onChange(e.target.value)}>
             {(field.values ?? []).map((opt) => (
-              <SingleSelectOption key={opt} value={opt}>{opt}</SingleSelectOption>
+              <option key={opt} value={opt}>{opt}</option>
             ))}
-          </SingleSelect>
-        </Field.Root>
+          </Select>
+        </FormField>
       );
     case 'relation':
       return <RelationSelect field={field} value={value} onChange={onChange} />;
     default:
       return (
-        <Field.Root name={field.name} required={field.required}>
-          <Field.Label>{field.name}</Field.Label>
-          <TextInput
+        <FormField label={field.name} required={field.required}>
+          <Input
+            bg="white"
             value={value ?? ''}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) => onChange(e.target.value)}
           />
-        </Field.Root>
+        </FormField>
       );
   }
+}
+
+function toDateTimeLocal(iso: string): string {
+  const d = new Date(iso);
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
