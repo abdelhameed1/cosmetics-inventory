@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Box, Button, Flex, Grid, Typography } from '@strapi/design-system';
+import { Box, Button, Grid, GridItem, HStack, Text } from '@chakra-ui/react';
 import { useApi } from '../utils/api';
 import { useSchema } from '../hooks/useSchema';
 import { FieldRenderer } from '../components/FieldRenderer';
 import ProductVariantsForm from '../components/ProductVariantsForm';
+import { PageHeader } from '../components/ui/PageHeader';
 
 export default function ResourceFormPage() {
   const { resource = '', id } = useParams();
@@ -49,22 +50,20 @@ export default function ResourceFormPage() {
   }
 
   return (
-    <Box padding={8}>
-      <Typography variant="alpha">{isEdit ? `Edit ${resource}` : `New ${resource}`}</Typography>
-      {error && <Box paddingTop={2}><Typography textColor="danger600">{error}</Typography></Box>}
-      <Box paddingTop={6}>
-        <Grid.Root gap={4}>
-          {editableFields.map((f) => (
-            <Grid.Item key={f.name} col={6} direction="column" alignItems="stretch">
-              <FieldRenderer field={f} value={values[f.name]} onChange={(v) => setField(f.name, v)} />
-            </Grid.Item>
-          ))}
-        </Grid.Root>
-      </Box>
-      <Flex gap={2} paddingTop={6}>
+    <Box p={8}>
+      <PageHeader title={isEdit ? `Edit ${resource}` : `New ${resource}`} />
+      {error && <Text color="red.600" pb={2}>{error}</Text>}
+      <Grid templateColumns="repeat(12, 1fr)" gap={4}>
+        {editableFields.map((f) => (
+          <GridItem key={f.name} colSpan={6}>
+            <FieldRenderer field={f} value={values[f.name]} onChange={(v) => setField(f.name, v)} />
+          </GridItem>
+        ))}
+      </Grid>
+      <HStack spacing={2} pt={6}>
         <Button onClick={submit}>Save</Button>
-        <Button variant="tertiary" onClick={() => navigate(`/plugins/inventory-dashboard/r/${resource}`)}>Cancel</Button>
-      </Flex>
+        <Button variant="ghost" onClick={() => navigate(`/plugins/inventory-dashboard/r/${resource}`)}>Cancel</Button>
+      </HStack>
     </Box>
   );
 }
