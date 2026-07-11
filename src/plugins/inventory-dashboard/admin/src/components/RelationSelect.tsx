@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { Field, SingleSelect, SingleSelectOption } from '@strapi/design-system';
+import { Select } from '@chakra-ui/react';
+import { FormField } from './ui/FormField';
 import { useApi, type FieldMeta } from '../utils/api';
 
 export function RelationSelect({
@@ -19,24 +20,24 @@ export function RelationSelect({
   const selected = value?.documentId ?? value ?? '';
 
   return (
-    <Field.Root name={field.name} required={field.required}>
-      <Field.Label>{field.name}</Field.Label>
-      <SingleSelect
+    <FormField label={field.name} required={field.required}>
+      <Select
         value={selected}
-        onChange={(v: string | number) => onChange(v)}
+        onChange={(e) => onChange(e.target.value)}
         placeholder={`Select ${field.name}`}
+        bg="white"
       >
         {options.map((o) => {
           const label = String(
             o[field.relation?.mainField ?? 'name'] ?? o.name ?? o.label ?? o.documentId ?? o.id
           );
           return (
-            <SingleSelectOption key={o.documentId} value={o.documentId}>
+            <option key={o.documentId} value={o.documentId}>
               {label}
-            </SingleSelectOption>
+            </option>
           );
         })}
-      </SingleSelect>
-    </Field.Root>
+      </Select>
+    </FormField>
   );
 }
