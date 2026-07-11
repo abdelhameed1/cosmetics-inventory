@@ -1,10 +1,9 @@
 import { useEffect, useState } from 'react';
-import {
-  Box, Button, Field, Flex, Grid, Typography, TextInput, NumberInput,
-  SingleSelect, SingleSelectOption, IconButton,
-} from '@strapi/design-system';
-import { Trash } from '@strapi/icons';
+import { Box, Button, Grid, GridItem, HStack, IconButton, Input, NumberInput, NumberInputField, Select, Text } from '@chakra-ui/react';
+import { FiTrash2 } from 'react-icons/fi';
 import { useApi } from '../utils/api';
+import { PageHeader } from './ui/PageHeader';
+import { FormField } from './ui/FormField';
 
 interface VariantRow { label: string; variantTypeId: string; lowStockThreshold?: number; }
 
@@ -80,101 +79,96 @@ export default function ProductVariantsForm({ onDone }: { onDone: () => void }) 
   };
 
   return (
-    <Box padding={8}>
-      <Typography variant="alpha">New product</Typography>
-      {error && <Box paddingTop={2}><Typography textColor="danger600">{error}</Typography></Box>}
-      <Box paddingTop={6}>
-        <Grid.Root gap={4}>
-          <Grid.Item col={4} direction="column" alignItems="stretch">
-            <Field.Root name="name">
-              <Field.Label>Name</Field.Label>
-              <TextInput value={name} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setName(e.target.value)} />
-            </Field.Root>
-          </Grid.Item>
-          <Grid.Item col={4} direction="column" alignItems="stretch">
-            <Field.Root name="brand">
-              <Field.Label>Brand</Field.Label>
-              <SingleSelect value={brandId} onChange={(v: string | number) => setBrandId(String(v))}>
-                {brands.map((b) => <SingleSelectOption key={b.documentId} value={b.documentId}>{b.name}</SingleSelectOption>)}
-              </SingleSelect>
-            </Field.Root>
-          </Grid.Item>
-          <Grid.Item col={4} direction="column" alignItems="stretch">
-            <Field.Root name="category">
-              <Field.Label>Category</Field.Label>
-              <SingleSelect value={categoryId} onChange={(v: string | number) => setCategoryId(String(v))}>
-                {categories.map((c) => <SingleSelectOption key={c.documentId} value={c.documentId}>{c.name}</SingleSelectOption>)}
-              </SingleSelect>
-            </Field.Root>
-          </Grid.Item>
-        </Grid.Root>
-      </Box>
+    <Box p={8}>
+      <PageHeader title="New product" />
+      {error && <Text color="red.600" pb={2}>{error}</Text>}
+      <Grid templateColumns="repeat(12, 1fr)" gap={4}>
+        <GridItem colSpan={4}>
+          <FormField label="Name">
+            <Input bg="white" value={name} onChange={(e) => setName(e.target.value)} />
+          </FormField>
+        </GridItem>
+        <GridItem colSpan={4}>
+          <FormField label="Brand">
+            <Select bg="white" value={brandId} onChange={(e) => setBrandId(e.target.value)} placeholder="Select brand">
+              {brands.map((b) => <option key={b.documentId} value={b.documentId}>{b.name}</option>)}
+            </Select>
+          </FormField>
+        </GridItem>
+        <GridItem colSpan={4}>
+          <FormField label="Category">
+            <Select bg="white" value={categoryId} onChange={(e) => setCategoryId(e.target.value)} placeholder="Select category">
+              {categories.map((c) => <option key={c.documentId} value={c.documentId}>{c.name}</option>)}
+            </Select>
+          </FormField>
+        </GridItem>
+      </Grid>
 
-      <Box paddingTop={6}>
-        <Flex justifyContent="space-between">
-          <Typography variant="beta">Variants (optional)</Typography>
-          <Button variant="secondary" onClick={addRow}>Add variant</Button>
-        </Flex>
+      <Box pt={6}>
+        <HStack justify="space-between">
+          <Text fontSize="lg" fontWeight="semibold">Variants (optional)</Text>
+          <Button variant="outline" onClick={addRow}>Add variant</Button>
+        </HStack>
         {rows.map((row, i) => (
-          <Grid.Root gap={4} key={i} paddingTop={2}>
-            <Grid.Item col={4} direction="column" alignItems="stretch">
-              <Field.Root name={`label-${i}`}>
-                <Field.Label>Label</Field.Label>
-                <TextInput
-                  value={row.label}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateRow(i, { label: e.target.value })}
-                />
-              </Field.Root>
-            </Grid.Item>
-            <Grid.Item col={4} direction="column" alignItems="stretch">
-              <Field.Root name={`type-${i}`}>
-                <Field.Label>Type</Field.Label>
-                <SingleSelect value={row.variantTypeId} onChange={(v: string | number) => updateRow(i, { variantTypeId: String(v) })}>
-                  {variantTypes.map((t) => <SingleSelectOption key={t.documentId} value={t.documentId}>{t.name}</SingleSelectOption>)}
-                </SingleSelect>
-              </Field.Root>
-            </Grid.Item>
-            <Grid.Item col={3} direction="column" alignItems="stretch">
-              <Field.Root name={`threshold-${i}`}>
-                <Field.Label>Low-stock threshold</Field.Label>
+          <Grid templateColumns="repeat(12, 1fr)" gap={4} key={i} pt={2}>
+            <GridItem colSpan={4}>
+              <FormField label="Label">
+                <Input bg="white" value={row.label} onChange={(e) => updateRow(i, { label: e.target.value })} />
+              </FormField>
+            </GridItem>
+            <GridItem colSpan={4}>
+              <FormField label="Type">
+                <Select
+                  bg="white"
+                  value={row.variantTypeId}
+                  onChange={(e) => updateRow(i, { variantTypeId: e.target.value })}
+                  placeholder="Select type"
+                >
+                  {variantTypes.map((t) => <option key={t.documentId} value={t.documentId}>{t.name}</option>)}
+                </Select>
+              </FormField>
+            </GridItem>
+            <GridItem colSpan={3}>
+              <FormField label="Low-stock threshold">
                 <NumberInput
-                  value={row.lowStockThreshold}
-                  onValueChange={(v: number | undefined) => updateRow(i, { lowStockThreshold: v })}
-                />
-              </Field.Root>
-            </Grid.Item>
-            <Grid.Item col={1} direction="column" alignItems="stretch">
-              <IconButton label="Remove" onClick={() => removeRow(i)}>
-                <Trash />
-              </IconButton>
-            </Grid.Item>
-          </Grid.Root>
+                  value={row.lowStockThreshold ?? ''}
+                  onChange={(_, v) => updateRow(i, { lowStockThreshold: Number.isNaN(v) ? undefined : v })}
+                >
+                  <NumberInputField bg="white" />
+                </NumberInput>
+              </FormField>
+            </GridItem>
+            <GridItem colSpan={1} display="flex" alignItems="flex-end">
+              <IconButton aria-label="Remove" icon={<FiTrash2 />} onClick={() => removeRow(i)} />
+            </GridItem>
+          </Grid>
         ))}
       </Box>
 
-      <Box paddingTop={6}>
-        <Typography variant="beta">Related products (cross-sell)</Typography>
-        <Field.Root name="relatedProducts">
-          <Field.Label>Add related product</Field.Label>
-          <SingleSelect
+      <Box pt={6}>
+        <Text fontSize="lg" fontWeight="semibold" pb={2}>Related products (cross-sell)</Text>
+        <FormField label="Add related product">
+          <Select
+            bg="white"
             value=""
-            onChange={(v: string | number) => setRelatedIds((ids) => (ids.includes(String(v)) ? ids : [...ids, String(v)]))}
+            onChange={(e) => setRelatedIds((ids) => (ids.includes(e.target.value) ? ids : [...ids, e.target.value]))}
+            placeholder="Select product"
           >
-            {products.map((p) => <SingleSelectOption key={p.documentId} value={p.documentId}>{p.name}</SingleSelectOption>)}
-          </SingleSelect>
-        </Field.Root>
-        <Box paddingTop={2}>
+            {products.map((p) => <option key={p.documentId} value={p.documentId}>{p.name}</option>)}
+          </Select>
+        </FormField>
+        <Box pt={2}>
           {relatedIds.map((id) => {
             const p = products.find((x) => x.documentId === id);
-            return <Typography key={id}>{p?.name ?? id} </Typography>;
+            return <Text key={id} display="inline-block" pr={2}>{p?.name ?? id}</Text>;
           })}
         </Box>
       </Box>
 
-      <Flex gap={2} paddingTop={6}>
-        <Button onClick={save} disabled={!name || !brandId || !categoryId}>Create product</Button>
-        <Button variant="tertiary" onClick={onDone}>Cancel</Button>
-      </Flex>
+      <HStack spacing={2} pt={6}>
+        <Button onClick={save} isDisabled={!name || !brandId || !categoryId}>Create product</Button>
+        <Button variant="ghost" onClick={onDone}>Cancel</Button>
+      </HStack>
     </Box>
   );
 }
