@@ -1,11 +1,15 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
-  Box, Button, Flex, Searchbar, Table, Thead, Tbody, Tr, Th, Td,
-  Typography, IconButton, Dialog,
-} from '@strapi/design-system';
+  AlertDialog, AlertDialogBody, AlertDialogContent, AlertDialogFooter,
+  AlertDialogHeader, AlertDialogOverlay, Box, Button, IconButton, Input,
+  InputGroup, InputLeftElement, InputRightElement, Text, Td, Tr,
+} from '@chakra-ui/react';
+import { FiSearch, FiTrash2, FiX } from 'react-icons/fi';
 import { useApi } from '../utils/api';
 import { useSchema } from '../hooks/useSchema';
+import { PageHeader } from '../components/ui/PageHeader';
+import { DataTable } from '../components/ui/DataTable';
 
 export default function ResourceListPage() {
   const { resource = '' } = useParams();
@@ -16,6 +20,7 @@ export default function ResourceListPage() {
   const [search, setSearch] = useState('');
   const [toDelete, setToDelete] = useState<any | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const cancelRef = useRef<HTMLButtonElement>(null);
 
   const visibleFields = useMemo(
     () => (schema?.fields ?? []).filter((f) => !f.hidden).slice(0, 6),
@@ -45,56 +50,78 @@ export default function ResourceListPage() {
   };
 
   return (
-    <Box padding={8}>
-      <Flex justifyContent="space-between" paddingBottom={4}>
-        <Typography variant="alpha">{resource}</Typography>
-        <Button onClick={() => navigate(`/plugins/inventory-dashboard/r/${resource}/new`)}>New</Button>
-      </Flex>
+    <Box p={8}>
+      <PageHeader
+        title={resource}
+        actions={<Button onClick={() => navigate(`/plugins/inventory-dashboard/r/${resource}/new`)}>New</Button>}
+      />
 
-      <Box paddingBottom={4}>
-        <Searchbar name="search" value={search} onChange={(e: any) => setSearch(e.target.value)}
-          onClear={() => setSearch('')} clearLabel="Clear search" placeholder="Search by name">Search</Searchbar>
+      <Box pb={4}>
+        <InputGroup maxW="sm">
+          <InputLeftElement pointerEvents="none"><FiSearch color="gray" /></InputLeftElement>
+          <Input
+            aria-label="Search"
+            placeholder="Search by name"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            bg="white"
+          />
+          {search && (
+            <InputRightElement>
+              <IconButton
+                aria-label="Clear search"
+                icon={<FiX />}
+                size="sm"
+                variant="ghost"
+                onClick={() => setSearch('')}
+              />
+            </InputRightElement>
+          )}
+        </InputGroup>
       </Box>
 
-      {error && <Box paddingBottom={4}><Typography textColor="danger600">{error}</Typography></Box>}
+      {error && <Text color="red.600" pb={4}>{error}</Text>}
 
-      <Table colCount={visibleFields.length + 1} rowCount={rows.length}>
-        <Thead>
-          <Tr>
-            {visibleFields.map((f) => (<Th key={f.name}><Typography variant="sigma">{f.name}</Typography></Th>))}
-            <Th><Typography variant="sigma">Actions</Typography></Th>
+      <DataTable
+        columns={[...visibleFields.map((f) => f.name), 'Actions']}
+        isEmpty={rows.length === 0}
+      >
+        {rows.map((row) => (
+          <Tr
+            key={row.documentId}
+            cursor="pointer"
+            _hover={{ bg: 'gray.50' }}
+            onClick={() => navigate(`/plugins/inventory-dashboard/r/${resource}/${row.documentId}`)}
+          >
+            {visibleFields.map((f) => (
+              <Td key={f.name}>{renderCell(row[f.name])}</Td>
+            ))}
+            <Td onClick={(e) => e.stopPropagation()}>
+              <IconButton
+                aria-label="Delete"
+                icon={<FiTrash2 />}
+                size="sm"
+                variant="ghost"
+                colorScheme="red"
+                onClick={() => setToDelete(row)}
+              />
+            </Td>
           </Tr>
-        </Thead>
-        <Tbody>
-          {rows.map((row) => (
-            <Tr key={row.documentId} onClick={() => navigate(`/plugins/inventory-dashboard/r/${resource}/${row.documentId}`)}>
-              {visibleFields.map((f) => (
-                <Td key={f.name}><Typography>{renderCell(row[f.name])}</Typography></Td>
-              ))}
-              <Td onClick={(e: any) => e.stopPropagation()}>
-                <IconButton onClick={() => setToDelete(row)} label="Delete">✕</IconButton>
-              </Td>
-            </Tr>
-          ))}
-        </Tbody>
-      </Table>
+        ))}
+      </DataTable>
 
-      <Dialog.Root open={!!toDelete} onOpenChange={(open: boolean) => { if (!open) setToDelete(null); }}>
-        <Dialog.Content>
-          <Dialog.Header>Confirm delete</Dialog.Header>
-          <Dialog.Body>
-            <Typography>Delete this record? This cannot be undone.</Typography>
-          </Dialog.Body>
-          <Dialog.Footer>
-            <Dialog.Cancel>
-              <Button fullWidth variant="tertiary" onClick={() => setToDelete(null)}>Cancel</Button>
-            </Dialog.Cancel>
-            <Dialog.Action>
-              <Button fullWidth variant="danger-light" onClick={confirmDelete}>Delete</Button>
-            </Dialog.Action>
-          </Dialog.Footer>
-        </Dialog.Content>
-      </Dialog.Root>
+      <AlertDialog isOpen={!!toDelete} leastDestructiveRef={cancelRef} onClose={() => setToDelete(null)}>
+        <AlertDialogOverlay>
+          <AlertDialogContent>
+            <AlertDialogHeader>Confirm delete</AlertDialogHeader>
+            <AlertDialogBody>Delete this record? This cannot be undone.</AlertDialogBody>
+            <AlertDialogFooter>
+              <Button ref={cancelRef} variant="ghost" onClick={() => setToDelete(null)}>Cancel</Button>
+              <Button colorScheme="red" onClick={confirmDelete} ml={3}>Delete</Button>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialogOverlay>
+      </AlertDialog>
     </Box>
   );
 }
