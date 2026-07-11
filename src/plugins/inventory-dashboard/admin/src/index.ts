@@ -25,7 +25,7 @@ const plugin: StrapiApp["appPlugins"][string] = {
         id: `${PLUGIN_ID}.menu.stock-purchase`,
         defaultMessage: 'Stock purchase',
       },
-      Component: () => import("./pages/StockPurchase"),
+      Component: () => import("./pages/StockPurchaseStandalone"),
       permissions: [],
     });
 
@@ -36,7 +36,7 @@ const plugin: StrapiApp["appPlugins"][string] = {
         id: `${PLUGIN_ID}.menu.orders`,
         defaultMessage: 'New Order',
       },
-      Component: () => import("./pages/OrderForm"),
+      Component: () => import("./pages/OrderFormStandalone"),
       permissions: [],
     });
 
