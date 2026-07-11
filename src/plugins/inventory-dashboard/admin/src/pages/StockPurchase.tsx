@@ -1,21 +1,9 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import {
-  Box, Button, Field, Flex, Grid, Typography, NumberInput, DatePicker,
-  SingleSelect, SingleSelectOption,
-} from '@strapi/design-system';
+import { Box, Button, Grid, GridItem, HStack, Input, NumberInput, NumberInputField, Select, Text } from '@chakra-ui/react';
 import { useApi } from '../utils/api';
-
-function formatLocalDate(d: Date): string {
-  const mm = String(d.getMonth() + 1).padStart(2, '0');
-  const dd = String(d.getDate()).padStart(2, '0');
-  return `${d.getFullYear()}-${mm}-${dd}`;
-}
-
-function parseLocalDate(value: string): Date {
-  const [y, m, d] = value.split('-').map(Number);
-  return new Date(y, (m ?? 1) - 1, d ?? 1);
-}
+import { PageHeader } from '../components/ui/PageHeader';
+import { FormField } from '../components/ui/FormField';
 
 export default function StockPurchase() {
   const api = useApi();
@@ -65,82 +53,73 @@ export default function StockPurchase() {
   };
 
   return (
-    <Box padding={8}>
-      <Typography variant="alpha">Record stock purchase</Typography>
-      {error && <Box paddingTop={2}><Typography textColor="danger600">{error}</Typography></Box>}
-      <Box paddingTop={6}>
-        <Grid.Root gap={4}>
-          <Grid.Item col={4}>
-            <Field.Root name="product">
-              <Field.Label>Product</Field.Label>
-              <SingleSelect value={productId} onChange={(v: string | number) => setProductId(String(v))}>
-                {products.map((p) => <SingleSelectOption key={p.documentId} value={p.documentId}>{p.name}</SingleSelectOption>)}
-              </SingleSelect>
-            </Field.Root>
-          </Grid.Item>
-          <Grid.Item col={4}>
-            <Field.Root name="variant">
-              <Field.Label>Variant</Field.Label>
-              <SingleSelect value={variantId} onChange={(v: string | number) => setVariantId(String(v))} disabled={!productId}>
-                {variants.map((v) => <SingleSelectOption key={v.documentId} value={v.documentId}>{v.label ?? 'Default'}</SingleSelectOption>)}
-              </SingleSelect>
-            </Field.Root>
-          </Grid.Item>
-          <Grid.Item col={4}>
-            <Field.Root name="supplier">
-              <Field.Label>Supplier</Field.Label>
-              <SingleSelect value={supplierId} onChange={(v: string | number) => setSupplierId(String(v))}>
-                {suppliers.map((s) => <SingleSelectOption key={s.documentId} value={s.documentId}>{s.name}</SingleSelectOption>)}
-              </SingleSelect>
-            </Field.Root>
-          </Grid.Item>
-          <Grid.Item col={4}>
-            <Field.Root name="qty">
-              <Field.Label>Quantity purchased</Field.Label>
-              <NumberInput value={qty} onValueChange={setQty} />
-            </Field.Root>
-          </Grid.Item>
-          <Grid.Item col={4}>
-            <Field.Root name="cost">
-              <Field.Label>Cost price (USD)</Field.Label>
-              <NumberInput value={cost} onValueChange={setCost} />
-            </Field.Root>
-          </Grid.Item>
-          <Grid.Item col={4} />
-          <Grid.Item col={4}>
-            <Field.Root name="purchaseDate">
-              <Field.Label>Purchase date</Field.Label>
-              <DatePicker
-                value={purchaseDate ? parseLocalDate(purchaseDate) : undefined}
-                onChange={(d?: Date) => setPurchaseDate(d ? formatLocalDate(d) : null)}
-              />
-            </Field.Root>
-          </Grid.Item>
-          <Grid.Item col={4}>
-            <Field.Root name="productionDate">
-              <Field.Label>Production date</Field.Label>
-              <DatePicker
-                value={productionDate ? parseLocalDate(productionDate) : undefined}
-                onChange={(d?: Date) => setProductionDate(d ? formatLocalDate(d) : null)}
-              />
-            </Field.Root>
-          </Grid.Item>
-          <Grid.Item col={4}>
-            <Field.Root name="expiryDate">
-              <Field.Label>Expiry date</Field.Label>
-              <DatePicker
-                value={expiryDate ? parseLocalDate(expiryDate) : undefined}
-                onChange={(d?: Date) => setExpiryDate(d ? formatLocalDate(d) : null)}
-              />
-            </Field.Root>
-          </Grid.Item>
-        </Grid.Root>
-      </Box>
-      <Flex gap={2} paddingTop={6}>
-        <Button onClick={submit} disabled={!variantId || !supplierId || !qty || !cost || !purchaseDate}>
+    <Box p={8}>
+      <PageHeader title="Record stock purchase" />
+      {error && <Text color="red.600" pb={2}>{error}</Text>}
+      <Grid templateColumns="repeat(12, 1fr)" gap={4}>
+        <GridItem colSpan={4}>
+          <FormField label="Product">
+            <Select bg="white" value={productId} onChange={(e) => setProductId(e.target.value)} placeholder="Select product">
+              {products.map((p) => <option key={p.documentId} value={p.documentId}>{p.name}</option>)}
+            </Select>
+          </FormField>
+        </GridItem>
+        <GridItem colSpan={4}>
+          <FormField label="Variant">
+            <Select
+              bg="white"
+              value={variantId}
+              onChange={(e) => setVariantId(e.target.value)}
+              isDisabled={!productId}
+              placeholder="Select variant"
+            >
+              {variants.map((v) => <option key={v.documentId} value={v.documentId}>{v.label ?? 'Default'}</option>)}
+            </Select>
+          </FormField>
+        </GridItem>
+        <GridItem colSpan={4}>
+          <FormField label="Supplier">
+            <Select bg="white" value={supplierId} onChange={(e) => setSupplierId(e.target.value)} placeholder="Select supplier">
+              {suppliers.map((s) => <option key={s.documentId} value={s.documentId}>{s.name}</option>)}
+            </Select>
+          </FormField>
+        </GridItem>
+        <GridItem colSpan={4}>
+          <FormField label="Quantity purchased">
+            <NumberInput value={qty ?? ''} onChange={(_, v) => setQty(Number.isNaN(v) ? undefined : v)}>
+              <NumberInputField bg="white" />
+            </NumberInput>
+          </FormField>
+        </GridItem>
+        <GridItem colSpan={4}>
+          <FormField label="Cost price (USD)">
+            <NumberInput value={cost ?? ''} onChange={(_, v) => setCost(Number.isNaN(v) ? undefined : v)}>
+              <NumberInputField bg="white" />
+            </NumberInput>
+          </FormField>
+        </GridItem>
+        <GridItem colSpan={4} />
+        <GridItem colSpan={4}>
+          <FormField label="Purchase date">
+            <Input bg="white" type="date" value={purchaseDate ?? ''} onChange={(e) => setPurchaseDate(e.target.value || null)} />
+          </FormField>
+        </GridItem>
+        <GridItem colSpan={4}>
+          <FormField label="Production date">
+            <Input bg="white" type="date" value={productionDate ?? ''} onChange={(e) => setProductionDate(e.target.value || null)} />
+          </FormField>
+        </GridItem>
+        <GridItem colSpan={4}>
+          <FormField label="Expiry date">
+            <Input bg="white" type="date" value={expiryDate ?? ''} onChange={(e) => setExpiryDate(e.target.value || null)} />
+          </FormField>
+        </GridItem>
+      </Grid>
+      <HStack spacing={2} pt={6}>
+        <Button onClick={submit} isDisabled={!variantId || !supplierId || !qty || !cost || !purchaseDate}>
           Record purchase
         </Button>
-      </Flex>
+      </HStack>
     </Box>
   );
 }
