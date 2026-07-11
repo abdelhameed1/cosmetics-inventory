@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
-import {
-  Box, Flex, Grid, Typography, NumberInput, Field, Button,
-  Table, Thead, Tbody, Tr, Th, Td,
-  Card, CardBody, CardContent, CardTitle, CardSubtitle,
-} from '@strapi/design-system';
+import { Box, Button, Grid, GridItem, HStack, NumberInput, NumberInputField, SimpleGrid, Td, Text, Tr } from '@chakra-ui/react';
 import { useOverview } from '../hooks/useOverview';
 import { useSettings } from '../hooks/useSettings';
+import { PageHeader } from '../components/ui/PageHeader';
+import { StatCard } from '../components/ui/StatCard';
+import { DataTable } from '../components/ui/DataTable';
+import { FormField } from '../components/ui/FormField';
 
 export default function Overview() {
   const { data, loading, error, reload } = useOverview();
@@ -33,83 +33,63 @@ export default function Overview() {
 
   if (error) {
     return (
-      <Box padding={8}>
-        <Typography textColor="danger600">Could not load overview data</Typography>
+      <Box p={8}>
+        <Text color="red.600">Could not load overview data</Text>
       </Box>
     );
   }
 
-  if (loading || !data) return <Box padding={8}><Typography>Loading…</Typography></Box>;
+  if (loading || !data) return <Box p={8}><Text>Loading…</Text></Box>;
 
   return (
-    <Box padding={8}>
-      <Typography variant="alpha">Overview</Typography>
+    <Box p={8}>
+      <PageHeader title="Overview" />
 
-      <Box paddingTop={4} paddingBottom={6}>
-        <Flex gap={2} alignItems="flex-end">
-          <Field.Root name="rate">
-            <Field.Label>Exchange rate (EGP per USD)</Field.Label>
-            <NumberInput
-              value={rateInput}
-              onValueChange={(value: number | undefined) => setRateInput(value)}
-            />
-          </Field.Root>
+      <Box pb={6}>
+        <HStack spacing={2} align="flex-end">
+          <FormField label="Exchange rate (EGP per USD)" maxW="xs">
+            <NumberInput value={rateInput ?? ''} onChange={(_, v) => setRateInput(Number.isNaN(v) ? undefined : v)}>
+              <NumberInputField bg="white" />
+            </NumberInput>
+          </FormField>
           <Button onClick={onSaveRate}>Save rate</Button>
-        </Flex>
+        </HStack>
         {exchangeRateUpdatedAt && (
-          <Typography variant="pi" textColor="neutral600">Updated: {exchangeRateUpdatedAt}</Typography>
+          <Text fontSize="xs" color="gray.500" pt={1}>Updated: {exchangeRateUpdatedAt}</Text>
         )}
-        {saveError && <Typography textColor="danger600">{saveError}</Typography>}
+        {saveError && <Text color="red.600" pt={1}>{saveError}</Text>}
       </Box>
 
-      <Grid.Root gap={4}>
+      <SimpleGrid columns={4} spacing={4}>
         <StatCard label="Total stock units" value={String(data.totalStockUnits)} />
         <StatCard label="Stock value (USD)" value={`$${data.stockValueUsd.toFixed(2)}`} />
         <StatCard label="Stock value (EGP)" value={`E£${data.stockValueEgp.toFixed(2)}`} />
         <StatCard label="Exchange rate" value={String(data.exchangeRate)} />
-      </Grid.Root>
+      </SimpleGrid>
 
-      <Box paddingTop={6}>
-        <Typography variant="beta">Low stock</Typography>
-        <Table colCount={3} rowCount={data.lowStock.length}>
-          <Thead><Tr><Th>Variant</Th><Th>Qty</Th><Th>Threshold</Th></Tr></Thead>
-          <Tbody>
-            {data.lowStock.map((r: any) => (
-              <Tr key={r.variantId}><Td>{r.label}</Td><Td>{r.quantity}</Td><Td>{r.threshold}</Td></Tr>
-            ))}
-          </Tbody>
-        </Table>
+      <Box pt={6}>
+        <Text fontSize="lg" fontWeight="semibold" pb={2}>Low stock</Text>
+        <DataTable columns={['Variant', 'Qty', 'Threshold']} isEmpty={data.lowStock.length === 0}>
+          {data.lowStock.map((r: any) => (
+            <Tr key={r.variantId}><Td>{r.label}</Td><Td>{r.quantity}</Td><Td>{r.threshold}</Td></Tr>
+          ))}
+        </DataTable>
       </Box>
 
-      <Grid.Root gap={4} paddingTop={6}>
-        <Grid.Item col={6}>
-          <Typography variant="beta">Expired</Typography>
+      <Grid templateColumns="repeat(12, 1fr)" gap={4} pt={6}>
+        <GridItem colSpan={6}>
+          <Text fontSize="lg" fontWeight="semibold" pb={2}>Expired</Text>
           {data.expired.map((b: any) => (
-            <Typography key={b.batchId} textColor="danger600">{b.variantLabel} — {b.expiryDate}</Typography>
+            <Text key={b.batchId} color="red.600">{b.variantLabel} — {b.expiryDate}</Text>
           ))}
-        </Grid.Item>
-        <Grid.Item col={6}>
-          <Typography variant="beta">Expiring soon (90 days)</Typography>
+        </GridItem>
+        <GridItem colSpan={6}>
+          <Text fontSize="lg" fontWeight="semibold" pb={2}>Expiring soon (90 days)</Text>
           {data.expiringSoon.map((b: any) => (
-            <Typography key={b.batchId} textColor="warning600">{b.variantLabel} — {b.expiryDate}</Typography>
+            <Text key={b.batchId} color="orange.600">{b.variantLabel} — {b.expiryDate}</Text>
           ))}
-        </Grid.Item>
-      </Grid.Root>
+        </GridItem>
+      </Grid>
     </Box>
-  );
-}
-
-function StatCard({ label, value }: { label: string; value: string }) {
-  return (
-    <Grid.Item col={3}>
-      <Card>
-        <CardBody>
-          <CardContent>
-            <CardTitle>{value}</CardTitle>
-            <CardSubtitle>{label}</CardSubtitle>
-          </CardContent>
-        </CardBody>
-      </Card>
-    </Grid.Item>
   );
 }
