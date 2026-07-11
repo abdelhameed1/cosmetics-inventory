@@ -1,11 +1,14 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
-  Box, Button, Field, Flex, Grid, Typography, NumberInput, DatePicker,
-  SingleSelect, SingleSelectOption, Table, Thead, Tbody, Tr, Th, Td, Badge,
-} from '@strapi/design-system';
+  Badge, Box, Button, Grid, GridItem, HStack, Input, NumberInput, NumberInputField,
+  Select, Td, Text, Tr,
+} from '@chakra-ui/react';
 import { useApi } from '../utils/api';
 import { useOrder } from '../hooks/useOrder';
+import { PageHeader } from '../components/ui/PageHeader';
+import { FormField } from '../components/ui/FormField';
+import { DataTable } from '../components/ui/DataTable';
 
 interface DraftLine {
   variantDocumentId: string;
@@ -20,11 +23,6 @@ function formatLocalDate(d: Date): string {
   const mm = String(d.getMonth() + 1).padStart(2, '0');
   const dd = String(d.getDate()).padStart(2, '0');
   return `${d.getFullYear()}-${mm}-${dd}`;
-}
-
-function parseLocalDate(value: string): Date {
-  const [y, m, d] = value.split('-').map(Number);
-  return new Date(y, (m ?? 1) - 1, d ?? 1);
 }
 
 export default function OrderForm() {
@@ -133,114 +131,132 @@ export default function OrderForm() {
   }
 
   return (
-    <Box padding={8}>
-      <Typography variant="alpha">New order</Typography>
-      {error && <Box paddingTop={2}><Typography textColor="danger600">{error}</Typography></Box>}
+    <Box p={8}>
+      <PageHeader title="New order" />
+      {error && <Text color="red.600" pb={2}>{error}</Text>}
 
-      <Grid.Root gap={4} paddingTop={6}>
-        <Grid.Item col={4}>
-          <Field.Root name="customer">
-            <Field.Label>Customer</Field.Label>
-            <SingleSelect value={customerId} onChange={(v: string | number) => setCustomerId(String(v))}>
-              {customers.map((c) => <SingleSelectOption key={c.documentId} value={c.documentId}>{c.name}</SingleSelectOption>)}
-            </SingleSelect>
-          </Field.Root>
-        </Grid.Item>
-        <Grid.Item col={4}>
-          <Field.Root name="orderDate">
-            <Field.Label>Order date</Field.Label>
-            <DatePicker
-              value={orderDate ? parseLocalDate(orderDate) : undefined}
-              onChange={(d?: Date) => setOrderDate(d ? formatLocalDate(d) : null)}
-            />
-          </Field.Root>
-        </Grid.Item>
-      </Grid.Root>
+      <Grid templateColumns="repeat(12, 1fr)" gap={4}>
+        <GridItem colSpan={4}>
+          <FormField label="Customer">
+            <Select bg="white" value={customerId} onChange={(e) => setCustomerId(e.target.value)} placeholder="Select customer">
+              {customers.map((c) => <option key={c.documentId} value={c.documentId}>{c.name}</option>)}
+            </Select>
+          </FormField>
+        </GridItem>
+        <GridItem colSpan={4}>
+          <FormField label="Order date">
+            <Input bg="white" type="date" value={orderDate ?? ''} onChange={(e) => setOrderDate(e.target.value || null)} />
+          </FormField>
+        </GridItem>
+      </Grid>
 
-      <Box paddingTop={6}>
-        <Typography variant="beta">Add product</Typography>
-        <Grid.Root gap={4} paddingTop={2}>
-          <Grid.Item col={4}>
-            <Field.Root name="product">
-              <Field.Label>Product</Field.Label>
-              <SingleSelect value={addProductId} onChange={(v: string | number) => { setAddProductId(String(v)); setAddVariantId(''); }}>
-                {products.map((p) => <SingleSelectOption key={p.documentId} value={p.documentId}>{p.name}</SingleSelectOption>)}
-              </SingleSelect>
-            </Field.Root>
-          </Grid.Item>
-          <Grid.Item col={4}>
-            <Field.Root name="variant">
-              <Field.Label>Variant</Field.Label>
-              <SingleSelect value={addVariantId} onChange={(v: string | number) => setAddVariantId(String(v))} disabled={!addProductId}>
-                {variantsForProduct.map((v) => <SingleSelectOption key={v.documentId} value={v.documentId}>{v.label ?? 'Default'}</SingleSelectOption>)}
-              </SingleSelect>
-            </Field.Root>
-          </Grid.Item>
-          <Grid.Item col={3}>
-            <Field.Root name="qty">
-              <Field.Label>Quantity</Field.Label>
-              <NumberInput value={addQty} onValueChange={setAddQty} />
-            </Field.Root>
-          </Grid.Item>
-          <Grid.Item col={1}><Box paddingTop={6}><Button onClick={addLine} disabled={!addVariantId}>Add</Button></Box></Grid.Item>
-        </Grid.Root>
+      <Box pt={6}>
+        <Text fontSize="lg" fontWeight="semibold" pb={2}>Add product</Text>
+        <Grid templateColumns="repeat(12, 1fr)" gap={4}>
+          <GridItem colSpan={4}>
+            <FormField label="Product">
+              <Select
+                bg="white"
+                value={addProductId}
+                onChange={(e) => { setAddProductId(e.target.value); setAddVariantId(''); }}
+                placeholder="Select product"
+              >
+                {products.map((p) => <option key={p.documentId} value={p.documentId}>{p.name}</option>)}
+              </Select>
+            </FormField>
+          </GridItem>
+          <GridItem colSpan={4}>
+            <FormField label="Variant">
+              <Select
+                bg="white"
+                value={addVariantId}
+                onChange={(e) => setAddVariantId(e.target.value)}
+                isDisabled={!addProductId}
+                placeholder="Select variant"
+              >
+                {variantsForProduct.map((v) => <option key={v.documentId} value={v.documentId}>{v.label ?? 'Default'}</option>)}
+              </Select>
+            </FormField>
+          </GridItem>
+          <GridItem colSpan={3}>
+            <FormField label="Quantity">
+              <NumberInput value={addQty ?? ''} onChange={(_, v) => setAddQty(Number.isNaN(v) ? undefined : v)}>
+                <NumberInputField bg="white" />
+              </NumberInput>
+            </FormField>
+          </GridItem>
+          <GridItem colSpan={1} display="flex" alignItems="flex-end">
+            <Button onClick={addLine} isDisabled={!addVariantId}>Add</Button>
+          </GridItem>
+        </Grid>
       </Box>
 
       {relatedSuggestions.length > 0 && (
-        <Box paddingTop={4} background="primary100" padding={3} hasRadius>
-          <Typography variant="omega">Customers also buy:&nbsp;</Typography>
+        <Box mt={4} bg="brand.50" p={3} borderRadius="lg">
+          <Text as="span" fontSize="sm">Customers also buy:&nbsp;</Text>
           {relatedSuggestions.map((rp: any) => (
-            <Button key={rp.documentId} variant="tertiary"
-              onClick={() => { setAddProductId(rp.documentId); setAddVariantId(''); }}>
+            <Button
+              key={rp.documentId}
+              variant="link"
+              size="sm"
+              mr={2}
+              onClick={() => { setAddProductId(rp.documentId); setAddVariantId(''); }}
+            >
               {rp.name}
             </Button>
           ))}
         </Box>
       )}
 
-      <Box paddingTop={6}>
-        <Table colCount={6} rowCount={draftLines.length}>
-          <Thead><Tr><Th>Variant</Th><Th>Batch</Th><Th>Qty</Th><Th>Sell (EGP)</Th><Th>Cost EGP</Th><Th>Flag</Th></Tr></Thead>
-          <Tbody>
-            {draftLines.map((l, i) => {
-              const costEgp = l.costPriceUsd * exchangeRate;
-              const below = l.sellPrice < costEgp;
-              return (
-                <Tr key={i}>
-                  <Td>{l.variantLabel}</Td>
-                  <Td>{l.stockBatchDocumentId.slice(0, 6)}</Td>
-                  <Td>{l.quantitySold}</Td>
-                  <Td>
-                    <NumberInput aria-label="sell" value={l.sellPrice}
-                      onValueChange={(v: number | undefined) => setDraftLines((prev) => prev.map((x, idx) => idx === i ? { ...x, sellPrice: v ?? 0 } : x))} />
-                  </Td>
-                  <Td>{costEgp.toFixed(2)}</Td>
-                  <Td>{below ? <Badge backgroundColor="danger500" textColor="neutral0">Below cost</Badge> : null}</Td>
-                </Tr>
-              );
-            })}
-          </Tbody>
-        </Table>
+      <Box pt={6}>
+        <DataTable columns={['Variant', 'Batch', 'Qty', 'Sell (EGP)', 'Cost EGP', 'Flag']} isEmpty={draftLines.length === 0}>
+          {draftLines.map((l, i) => {
+            const costEgp = l.costPriceUsd * exchangeRate;
+            const below = l.sellPrice < costEgp;
+            return (
+              <Tr key={i}>
+                <Td>{l.variantLabel}</Td>
+                <Td>{l.stockBatchDocumentId.slice(0, 6)}</Td>
+                <Td>{l.quantitySold}</Td>
+                <Td>
+                  <NumberInput
+                    size="sm"
+                    value={l.sellPrice}
+                    onChange={(_, v) =>
+                      setDraftLines((prev) => prev.map((x, idx) => (idx === i ? { ...x, sellPrice: Number.isNaN(v) ? 0 : v } : x)))}
+                  >
+                    <NumberInputField aria-label="sell" />
+                  </NumberInput>
+                </Td>
+                <Td>{costEgp.toFixed(2)}</Td>
+                <Td>{below ? <Badge colorScheme="red">Below cost</Badge> : null}</Td>
+              </Tr>
+            );
+          })}
+        </DataTable>
       </Box>
 
-      <Box paddingTop={6}>
-        <Grid.Root gap={4}>
-          <Grid.Item col={4}>
-            <Field.Root name="discount">
-              <Field.Label>Discount (EGP)</Field.Label>
-              <NumberInput value={discount} onValueChange={setDiscount} />
-            </Field.Root>
-          </Grid.Item>
-          <Grid.Item col={4}><Box paddingTop={6}><Typography>Subtotal: {subtotal.toFixed(2)} EGP</Typography></Box></Grid.Item>
-          <Grid.Item col={4}><Box paddingTop={6}><Typography variant="beta">Total: {finalTotal.toFixed(2)} EGP</Typography></Box></Grid.Item>
-        </Grid.Root>
-      </Box>
+      <Grid templateColumns="repeat(12, 1fr)" gap={4} pt={6}>
+        <GridItem colSpan={4}>
+          <FormField label="Discount (EGP)">
+            <NumberInput value={discount ?? ''} onChange={(_, v) => setDiscount(Number.isNaN(v) ? undefined : v)}>
+              <NumberInputField bg="white" />
+            </NumberInput>
+          </FormField>
+        </GridItem>
+        <GridItem colSpan={4} display="flex" alignItems="flex-end">
+          <Text>Subtotal: {subtotal.toFixed(2)} EGP</Text>
+        </GridItem>
+        <GridItem colSpan={4} display="flex" alignItems="flex-end">
+          <Text fontSize="lg" fontWeight="semibold">Total: {finalTotal.toFixed(2)} EGP</Text>
+        </GridItem>
+      </Grid>
 
-      <Flex gap={2} paddingTop={6}>
-        <Button onClick={saveDraft} disabled={!customerId || draftLines.length === 0}>Save draft</Button>
-        {id && <Button variant="success" onClick={onConfirm}>Confirm order</Button>}
-        <Button variant="tertiary" onClick={() => navigate('/plugins/inventory-dashboard/r/orders')}>Cancel</Button>
-      </Flex>
+      <HStack spacing={2} pt={6}>
+        <Button onClick={saveDraft} isDisabled={!customerId || draftLines.length === 0}>Save draft</Button>
+        {id && <Button colorScheme="green" onClick={onConfirm}>Confirm order</Button>}
+        <Button variant="ghost" onClick={() => navigate('/plugins/inventory-dashboard/r/orders')}>Cancel</Button>
+      </HStack>
     </Box>
   );
 }
@@ -267,51 +283,46 @@ function ConfirmedOrderView({ order, reload, api }: { order: any; reload: () => 
   };
 
   return (
-    <Box padding={8}>
-      <Flex justifyContent="space-between">
-        <Typography variant="alpha">Order {order.documentId.slice(0, 8)}</Typography>
-        <Badge>{order.status}</Badge>
-      </Flex>
+    <Box p={8}>
+      <HStack justify="space-between" mb={6}>
+        <Text fontSize="lg" fontWeight="bold" color="gray.800">{`Order ${order.documentId.slice(0, 8)}`}</Text>
+        <Badge fontSize="sm">{order.status}</Badge>
+      </HStack>
 
-      <Box paddingTop={6}>
-        <Table colCount={5} rowCount={order.lines.length}>
-          <Thead><Tr><Th>Variant</Th><Th>Qty</Th><Th>Sell</Th><Th>Cost USD snap</Th><Th>Flag</Th></Tr></Thead>
-          <Tbody>
-            {order.lines.map((l: any) => (
-              <Tr key={l.documentId}>
-                <Td>{l.stockBatch?.documentId?.slice(0, 6) ?? '-'}</Td>
-                <Td>{l.quantitySold}</Td>
-                <Td>{l.sellPrice}</Td>
-                <Td>{l.costPriceUsdSnapshot}</Td>
-                <Td>{l.belowCost ? <Badge backgroundColor="danger500" textColor="neutral0">Below cost</Badge> : null}</Td>
-              </Tr>
-            ))}
-          </Tbody>
-        </Table>
+      <DataTable columns={['Variant', 'Qty', 'Sell', 'Cost USD snap', 'Flag']} isEmpty={order.lines.length === 0}>
+        {order.lines.map((l: any) => (
+          <Tr key={l.documentId}>
+            <Td>{l.stockBatch?.documentId?.slice(0, 6) ?? '-'}</Td>
+            <Td>{l.quantitySold}</Td>
+            <Td>{l.sellPrice}</Td>
+            <Td>{l.costPriceUsdSnapshot}</Td>
+            <Td>{l.belowCost ? <Badge colorScheme="red">Below cost</Badge> : null}</Td>
+          </Tr>
+        ))}
+      </DataTable>
+
+      <Box pt={6}>
+        <Text fontSize="lg" fontWeight="semibold">Totals</Text>
+        <Text>Subtotal: {order.totals.subtotal} | Final: {order.totals.finalTotal} | Profit: {order.totals.netProfit}</Text>
+        <Text>Paid: {order.totals.totalPaid} | Balance due: {order.totals.balanceDue}</Text>
       </Box>
 
-      <Box paddingTop={6}>
-        <Typography variant="beta">Totals</Typography>
-        <Typography>Subtotal: {order.totals.subtotal} | Final: {order.totals.finalTotal} | Profit: {order.totals.netProfit}</Typography>
-        <Typography>Paid: {order.totals.totalPaid} | Balance due: {order.totals.balanceDue}</Typography>
-      </Box>
-
-      <Box paddingTop={6}>
-        <Typography variant="beta">Record payment</Typography>
-        <Flex gap={2} alignItems="flex-end" paddingTop={2}>
-          <Field.Root name="amount">
-            <Field.Label>Amount</Field.Label>
-            <NumberInput value={amount} onValueChange={setAmount} />
-          </Field.Root>
-          <Field.Root name="method">
-            <Field.Label>Method</Field.Label>
-            <SingleSelect value={method} onChange={(v: string | number) => setMethod(String(v))}>
-              <SingleSelectOption value="cash">cash</SingleSelectOption>
-              <SingleSelectOption value="transfer">transfer</SingleSelectOption>
-            </SingleSelect>
-          </Field.Root>
-          <Button onClick={addPayment} disabled={!amount}>Add payment</Button>
-        </Flex>
+      <Box pt={6}>
+        <Text fontSize="lg" fontWeight="semibold" pb={2}>Record payment</Text>
+        <HStack spacing={2} align="flex-end">
+          <FormField label="Amount">
+            <NumberInput value={amount ?? ''} onChange={(_, v) => setAmount(Number.isNaN(v) ? undefined : v)}>
+              <NumberInputField bg="white" />
+            </NumberInput>
+          </FormField>
+          <FormField label="Method">
+            <Select bg="white" value={method} onChange={(e) => setMethod(e.target.value)}>
+              <option value="cash">cash</option>
+              <option value="transfer">transfer</option>
+            </Select>
+          </FormField>
+          <Button onClick={addPayment} isDisabled={!amount}>Add payment</Button>
+        </HStack>
       </Box>
     </Box>
   );
