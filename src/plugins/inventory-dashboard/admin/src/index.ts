@@ -1,7 +1,7 @@
 import { getTranslation } from "./utils/getTranslation";
 import { PLUGIN_ID } from "./pluginId";
 import { Initializer } from "./components/Initializer";
-import { Database, Briefcase, ShoppingCart } from "@strapi/icons";
+import { Database, Briefcase, ShoppingCart, Folder } from "@strapi/icons";
 
 import type { StrapiApp } from "@strapi/strapi/admin";
 
@@ -37,6 +37,17 @@ const plugin: StrapiApp["appPlugins"][string] = {
         defaultMessage: 'New Order',
       },
       Component: () => import("./pages/OrderFormStandalone"),
+      permissions: [],
+    });
+
+    app.addMenuLink({
+      to: `/plugins/inventory-catalog`,
+      icon: Folder,
+      intlLabel: {
+        id: `${PLUGIN_ID}.menu.catalog`,
+        defaultMessage: 'Catalog',
+      },
+      Component: () => import("./pages/CatalogStandalone"),
       permissions: [],
     });
 
