@@ -38,7 +38,7 @@ export default function ResourceFormPage() {
       } else {
         await api.post(`/resources/${resource}`, payload);
       }
-      navigate('..');
+      navigate('..', { relative: 'path' });
     } catch (e: any) {
       setError(e?.response?.data?.error?.message ?? 'Save failed');
     }
@@ -46,7 +46,7 @@ export default function ResourceFormPage() {
 
   // Bespoke product-with-variants flow on create
   if (resource === 'products' && !isEdit) {
-    return <ProductVariantsForm onDone={() => navigate('..')} />;
+    return <ProductVariantsForm onDone={() => navigate('..', { relative: 'path' })} />;
   }
 
   return (
@@ -62,7 +62,7 @@ export default function ResourceFormPage() {
       </Grid>
       <HStack spacing={2} pt={6}>
         <Button onClick={submit}>Save</Button>
-        <Button variant="ghost" onClick={() => navigate('..')}>Cancel</Button>
+        <Button variant="ghost" onClick={() => navigate('..', { relative: 'path' })}>Cancel</Button>
       </HStack>
     </Box>
   );
