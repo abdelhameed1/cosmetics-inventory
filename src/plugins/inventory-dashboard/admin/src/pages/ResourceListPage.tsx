@@ -53,7 +53,7 @@ export default function ResourceListPage() {
     <Box p={8}>
       <PageHeader
         title={resource}
-        actions={<Button onClick={() => navigate(`/plugins/inventory-dashboard/r/${resource}/new`)}>New</Button>}
+        actions={<Button onClick={() => navigate('new')}>New</Button>}
       />
 
       <Box pb={4}>
@@ -91,7 +91,7 @@ export default function ResourceListPage() {
             key={row.documentId}
             cursor="pointer"
             _hover={{ bg: 'gray.50' }}
-            onClick={() => navigate(`/plugins/inventory-dashboard/r/${resource}/${row.documentId}`)}
+            onClick={() => navigate(row.documentId)}
           >
             {visibleFields.map((f) => (
               <Td key={f.name}>{renderCell(row[f.name])}</Td>
