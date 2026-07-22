@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Box, Button, Grid, GridItem, HStack, NumberInput, NumberInputField, SimpleGrid, Td, Text, Tr } from '@chakra-ui/react';
+import { FiArchive, FiTrendingUp, FiPieChart, FiRepeat } from 'react-icons/fi';
 import { useOverview } from '../hooks/useOverview';
 import { useSettings } from '../hooks/useSettings';
 import { PageHeader } from '../components/ui/PageHeader';
@@ -61,14 +62,14 @@ export default function Overview() {
       </Box>
 
       <SimpleGrid columns={4} spacing={4}>
-        <StatCard label="Total stock units" value={String(data.totalStockUnits)} />
-        <StatCard label="Stock value (USD)" value={`$${data.stockValueUsd.toFixed(2)}`} />
-        <StatCard label="Stock value (EGP)" value={`E£${data.stockValueEgp.toFixed(2)}`} />
-        <StatCard label="Exchange rate" value={String(data.exchangeRate)} />
+        <StatCard label="Total stock units" value={String(data.totalStockUnits)} icon={FiArchive} />
+        <StatCard label="Stock value (USD)" value={`$${data.stockValueUsd.toFixed(2)}`} icon={FiTrendingUp} />
+        <StatCard label="Stock value (EGP)" value={`E£${data.stockValueEgp.toFixed(2)}`} icon={FiPieChart} />
+        <StatCard label="Exchange rate" value={String(data.exchangeRate)} icon={FiRepeat} />
       </SimpleGrid>
 
-      <Box pt={6}>
-        <Text fontSize="lg" fontWeight="semibold" pb={2}>Low stock</Text>
+      <Box pt={8}>
+        <Text fontSize="lg" fontWeight="semibold" pb={3} color="gray.800">Low stock</Text>
         <DataTable columns={['Variant', 'Qty', 'Threshold']} isEmpty={data.lowStock.length === 0}>
           {data.lowStock.map((r: any) => (
             <Tr key={r.variantId}><Td>{r.label}</Td><Td>{r.quantity}</Td><Td>{r.threshold}</Td></Tr>
@@ -76,15 +77,15 @@ export default function Overview() {
         </DataTable>
       </Box>
 
-      <Grid templateColumns="repeat(12, 1fr)" gap={4} pt={6}>
+      <Grid templateColumns="repeat(12, 1fr)" gap={4} pt={8}>
         <GridItem colSpan={6}>
-          <Text fontSize="lg" fontWeight="semibold" pb={2}>Expired</Text>
+          <Text fontSize="lg" fontWeight="semibold" pb={3} color="gray.800">Expired</Text>
           {data.expired.map((b: any) => (
             <Text key={b.batchId} color="red.600">{b.variantLabel} — {b.expiryDate}</Text>
           ))}
         </GridItem>
         <GridItem colSpan={6}>
-          <Text fontSize="lg" fontWeight="semibold" pb={2}>Expiring soon (90 days)</Text>
+          <Text fontSize="lg" fontWeight="semibold" pb={3} color="gray.800">Expiring soon (90 days)</Text>
           {data.expiringSoon.map((b: any) => (
             <Text key={b.batchId} color="orange.600">{b.variantLabel} — {b.expiryDate}</Text>
           ))}
