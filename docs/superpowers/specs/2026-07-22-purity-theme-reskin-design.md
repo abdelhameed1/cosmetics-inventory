@@ -21,7 +21,7 @@ The ask: adopt the free, MIT-licensed **Purity UI Dashboard** (Chakra-based, Cre
 **Explicitly out of scope (non-goals):**
 - No second top navbar. Strapi's own admin chrome already renders a top bar (user menu, notifications) above whatever the plugin mounts; adding Purity's own navbar (breadcrumb/search/bell/avatar) on top of that would be a duplicate, competing chrome. The new shell is sidebar + content only.
 - No adoption of Purity's actual purple/gradient palette. The existing `brand.500 = #2563eb` blue stays as the single accent color, so the plugin doesn't visually clash with Strapi's own purple/pink admin branding. Only Purity's *structure* (cards, shadows, spacing, icon badges, table/form polish) is adopted, not its specific colors.
-- No new npm dependency for icons. `@strapi/icons` is already a direct dependency (used today for the 4 menu icons in `index.ts`) and has enough variety (`Archive`, `PuzzlePiece`, `GridFour`, `Palette`, `Store`, `User`, `PriceTag`, `Faders`, etc. — confirmed present) to cover every nav item without pulling in `react-icons` or any other icon set.
+- No new npm dependency for icons. `react-icons` is already a direct dependency of this plugin (declared in its own `package.json`, already used for `FiSearch`/`FiTrash2`/`FiX` in `ResourceListPage.tsx` and `ProductVariantsForm.tsx`) — its `fi` (Feather) set covers every new nav/stat-card icon needed. `@strapi/icons` stays reserved for Strapi's own top-level menu registration in `index.ts` only (a separate visual context — Strapi's own left-nav chrome, already a different icon style); it is not mixed into the new sidebar/stat cards alongside Feather icons.
 - No backend changes. This is a pure admin-UI restyle; `server/src/config/resources.ts` and all `/resources/*` routes are untouched.
 - No change to the relative-navigation behavior fixed during the Catalog hub work — `ResourceFormPage.tsx`'s `navigate('..', { relative: 'path' })` calls stay exactly as they are; only their surrounding visual chrome changes.
 
@@ -45,22 +45,22 @@ Because `App.tsx` wraps its own internal `<Routes>` (Overview at `index`, plus t
 
 `admin/src/config/catalogGroups.ts` is superseded by a fuller `admin/src/config/navConfig.ts`, exporting:
 
-- `TOP_LINKS`: the 3 direct entry-point links, each `{ to: string; label: string; icon: IconType }`:
-  - `{ to: '/plugins/inventory-dashboard', label: 'Overview', icon: Database }`
-  - `{ to: '/plugins/inventory-stock', label: 'Stock Purchase', icon: Briefcase }`
-  - `{ to: '/plugins/inventory-orders', label: 'New Order', icon: ShoppingCart }`
+- `TOP_LINKS`: the 3 direct entry-point links, each `{ to: string; label: string; icon: IconType }`, icons from `react-icons/fi` (confirmed present in the installed `react-icons` version):
+  - `{ to: '/plugins/inventory-dashboard', label: 'Overview', icon: FiHome }`
+  - `{ to: '/plugins/inventory-stock', label: 'Stock Purchase', icon: FiBriefcase }`
+  - `{ to: '/plugins/inventory-orders', label: 'New Order', icon: FiShoppingCart }`
 
-  (Same icons already used for these 3 in `index.ts`'s `addMenuLink` calls, so the sidebar visually matches Strapi's own left-nav icon for the same destination.)
+- `CATALOG_GROUPS`: the same 2-group, 8-entity structure from the Catalog hub design, each item gaining an `icon` field. Mapping (all confirmed present in the installed `react-icons/fi`):
+  - Products → `FiBox`
+  - Variants → `FiLayers`
+  - Variant Types → `FiSliders`
+  - Categories → `FiGrid`
+  - Brands → `FiTag`
+  - Suppliers → `FiTruck`
+  - Customers → `FiUsers`
+  - Price Lists → `FiDollarSign`
 
-- `CATALOG_GROUPS`: the same 2-group, 8-entity structure from the Catalog hub design, each item gaining an `icon` field. Proposed mapping (all confirmed present in `@strapi/icons`):
-  - Products → `Archive`
-  - Variants → `PuzzlePiece`
-  - Variant Types → `Faders`
-  - Categories → `GridFour`
-  - Brands → `Palette`
-  - Suppliers → `Store`
-  - Customers → `User`
-  - Price Lists → `PriceTag`
+`StatCard`'s icon badge (Overview's 4 stat cards) also draws from `react-icons/fi`: Total stock units → `FiArchive`, Stock value (USD) → `FiTrendingUp`, Stock value (EGP) → `FiPieChart`, Exchange rate → `FiRepeat`.
 
 `AppSidebar` (new, replaces `CatalogSidebar`) renders `TOP_LINKS` first as plain top-level nav buttons (active state: exact-match or prefix-match against the link's `to`), then the two `CATALOG_GROUPS` sections exactly as `CatalogSidebar` renders them today (group heading + item list), with the active-state check generalized from today's Catalog-only prefix (`pathname.startsWith('/plugins/inventory-catalog/...')`) to also correctly highlight when on `/plugins/inventory-dashboard`, `/plugins/inventory-stock`, or `/plugins/inventory-orders`.
 
