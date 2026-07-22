@@ -19,6 +19,10 @@ const theme = extendTheme({
     heading: `-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif`,
     body: `-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif`,
   },
+  shadows: {
+    card: '0 1px 3px rgba(17, 24, 39, 0.06), 0 1px 2px rgba(17, 24, 39, 0.04)',
+    cardHover: '0 4px 12px rgba(17, 24, 39, 0.08), 0 2px 4px rgba(17, 24, 39, 0.06)',
+  },
   components: {
     Button: {
       baseStyle: { borderRadius: 'lg', fontWeight: 'semibold' },
@@ -36,10 +40,38 @@ const theme = extendTheme({
             textTransform: 'uppercase',
             letterSpacing: 'wide',
             borderColor: 'gray.100',
+            py: 3,
           },
-          td: { borderColor: 'gray.100' },
+          td: { borderColor: 'gray.100', py: 3 },
         },
       },
+    },
+    Card: {
+      baseStyle: {
+        container: {
+          bg: 'white',
+          borderRadius: 'xl',
+          borderWidth: '1px',
+          borderColor: 'gray.100',
+          boxShadow: 'card',
+        },
+      },
+    },
+    Input: {
+      defaultProps: { focusBorderColor: 'brand.500' },
+      baseStyle: { field: { borderRadius: 'lg' } },
+    },
+    NumberInput: {
+      defaultProps: { focusBorderColor: 'brand.500' },
+      baseStyle: { field: { borderRadius: 'lg' } },
+    },
+    Select: {
+      defaultProps: { focusBorderColor: 'brand.500' },
+      baseStyle: { field: { borderRadius: 'lg' } },
+    },
+    Textarea: {
+      defaultProps: { focusBorderColor: 'brand.500' },
+      baseStyle: { borderRadius: 'lg' },
     },
   },
 });
