@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Box, Button, Grid, GridItem, HStack, IconButton, Input, NumberInput, NumberInputField, Select, Text } from '@chakra-ui/react';
+import { Box, Button, Card, CardBody, Grid, GridItem, HStack, IconButton, Input, NumberInput, NumberInputField, Select, Text } from '@chakra-ui/react';
 import { FiTrash2 } from 'react-icons/fi';
 import { useApi } from '../utils/api';
 import { PageHeader } from './ui/PageHeader';
@@ -82,87 +82,101 @@ export default function ProductVariantsForm({ onDone }: { onDone: () => void }) 
     <Box p={8}>
       <PageHeader title="New product" />
       {error && <Text color="red.600" pb={2}>{error}</Text>}
-      <Grid templateColumns="repeat(12, 1fr)" gap={4}>
-        <GridItem colSpan={4}>
-          <FormField label="Name">
-            <Input bg="white" value={name} onChange={(e) => setName(e.target.value)} />
-          </FormField>
-        </GridItem>
-        <GridItem colSpan={4}>
-          <FormField label="Brand">
-            <Select bg="white" value={brandId} onChange={(e) => setBrandId(e.target.value)} placeholder="Select brand">
-              {brands.map((b) => <option key={b.documentId} value={b.documentId}>{b.name}</option>)}
-            </Select>
-          </FormField>
-        </GridItem>
-        <GridItem colSpan={4}>
-          <FormField label="Category">
-            <Select bg="white" value={categoryId} onChange={(e) => setCategoryId(e.target.value)} placeholder="Select category">
-              {categories.map((c) => <option key={c.documentId} value={c.documentId}>{c.name}</option>)}
-            </Select>
-          </FormField>
-        </GridItem>
-      </Grid>
-
-      <Box pt={6}>
-        <HStack justify="space-between">
-          <Text fontSize="lg" fontWeight="semibold">Variants (optional)</Text>
-          <Button variant="outline" onClick={addRow}>Add variant</Button>
-        </HStack>
-        {rows.map((row, i) => (
-          <Grid templateColumns="repeat(12, 1fr)" gap={4} key={i} pt={2}>
+      <Card>
+        <CardBody>
+          <Grid templateColumns="repeat(12, 1fr)" gap={4}>
             <GridItem colSpan={4}>
-              <FormField label="Label">
-                <Input bg="white" value={row.label} onChange={(e) => updateRow(i, { label: e.target.value })} />
+              <FormField label="Name">
+                <Input bg="white" value={name} onChange={(e) => setName(e.target.value)} />
               </FormField>
             </GridItem>
             <GridItem colSpan={4}>
-              <FormField label="Type">
-                <Select
-                  bg="white"
-                  value={row.variantTypeId}
-                  onChange={(e) => updateRow(i, { variantTypeId: e.target.value })}
-                  placeholder="Select type"
-                >
-                  {variantTypes.map((t) => <option key={t.documentId} value={t.documentId}>{t.name}</option>)}
+              <FormField label="Brand">
+                <Select bg="white" value={brandId} onChange={(e) => setBrandId(e.target.value)} placeholder="Select brand">
+                  {brands.map((b) => <option key={b.documentId} value={b.documentId}>{b.name}</option>)}
                 </Select>
               </FormField>
             </GridItem>
-            <GridItem colSpan={3}>
-              <FormField label="Low-stock threshold">
-                <NumberInput
-                  value={row.lowStockThreshold ?? ''}
-                  onChange={(_, v) => updateRow(i, { lowStockThreshold: Number.isNaN(v) ? undefined : v })}
-                >
-                  <NumberInputField bg="white" />
-                </NumberInput>
+            <GridItem colSpan={4}>
+              <FormField label="Category">
+                <Select bg="white" value={categoryId} onChange={(e) => setCategoryId(e.target.value)} placeholder="Select category">
+                  {categories.map((c) => <option key={c.documentId} value={c.documentId}>{c.name}</option>)}
+                </Select>
               </FormField>
             </GridItem>
-            <GridItem colSpan={1} display="flex" alignItems="flex-end">
-              <IconButton aria-label="Remove" icon={<FiTrash2 />} onClick={() => removeRow(i)} />
-            </GridItem>
           </Grid>
-        ))}
+        </CardBody>
+      </Card>
+
+      <Box pt={6}>
+        <HStack justify="space-between">
+          <Text fontSize="lg" fontWeight="semibold" color="gray.800">Variants (optional)</Text>
+          <Button variant="outline" onClick={addRow}>Add variant</Button>
+        </HStack>
+        {rows.length > 0 && (
+          <Card mt={2}>
+            <CardBody>
+              {rows.map((row, i) => (
+                <Grid templateColumns="repeat(12, 1fr)" gap={4} key={i} pt={i === 0 ? 0 : 4}>
+                  <GridItem colSpan={4}>
+                    <FormField label="Label">
+                      <Input bg="white" value={row.label} onChange={(e) => updateRow(i, { label: e.target.value })} />
+                    </FormField>
+                  </GridItem>
+                  <GridItem colSpan={4}>
+                    <FormField label="Type">
+                      <Select
+                        bg="white"
+                        value={row.variantTypeId}
+                        onChange={(e) => updateRow(i, { variantTypeId: e.target.value })}
+                        placeholder="Select type"
+                      >
+                        {variantTypes.map((t) => <option key={t.documentId} value={t.documentId}>{t.name}</option>)}
+                      </Select>
+                    </FormField>
+                  </GridItem>
+                  <GridItem colSpan={3}>
+                    <FormField label="Low-stock threshold">
+                      <NumberInput
+                        value={row.lowStockThreshold ?? ''}
+                        onChange={(_, v) => updateRow(i, { lowStockThreshold: Number.isNaN(v) ? undefined : v })}
+                      >
+                        <NumberInputField bg="white" />
+                      </NumberInput>
+                    </FormField>
+                  </GridItem>
+                  <GridItem colSpan={1} display="flex" alignItems="flex-end">
+                    <IconButton aria-label="Remove" icon={<FiTrash2 />} onClick={() => removeRow(i)} />
+                  </GridItem>
+                </Grid>
+              ))}
+            </CardBody>
+          </Card>
+        )}
       </Box>
 
       <Box pt={6}>
-        <Text fontSize="lg" fontWeight="semibold" pb={2}>Related products (cross-sell)</Text>
-        <FormField label="Add related product">
-          <Select
-            bg="white"
-            value=""
-            onChange={(e) => setRelatedIds((ids) => (ids.includes(e.target.value) ? ids : [...ids, e.target.value]))}
-            placeholder="Select product"
-          >
-            {products.map((p) => <option key={p.documentId} value={p.documentId}>{p.name}</option>)}
-          </Select>
-        </FormField>
-        <Box pt={2}>
-          {relatedIds.map((id) => {
-            const p = products.find((x) => x.documentId === id);
-            return <Text key={id} display="inline-block" pr={2}>{p?.name ?? id}</Text>;
-          })}
-        </Box>
+        <Text fontSize="lg" fontWeight="semibold" pb={2} color="gray.800">Related products (cross-sell)</Text>
+        <Card>
+          <CardBody>
+            <FormField label="Add related product">
+              <Select
+                bg="white"
+                value=""
+                onChange={(e) => setRelatedIds((ids) => (ids.includes(e.target.value) ? ids : [...ids, e.target.value]))}
+                placeholder="Select product"
+              >
+                {products.map((p) => <option key={p.documentId} value={p.documentId}>{p.name}</option>)}
+              </Select>
+            </FormField>
+            <Box pt={2}>
+              {relatedIds.map((id) => {
+                const p = products.find((x) => x.documentId === id);
+                return <Text key={id} display="inline-block" pr={2}>{p?.name ?? id}</Text>;
+              })}
+            </Box>
+          </CardBody>
+        </Card>
       </Box>
 
       <HStack spacing={2} pt={6}>

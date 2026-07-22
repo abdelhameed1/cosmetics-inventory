@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
-  Badge, Box, Button, Grid, GridItem, HStack, Input, NumberInput, NumberInputField,
+  Badge, Box, Button, Card, CardBody, Grid, GridItem, HStack, Input, NumberInput, NumberInputField,
   Select, Td, Text, Tr,
 } from '@chakra-ui/react';
 import { useApi } from '../utils/api';
@@ -135,60 +135,68 @@ export default function OrderForm() {
       <PageHeader title="New order" />
       {error && <Text color="red.600" pb={2}>{error}</Text>}
 
-      <Grid templateColumns="repeat(12, 1fr)" gap={4}>
-        <GridItem colSpan={4}>
-          <FormField label="Customer">
-            <Select bg="white" value={customerId} onChange={(e) => setCustomerId(e.target.value)} placeholder="Select customer">
-              {customers.map((c) => <option key={c.documentId} value={c.documentId}>{c.name}</option>)}
-            </Select>
-          </FormField>
-        </GridItem>
-        <GridItem colSpan={4}>
-          <FormField label="Order date">
-            <Input bg="white" type="date" value={orderDate ?? ''} onChange={(e) => setOrderDate(e.target.value || null)} />
-          </FormField>
-        </GridItem>
-      </Grid>
+      <Card>
+        <CardBody>
+          <Grid templateColumns="repeat(12, 1fr)" gap={4}>
+            <GridItem colSpan={4}>
+              <FormField label="Customer">
+                <Select bg="white" value={customerId} onChange={(e) => setCustomerId(e.target.value)} placeholder="Select customer">
+                  {customers.map((c) => <option key={c.documentId} value={c.documentId}>{c.name}</option>)}
+                </Select>
+              </FormField>
+            </GridItem>
+            <GridItem colSpan={4}>
+              <FormField label="Order date">
+                <Input bg="white" type="date" value={orderDate ?? ''} onChange={(e) => setOrderDate(e.target.value || null)} />
+              </FormField>
+            </GridItem>
+          </Grid>
+        </CardBody>
+      </Card>
 
       <Box pt={6}>
-        <Text fontSize="lg" fontWeight="semibold" pb={2}>Add product</Text>
-        <Grid templateColumns="repeat(12, 1fr)" gap={4}>
-          <GridItem colSpan={4}>
-            <FormField label="Product">
-              <Select
-                bg="white"
-                value={addProductId}
-                onChange={(e) => { setAddProductId(e.target.value); setAddVariantId(''); }}
-                placeholder="Select product"
-              >
-                {products.map((p) => <option key={p.documentId} value={p.documentId}>{p.name}</option>)}
-              </Select>
-            </FormField>
-          </GridItem>
-          <GridItem colSpan={4}>
-            <FormField label="Variant">
-              <Select
-                bg="white"
-                value={addVariantId}
-                onChange={(e) => setAddVariantId(e.target.value)}
-                isDisabled={!addProductId}
-                placeholder="Select variant"
-              >
-                {variantsForProduct.map((v) => <option key={v.documentId} value={v.documentId}>{v.label ?? 'Default'}</option>)}
-              </Select>
-            </FormField>
-          </GridItem>
-          <GridItem colSpan={3}>
-            <FormField label="Quantity">
-              <NumberInput value={addQty ?? ''} onChange={(_, v) => setAddQty(Number.isNaN(v) ? undefined : v)}>
-                <NumberInputField bg="white" />
-              </NumberInput>
-            </FormField>
-          </GridItem>
-          <GridItem colSpan={1} display="flex" alignItems="flex-end">
-            <Button onClick={addLine} isDisabled={!addVariantId}>Add</Button>
-          </GridItem>
-        </Grid>
+        <Text fontSize="lg" fontWeight="semibold" pb={2} color="gray.800">Add product</Text>
+        <Card>
+          <CardBody>
+            <Grid templateColumns="repeat(12, 1fr)" gap={4}>
+              <GridItem colSpan={4}>
+                <FormField label="Product">
+                  <Select
+                    bg="white"
+                    value={addProductId}
+                    onChange={(e) => { setAddProductId(e.target.value); setAddVariantId(''); }}
+                    placeholder="Select product"
+                  >
+                    {products.map((p) => <option key={p.documentId} value={p.documentId}>{p.name}</option>)}
+                  </Select>
+                </FormField>
+              </GridItem>
+              <GridItem colSpan={4}>
+                <FormField label="Variant">
+                  <Select
+                    bg="white"
+                    value={addVariantId}
+                    onChange={(e) => setAddVariantId(e.target.value)}
+                    isDisabled={!addProductId}
+                    placeholder="Select variant"
+                  >
+                    {variantsForProduct.map((v) => <option key={v.documentId} value={v.documentId}>{v.label ?? 'Default'}</option>)}
+                  </Select>
+                </FormField>
+              </GridItem>
+              <GridItem colSpan={3}>
+                <FormField label="Quantity">
+                  <NumberInput value={addQty ?? ''} onChange={(_, v) => setAddQty(Number.isNaN(v) ? undefined : v)}>
+                    <NumberInputField bg="white" />
+                  </NumberInput>
+                </FormField>
+              </GridItem>
+              <GridItem colSpan={1} display="flex" alignItems="flex-end">
+                <Button onClick={addLine} isDisabled={!addVariantId}>Add</Button>
+              </GridItem>
+            </Grid>
+          </CardBody>
+        </Card>
       </Box>
 
       {relatedSuggestions.length > 0 && (
@@ -302,27 +310,31 @@ function ConfirmedOrderView({ order, reload, api }: { order: any; reload: () => 
       </DataTable>
 
       <Box pt={6}>
-        <Text fontSize="lg" fontWeight="semibold">Totals</Text>
+        <Text fontSize="lg" fontWeight="semibold" color="gray.800">Totals</Text>
         <Text>Subtotal: {order.totals.subtotal} | Final: {order.totals.finalTotal} | Profit: {order.totals.netProfit}</Text>
         <Text>Paid: {order.totals.totalPaid} | Balance due: {order.totals.balanceDue}</Text>
       </Box>
 
       <Box pt={6}>
-        <Text fontSize="lg" fontWeight="semibold" pb={2}>Record payment</Text>
-        <HStack spacing={2} align="flex-end">
-          <FormField label="Amount">
-            <NumberInput value={amount ?? ''} onChange={(_, v) => setAmount(Number.isNaN(v) ? undefined : v)}>
-              <NumberInputField bg="white" />
-            </NumberInput>
-          </FormField>
-          <FormField label="Method">
-            <Select bg="white" value={method} onChange={(e) => setMethod(e.target.value)}>
-              <option value="cash">cash</option>
-              <option value="transfer">transfer</option>
-            </Select>
-          </FormField>
-          <Button onClick={addPayment} isDisabled={!amount}>Add payment</Button>
-        </HStack>
+        <Text fontSize="lg" fontWeight="semibold" pb={2} color="gray.800">Record payment</Text>
+        <Card>
+          <CardBody>
+            <HStack spacing={2} align="flex-end">
+              <FormField label="Amount">
+                <NumberInput value={amount ?? ''} onChange={(_, v) => setAmount(Number.isNaN(v) ? undefined : v)}>
+                  <NumberInputField bg="white" />
+                </NumberInput>
+              </FormField>
+              <FormField label="Method">
+                <Select bg="white" value={method} onChange={(e) => setMethod(e.target.value)}>
+                  <option value="cash">cash</option>
+                  <option value="transfer">transfer</option>
+                </Select>
+              </FormField>
+              <Button onClick={addPayment} isDisabled={!amount}>Add payment</Button>
+            </HStack>
+          </CardBody>
+        </Card>
       </Box>
     </Box>
   );
