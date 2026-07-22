@@ -1,10 +1,13 @@
 import { ChakraRoot } from '../components/ChakraRoot';
+import { AppShell } from '../components/AppShell';
 import OrderForm from './OrderForm';
 
 export default function OrderFormStandalone() {
   return (
     <ChakraRoot>
-      <OrderForm />
+      <AppShell>
+        <OrderForm />
+      </AppShell>
     </ChakraRoot>
   );
 }

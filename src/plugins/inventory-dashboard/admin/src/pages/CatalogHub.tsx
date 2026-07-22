@@ -4,7 +4,7 @@ import { Box, Heading, SimpleGrid, Text } from '@chakra-ui/react';
 import { useNavigate } from 'react-router-dom';
 import { useApi } from '../utils/api';
 import { PageHeader } from '../components/ui/PageHeader';
-import { CATALOG_GROUPS } from '../config/catalogGroups';
+import { CATALOG_GROUPS } from '../config/navConfig';
 
 export default function CatalogHub() {
   const api = useApi();
