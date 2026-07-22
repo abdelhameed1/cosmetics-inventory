@@ -1,6 +1,6 @@
 // src/plugins/inventory-dashboard/admin/src/pages/CatalogHub.tsx
 import { useEffect, useState } from 'react';
-import { Box, Heading, SimpleGrid, Text } from '@chakra-ui/react';
+import { Box, Card, CardBody, Heading, HStack, Icon, SimpleGrid, Text, VStack } from '@chakra-ui/react';
 import { useNavigate } from 'react-router-dom';
 import { useApi } from '../utils/api';
 import { PageHeader } from '../components/ui/PageHeader';
@@ -42,26 +42,31 @@ export default function CatalogHub() {
           </Heading>
           <SimpleGrid columns={{ base: 1, md: 3 }} spacing={4}>
             {group.items.map((item) => (
-              <Box
+              <Card
                 key={item.slug}
                 as="button"
                 textAlign="left"
-                bg="white"
-                borderRadius="xl"
-                boxShadow="sm"
-                borderWidth="1px"
-                borderColor="gray.100"
-                p={5}
-                _hover={{ borderColor: 'brand.200', boxShadow: 'md' }}
+                cursor="pointer"
+                transition="box-shadow 0.15s, border-color 0.15s"
+                _hover={{ borderColor: 'brand.200', boxShadow: 'cardHover' }}
                 onClick={() => navigate(item.slug)}
               >
-                <Text fontSize="sm" color="gray.500" fontWeight="medium">
-                  {item.label}
-                </Text>
-                <Text fontSize="2xl" fontWeight="bold" color="gray.800" mt={1}>
-                  {counts[item.slug] ?? '—'}
-                </Text>
-              </Box>
+                <CardBody>
+                  <HStack spacing={4} align="flex-start">
+                    <VStack align="center" justify="center" bg="brand.50" borderRadius="lg" boxSize={10} flexShrink={0}>
+                      <Icon as={item.icon} boxSize={5} color="brand.600" />
+                    </VStack>
+                    <VStack align="flex-start" spacing={0}>
+                      <Text fontSize="sm" color="gray.500" fontWeight="medium">
+                        {item.label}
+                      </Text>
+                      <Text fontSize="2xl" fontWeight="bold" color="gray.800">
+                        {counts[item.slug] ?? '—'}
+                      </Text>
+                    </VStack>
+                  </HStack>
+                </CardBody>
+              </Card>
             ))}
           </SimpleGrid>
         </Box>
