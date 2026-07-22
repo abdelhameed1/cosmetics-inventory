@@ -58,7 +58,7 @@ export default function ResourceListPage() {
 
       <Box pb={4}>
         <InputGroup maxW="sm">
-          <InputLeftElement pointerEvents="none"><FiSearch color="gray" /></InputLeftElement>
+          <InputLeftElement pointerEvents="none"><FiSearch color="var(--chakra-colors-gray-400)" /></InputLeftElement>
           <Input
             aria-label="Search"
             placeholder="Search by name"
@@ -112,7 +112,7 @@ export default function ResourceListPage() {
 
       <AlertDialog isOpen={!!toDelete} leastDestructiveRef={cancelRef} onClose={() => setToDelete(null)}>
         <AlertDialogOverlay>
-          <AlertDialogContent>
+          <AlertDialogContent borderRadius="xl">
             <AlertDialogHeader>Confirm delete</AlertDialogHeader>
             <AlertDialogBody>Delete this record? This cannot be undone.</AlertDialogBody>
             <AlertDialogFooter>
