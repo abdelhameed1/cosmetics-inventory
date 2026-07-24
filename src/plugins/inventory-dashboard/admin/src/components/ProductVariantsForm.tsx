@@ -9,7 +9,13 @@ import { WizardShell, type WizardStep } from './WizardShell';
 
 interface VariantRow { label: string; variantTypeId: string; lowStockThreshold?: number; }
 
-export default function ProductVariantsForm({ onDone }: { onDone: () => void }) {
+interface ProductVariantsFormProps {
+  onDone: () => void;
+  onCancel?: () => void;
+  embedded?: boolean;
+}
+
+export default function ProductVariantsForm({ onDone, onCancel, embedded = false }: ProductVariantsFormProps) {
   const api = useApi();
   const [name, setName] = useState('');
   const [brandId, setBrandId] = useState('');
@@ -235,8 +241,8 @@ export default function ProductVariantsForm({ onDone }: { onDone: () => void }) 
   ];
 
   return (
-    <Box p={8}>
-      <PageHeader title="New product" />
+    <Box p={embedded ? 0 : 8}>
+      {!embedded && <PageHeader title="New product" />}
       <WizardShell
         steps={steps}
         onSubmit={save}
@@ -244,7 +250,7 @@ export default function ProductVariantsForm({ onDone }: { onDone: () => void }) 
         isSubmitting={isSubmitting}
         submitError={error}
       />
-      <Button variant="ghost" mt={4} onClick={onDone} isDisabled={isSubmitting}>Cancel</Button>
+      <Button variant="ghost" mt={4} onClick={onCancel ?? onDone} isDisabled={isSubmitting}>Cancel</Button>
     </Box>
   );
 }

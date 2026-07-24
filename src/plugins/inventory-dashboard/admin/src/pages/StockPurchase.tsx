@@ -1,12 +1,18 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Box, Card, CardBody, Grid, GridItem, Input, NumberInput, NumberInputField, Select, Text } from '@chakra-ui/react';
+import { Box, Button, Card, CardBody, Grid, GridItem, Input, NumberInput, NumberInputField, Select, Text } from '@chakra-ui/react';
 import { useApi } from '../utils/api';
 import { PageHeader } from '../components/ui/PageHeader';
 import { FormField } from '../components/ui/FormField';
 import { WizardShell, type WizardStep } from '../components/WizardShell';
 
-export default function StockPurchase() {
+interface StockPurchaseProps {
+  onDone?: () => void;
+  onCancel?: () => void;
+  embedded?: boolean;
+}
+
+export default function StockPurchase({ onDone, onCancel, embedded = false }: StockPurchaseProps = {}) {
   const api = useApi();
   const navigate = useNavigate();
   const [products, setProducts] = useState<any[]>([]);
@@ -50,6 +56,7 @@ export default function StockPurchase() {
         supplier: supplierId,
       });
       navigate('/plugins/inventory-dashboard/r/stock-batches');
+      onDone?.();
     } catch (e: any) {
       setError(e?.response?.data?.error?.message ?? 'Could not record purchase');
     } finally {
@@ -154,9 +161,12 @@ export default function StockPurchase() {
   ];
 
   return (
-    <Box p={8}>
-      <PageHeader title="Record stock purchase" />
+    <Box p={embedded ? 0 : 8}>
+      {!embedded && <PageHeader title="Record stock purchase" />}
       <WizardShell steps={steps} onSubmit={submit} submitLabel="Record purchase" isSubmitting={isSubmitting} submitError={error} />
+      {onCancel && (
+        <Button variant="ghost" mt={4} onClick={onCancel} isDisabled={isSubmitting}>Cancel</Button>
+      )}
     </Box>
   );
 }

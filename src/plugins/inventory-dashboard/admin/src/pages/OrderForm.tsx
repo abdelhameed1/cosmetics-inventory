@@ -27,8 +27,18 @@ function formatLocalDate(d: Date): string {
   return `${d.getFullYear()}-${mm}-${dd}`;
 }
 
-export default function OrderForm() {
-  const { id } = useParams();
+interface OrderFormProps {
+  onDone?: () => void;
+  onCancel?: () => void;
+  embedded?: boolean;
+}
+
+export default function OrderForm({ onDone, onCancel, embedded = false }: OrderFormProps = {}) {
+  const params = useParams();
+  // When embedded (e.g. inside the Add New modal, which is mounted alongside
+  // whatever page is currently active), useParams() would otherwise pick up an
+  // unrelated `:id` from the ambient route — always force "new order" mode.
+  const id = embedded ? undefined : params.id;
   const navigate = useNavigate();
   const api = useApi();
   const { order, reload, confirm } = useOrder(id);
@@ -118,6 +128,7 @@ export default function OrderForm() {
         });
       }
       navigate(`/plugins/inventory-dashboard/orders/${created.documentId}`);
+      onDone?.();
     } catch (e: any) {
       setError(e?.response?.data?.error?.message ?? 'Could not save order');
     } finally {
@@ -294,12 +305,16 @@ export default function OrderForm() {
   ];
 
   return (
-    <Box p={8}>
-      <PageHeader title="New order" />
+    <Box p={embedded ? 0 : 8}>
+      {!embedded && <PageHeader title="New order" />}
       {error && !isSubmitting && draftLines.length === 0 && <Text color="red.600" pb={2}>{error}</Text>}
       <WizardShell steps={steps} onSubmit={saveDraft} submitLabel="Save draft" isSubmitting={isSubmitting} submitError={error} />
       <HStack spacing={2} pt={4}>
-        <Button variant="ghost" onClick={() => navigate('/plugins/inventory-dashboard/r/orders')} isDisabled={isSubmitting}>
+        <Button
+          variant="ghost"
+          onClick={() => (onCancel ? onCancel() : navigate('/plugins/inventory-dashboard/r/orders'))}
+          isDisabled={isSubmitting}
+        >
           Cancel
         </Button>
         {id && <Button colorScheme="green" onClick={onConfirm}>Confirm order</Button>}
