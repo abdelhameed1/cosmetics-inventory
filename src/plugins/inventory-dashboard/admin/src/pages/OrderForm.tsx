@@ -1,3 +1,4 @@
+// src/plugins/inventory-dashboard/admin/src/pages/OrderForm.tsx
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
@@ -9,6 +10,7 @@ import { useOrder } from '../hooks/useOrder';
 import { PageHeader } from '../components/ui/PageHeader';
 import { FormField } from '../components/ui/FormField';
 import { DataTable } from '../components/ui/DataTable';
+import { WizardShell, type WizardStep } from '../components/WizardShell';
 
 interface DraftLine {
   variantDocumentId: string;
@@ -44,6 +46,7 @@ export default function OrderForm() {
   const [addQty, setAddQty] = useState<number | undefined>(1);
   const [relatedSuggestions, setRelatedSuggestions] = useState<any[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const isConfirmed = order && order.status !== 'draft';
 
@@ -100,6 +103,7 @@ export default function OrderForm() {
 
   const saveDraft = async () => {
     setError(null);
+    setIsSubmitting(true);
     try {
       // create order header
       const created = await api.post<any>('/resources/orders', {
@@ -116,6 +120,8 @@ export default function OrderForm() {
       navigate(`/plugins/inventory-dashboard/orders/${created.documentId}`);
     } catch (e: any) {
       setError(e?.response?.data?.error?.message ?? 'Could not save order');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -130,74 +136,71 @@ export default function OrderForm() {
     return <ConfirmedOrderView order={order} reload={reload} api={api} />;
   }
 
-  return (
-    <Box p={8}>
-      <PageHeader title="New order" />
-      {error && <Text color="red.600" pb={2}>{error}</Text>}
+  const customerStep = (
+    <Card>
+      <CardBody>
+        <Grid templateColumns="repeat(12, 1fr)" gap={4}>
+          <GridItem colSpan={4}>
+            <FormField label="Customer" required>
+              <Select bg="white" value={customerId} onChange={(e) => setCustomerId(e.target.value)} placeholder="Select customer">
+                {customers.map((c) => <option key={c.documentId} value={c.documentId}>{c.name}</option>)}
+              </Select>
+            </FormField>
+          </GridItem>
+          <GridItem colSpan={4}>
+            <FormField label="Order date">
+              <Input bg="white" type="date" value={orderDate ?? ''} onChange={(e) => setOrderDate(e.target.value || null)} />
+            </FormField>
+          </GridItem>
+        </Grid>
+      </CardBody>
+    </Card>
+  );
 
+  const lineItemsStep = (
+    <Box>
+      <Text fontSize="lg" fontWeight="semibold" pb={2} color="gray.800">Add product</Text>
       <Card>
         <CardBody>
           <Grid templateColumns="repeat(12, 1fr)" gap={4}>
             <GridItem colSpan={4}>
-              <FormField label="Customer">
-                <Select bg="white" value={customerId} onChange={(e) => setCustomerId(e.target.value)} placeholder="Select customer">
-                  {customers.map((c) => <option key={c.documentId} value={c.documentId}>{c.name}</option>)}
+              <FormField label="Product">
+                <Select
+                  bg="white"
+                  value={addProductId}
+                  onChange={(e) => { setAddProductId(e.target.value); setAddVariantId(''); }}
+                  placeholder="Select product"
+                >
+                  {products.map((p) => <option key={p.documentId} value={p.documentId}>{p.name}</option>)}
                 </Select>
               </FormField>
             </GridItem>
             <GridItem colSpan={4}>
-              <FormField label="Order date">
-                <Input bg="white" type="date" value={orderDate ?? ''} onChange={(e) => setOrderDate(e.target.value || null)} />
+              <FormField label="Variant">
+                <Select
+                  bg="white"
+                  value={addVariantId}
+                  onChange={(e) => setAddVariantId(e.target.value)}
+                  isDisabled={!addProductId}
+                  placeholder="Select variant"
+                >
+                  {variantsForProduct.map((v) => <option key={v.documentId} value={v.documentId}>{v.label ?? 'Default'}</option>)}
+                </Select>
               </FormField>
+            </GridItem>
+            <GridItem colSpan={3}>
+              <FormField label="Quantity">
+                <NumberInput value={addQty ?? ''} onChange={(_, v) => setAddQty(Number.isNaN(v) ? undefined : v)}>
+                  <NumberInputField bg="white" />
+                </NumberInput>
+              </FormField>
+            </GridItem>
+            <GridItem colSpan={1} display="flex" alignItems="flex-end">
+              <Button onClick={addLine} isDisabled={!addVariantId}>Add</Button>
             </GridItem>
           </Grid>
         </CardBody>
       </Card>
-
-      <Box pt={6}>
-        <Text fontSize="lg" fontWeight="semibold" pb={2} color="gray.800">Add product</Text>
-        <Card>
-          <CardBody>
-            <Grid templateColumns="repeat(12, 1fr)" gap={4}>
-              <GridItem colSpan={4}>
-                <FormField label="Product">
-                  <Select
-                    bg="white"
-                    value={addProductId}
-                    onChange={(e) => { setAddProductId(e.target.value); setAddVariantId(''); }}
-                    placeholder="Select product"
-                  >
-                    {products.map((p) => <option key={p.documentId} value={p.documentId}>{p.name}</option>)}
-                  </Select>
-                </FormField>
-              </GridItem>
-              <GridItem colSpan={4}>
-                <FormField label="Variant">
-                  <Select
-                    bg="white"
-                    value={addVariantId}
-                    onChange={(e) => setAddVariantId(e.target.value)}
-                    isDisabled={!addProductId}
-                    placeholder="Select variant"
-                  >
-                    {variantsForProduct.map((v) => <option key={v.documentId} value={v.documentId}>{v.label ?? 'Default'}</option>)}
-                  </Select>
-                </FormField>
-              </GridItem>
-              <GridItem colSpan={3}>
-                <FormField label="Quantity">
-                  <NumberInput value={addQty ?? ''} onChange={(_, v) => setAddQty(Number.isNaN(v) ? undefined : v)}>
-                    <NumberInputField bg="white" />
-                  </NumberInput>
-                </FormField>
-              </GridItem>
-              <GridItem colSpan={1} display="flex" alignItems="flex-end">
-                <Button onClick={addLine} isDisabled={!addVariantId}>Add</Button>
-              </GridItem>
-            </Grid>
-          </CardBody>
-        </Card>
-      </Box>
 
       {relatedSuggestions.length > 0 && (
         <Box mt={4} bg="brand.50" p={3} borderRadius="lg">
@@ -259,11 +262,47 @@ export default function OrderForm() {
           <Text fontSize="lg" fontWeight="semibold">Total: {finalTotal.toFixed(2)} EGP</Text>
         </GridItem>
       </Grid>
+    </Box>
+  );
 
-      <HStack spacing={2} pt={6}>
-        <Button onClick={saveDraft} isDisabled={!customerId || draftLines.length === 0}>Save draft</Button>
+  const reviewStep = (
+    <Card>
+      <CardBody>
+        <Text><b>Customer:</b> {customers.find((c) => c.documentId === customerId)?.name ?? '—'}</Text>
+        <Text><b>Order date:</b> {orderDate ?? '—'}</Text>
+        <Box pt={4}>
+          <DataTable columns={['Variant', 'Qty', 'Sell (EGP)']} isEmpty={draftLines.length === 0}>
+            {draftLines.map((l, i) => (
+              <Tr key={i}>
+                <Td>{l.variantLabel}</Td>
+                <Td>{l.quantitySold}</Td>
+                <Td>{l.sellPrice.toFixed(2)}</Td>
+              </Tr>
+            ))}
+          </DataTable>
+        </Box>
+        <Text pt={4}><b>Discount:</b> {(discount ?? 0).toFixed(2)} EGP</Text>
+        <Text fontSize="lg" fontWeight="semibold">Total: {finalTotal.toFixed(2)} EGP</Text>
+      </CardBody>
+    </Card>
+  );
+
+  const steps: WizardStep[] = [
+    { label: 'Customer & Date', content: customerStep, isValid: () => Boolean(customerId) },
+    { label: 'Line Items', content: lineItemsStep, isValid: () => draftLines.length > 0 },
+    { label: 'Review', content: reviewStep, isValid: () => true },
+  ];
+
+  return (
+    <Box p={8}>
+      <PageHeader title="New order" />
+      {error && !isSubmitting && draftLines.length === 0 && <Text color="red.600" pb={2}>{error}</Text>}
+      <WizardShell steps={steps} onSubmit={saveDraft} submitLabel="Save draft" isSubmitting={isSubmitting} submitError={error} />
+      <HStack spacing={2} pt={4}>
+        <Button variant="ghost" onClick={() => navigate('/plugins/inventory-dashboard/r/orders')} isDisabled={isSubmitting}>
+          Cancel
+        </Button>
         {id && <Button colorScheme="green" onClick={onConfirm}>Confirm order</Button>}
-        <Button variant="ghost" onClick={() => navigate('/plugins/inventory-dashboard/r/orders')}>Cancel</Button>
       </HStack>
     </Box>
   );
