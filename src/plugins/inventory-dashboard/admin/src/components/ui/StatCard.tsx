@@ -6,12 +6,12 @@ export function StatCard({ label, value, icon }: { label: string; value: string;
     <Card>
       <CardBody>
         <HStack spacing={4} align="flex-start">
-          <VStack align="center" justify="center" bg="brand.50" borderRadius="lg" boxSize={10} flexShrink={0}>
-            <Icon as={icon} boxSize={5} color="brand.600" />
+          <VStack align="center" justify="center" bg="accent.bg" borderRadius="lg" boxSize={10} flexShrink={0}>
+            <Icon as={icon} boxSize={5} color="accent.fg" />
           </VStack>
           <VStack align="flex-start" spacing={0}>
-            <Text fontSize="sm" color="gray.500" fontWeight="medium">{label}</Text>
-            <Text fontSize="2xl" fontWeight="bold" color="gray.800">{value}</Text>
+            <Text fontSize="sm" color="text.secondary" fontWeight="medium">{label}</Text>
+            <Text fontSize="2xl" fontWeight="bold" color="text.primary">{value}</Text>
           </VStack>
         </HStack>
       </CardBody>

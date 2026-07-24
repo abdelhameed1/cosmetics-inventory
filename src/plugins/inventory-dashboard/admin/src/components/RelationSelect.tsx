@@ -25,7 +25,6 @@ export function RelationSelect({
         value={selected}
         onChange={(e) => onChange(e.target.value)}
         placeholder={`Select ${field.name}`}
-        bg="white"
       >
         {options.map((o) => {
           const label = String(

@@ -9,7 +9,7 @@ export function DataTable({
       <CardBody p={0}>
         <TableContainer>
           <Table variant="simple">
-            <Thead bg="gray.50">
+            <Thead bg="bg.subtle">
               <Tr>
                 {columns.map((c) => <Th key={c}>{c}</Th>)}
               </Tr>
@@ -18,7 +18,7 @@ export function DataTable({
               {isEmpty ? (
                 <Tr>
                   <Td colSpan={columns.length}>
-                    <Text color="gray.500" textAlign="center" py={6}>{emptyLabel}</Text>
+                    <Text color="text.secondary" textAlign="center" py={6}>{emptyLabel}</Text>
                   </Td>
                 </Tr>
               ) : children}

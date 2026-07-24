@@ -50,13 +50,13 @@ export default function Overview() {
         <HStack spacing={2} align="flex-end">
           <FormField label="Exchange rate (EGP per USD)" maxW="xs">
             <NumberInput value={rateInput ?? ''} onChange={(_, v) => setRateInput(Number.isNaN(v) ? undefined : v)}>
-              <NumberInputField bg="white" />
+              <NumberInputField />
             </NumberInput>
           </FormField>
           <Button onClick={onSaveRate}>Save rate</Button>
         </HStack>
         {exchangeRateUpdatedAt && (
-          <Text fontSize="xs" color="gray.500" pt={1}>Updated: {exchangeRateUpdatedAt}</Text>
+          <Text fontSize="xs" color="text.secondary" pt={1}>Updated: {exchangeRateUpdatedAt}</Text>
         )}
         {saveError && <Text color="red.600" pt={1}>{saveError}</Text>}
       </Box>
@@ -69,7 +69,7 @@ export default function Overview() {
       </SimpleGrid>
 
       <Box pt={8}>
-        <Text fontSize="lg" fontWeight="semibold" pb={3} color="gray.800">Low stock</Text>
+        <Text fontSize="lg" fontWeight="semibold" pb={3} color="text.primary">Low stock</Text>
         <DataTable columns={['Variant', 'Qty', 'Threshold']} isEmpty={data.lowStock.length === 0}>
           {data.lowStock.map((r: any) => (
             <Tr key={r.variantId}><Td>{r.label}</Td><Td>{r.quantity}</Td><Td>{r.threshold}</Td></Tr>
@@ -79,13 +79,13 @@ export default function Overview() {
 
       <Grid templateColumns="repeat(12, 1fr)" gap={4} pt={8}>
         <GridItem colSpan={6}>
-          <Text fontSize="lg" fontWeight="semibold" pb={3} color="gray.800">Expired</Text>
+          <Text fontSize="lg" fontWeight="semibold" pb={3} color="text.primary">Expired</Text>
           {data.expired.map((b: any) => (
             <Text key={b.batchId} color="red.600">{b.variantLabel} — {b.expiryDate}</Text>
           ))}
         </GridItem>
         <GridItem colSpan={6}>
-          <Text fontSize="lg" fontWeight="semibold" pb={3} color="gray.800">Expiring soon (90 days)</Text>
+          <Text fontSize="lg" fontWeight="semibold" pb={3} color="text.primary">Expiring soon (90 days)</Text>
           {data.expiringSoon.map((b: any) => (
             <Text key={b.batchId} color="orange.600">{b.variantLabel} — {b.expiryDate}</Text>
           ))}

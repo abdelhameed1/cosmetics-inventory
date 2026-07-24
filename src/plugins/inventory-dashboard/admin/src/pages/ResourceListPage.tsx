@@ -64,7 +64,6 @@ export default function ResourceListPage() {
             placeholder="Search by name"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            bg="white"
           />
           {search && (
             <InputRightElement>
@@ -90,7 +89,7 @@ export default function ResourceListPage() {
           <Tr
             key={row.documentId}
             cursor="pointer"
-            _hover={{ bg: 'gray.50' }}
+            _hover={{ bg: 'bg.subtle' }}
             onClick={() => navigate(row.documentId)}
           >
             {visibleFields.map((f) => (

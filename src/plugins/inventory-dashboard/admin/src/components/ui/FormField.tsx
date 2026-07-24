@@ -6,7 +6,7 @@ export function FormField({
 }: { label: string; required?: boolean; children: ReactNode } & FormControlProps) {
   return (
     <FormControl isRequired={required} {...rest}>
-      <FormLabel textTransform="capitalize" fontSize="sm" fontWeight="semibold" color="gray.700">{label}</FormLabel>
+      <FormLabel textTransform="capitalize" fontSize="sm" fontWeight="semibold" color="text.secondary">{label}</FormLabel>
       {children}
     </FormControl>
   );

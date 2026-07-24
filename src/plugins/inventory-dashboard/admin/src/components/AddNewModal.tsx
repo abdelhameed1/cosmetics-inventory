@@ -57,7 +57,7 @@ export function AddNewModal({ isOpen, onClose }: { isOpen: boolean; onClose: () 
             <>
               {ADD_NEW_GROUPS.map((group) => (
                 <Box key={group.label} pb={6}>
-                  <Heading size="xs" textTransform="uppercase" color="gray.500" pb={3}>
+                  <Heading size="xs" textTransform="uppercase" color="text.secondary" pb={3}>
                     {group.label}
                   </Heading>
                   <SimpleGrid columns={{ base: 1, md: 2 }} spacing={3}>
@@ -74,10 +74,10 @@ export function AddNewModal({ isOpen, onClose }: { isOpen: boolean; onClose: () 
                         <CardBody>
                           <HStack justify="space-between">
                             <HStack spacing={3}>
-                              <VStack align="center" justify="center" bg="brand.50" borderRadius="lg" boxSize={9} flexShrink={0}>
-                                <Icon as={item.icon} boxSize={4} color="brand.600" />
+                              <VStack align="center" justify="center" bg="accent.bg" borderRadius="lg" boxSize={9} flexShrink={0}>
+                                <Icon as={item.icon} boxSize={4} color="accent.fg" />
                               </VStack>
-                              <Text fontSize="sm" fontWeight="semibold" color="gray.800">{item.label}</Text>
+                              <Text fontSize="sm" fontWeight="semibold" color="text.primary">{item.label}</Text>
                             </HStack>
                             {item.kind === 'wizard' && <Badge colorScheme="brand">Guided</Badge>}
                           </HStack>

@@ -15,7 +15,6 @@ export function FieldRenderer({
       return (
         <FormField label={field.name} required={field.required}>
           <Textarea
-            bg="white"
             value={value ?? ''}
             onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => onChange(e.target.value)}
           />
@@ -31,7 +30,7 @@ export function FieldRenderer({
             value={value ?? ''}
             onChange={(_, valueAsNumber) => onChange(Number.isNaN(valueAsNumber) ? undefined : valueAsNumber)}
           >
-            <NumberInputField bg="white" />
+            <NumberInputField />
           </NumberInput>
         </FormField>
       );
@@ -48,7 +47,6 @@ export function FieldRenderer({
       return (
         <FormField label={field.name} required={field.required}>
           <Input
-            bg="white"
             type="date"
             value={value ?? ''}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) => onChange(e.target.value || null)}
@@ -59,7 +57,6 @@ export function FieldRenderer({
       return (
         <FormField label={field.name} required={field.required}>
           <Input
-            bg="white"
             type="datetime-local"
             value={value ? toDateTimeLocal(value) : ''}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
@@ -70,7 +67,7 @@ export function FieldRenderer({
     case 'enumeration':
       return (
         <FormField label={field.name} required={field.required}>
-          <Select bg="white" value={value ?? ''} onChange={(e) => onChange(e.target.value)}>
+          <Select value={value ?? ''} onChange={(e) => onChange(e.target.value)}>
             {(field.values ?? []).map((opt) => (
               <option key={opt} value={opt}>{opt}</option>
             ))}
@@ -83,7 +80,6 @@ export function FieldRenderer({
       return (
         <FormField label={field.name} required={field.required}>
           <Input
-            bg="white"
             value={value ?? ''}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) => onChange(e.target.value)}
           />
