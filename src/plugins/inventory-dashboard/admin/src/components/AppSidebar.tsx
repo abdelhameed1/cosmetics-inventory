@@ -1,7 +1,10 @@
 // src/plugins/inventory-dashboard/admin/src/components/AppSidebar.tsx
-import { Box, Heading, HStack, Icon, VStack, Text } from '@chakra-ui/react';
+import { useState } from 'react';
+import { Box, Button, Heading, HStack, Icon, VStack, Text } from '@chakra-ui/react';
+import { FiPlus } from 'react-icons/fi';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { TOP_LINKS, CATALOG_GROUPS, type IconComponent } from '../config/navConfig';
+import { AddNewModal } from './AddNewModal';
 
 function isLinkActive(pathname: string, to: string): boolean {
   return pathname === to || pathname.startsWith(`${to}/`);
@@ -35,9 +38,19 @@ function NavButton({
 export function AppSidebar() {
   const { pathname } = useLocation();
   const navigate = useNavigate();
+  const [isAddNewOpen, setIsAddNewOpen] = useState(false);
 
   return (
     <Box as="nav" w="240px" flexShrink={0} bg="white" borderRightWidth="1px" borderColor="gray.100" minH="100%" py={6} px={4}>
+      <Button
+        leftIcon={<Icon as={FiPlus} boxSize={4} />}
+        w="100%"
+        mb={4}
+        onClick={() => setIsAddNewOpen(true)}
+      >
+        Add new
+      </Button>
+
       <VStack align="stretch" spacing={1} pb={6}>
         {TOP_LINKS.map((link) => (
           <NavButton
@@ -71,6 +84,8 @@ export function AppSidebar() {
           </VStack>
         </Box>
       ))}
+
+      <AddNewModal isOpen={isAddNewOpen} onClose={() => setIsAddNewOpen(false)} />
     </Box>
   );
 }
