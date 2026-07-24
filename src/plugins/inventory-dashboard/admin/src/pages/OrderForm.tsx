@@ -153,14 +153,14 @@ export default function OrderForm({ onDone, onCancel, embedded = false }: OrderF
         <Grid templateColumns="repeat(12, 1fr)" gap={4}>
           <GridItem colSpan={4}>
             <FormField label="Customer" required>
-              <Select bg="white" value={customerId} onChange={(e) => setCustomerId(e.target.value)} placeholder="Select customer">
+              <Select value={customerId} onChange={(e) => setCustomerId(e.target.value)} placeholder="Select customer">
                 {customers.map((c) => <option key={c.documentId} value={c.documentId}>{c.name}</option>)}
               </Select>
             </FormField>
           </GridItem>
           <GridItem colSpan={4}>
             <FormField label="Order date">
-              <Input bg="white" type="date" value={orderDate ?? ''} onChange={(e) => setOrderDate(e.target.value || null)} />
+              <Input type="date" value={orderDate ?? ''} onChange={(e) => setOrderDate(e.target.value || null)} />
             </FormField>
           </GridItem>
         </Grid>
@@ -170,14 +170,13 @@ export default function OrderForm({ onDone, onCancel, embedded = false }: OrderF
 
   const lineItemsStep = (
     <Box>
-      <Text fontSize="lg" fontWeight="semibold" pb={2} color="gray.800">Add product</Text>
+      <Text fontSize="lg" fontWeight="semibold" pb={2} color="text.primary">Add product</Text>
       <Card>
         <CardBody>
           <Grid templateColumns="repeat(12, 1fr)" gap={4}>
             <GridItem colSpan={4}>
               <FormField label="Product">
                 <Select
-                  bg="white"
                   value={addProductId}
                   onChange={(e) => { setAddProductId(e.target.value); setAddVariantId(''); }}
                   placeholder="Select product"
@@ -189,7 +188,6 @@ export default function OrderForm({ onDone, onCancel, embedded = false }: OrderF
             <GridItem colSpan={4}>
               <FormField label="Variant">
                 <Select
-                  bg="white"
                   value={addVariantId}
                   onChange={(e) => setAddVariantId(e.target.value)}
                   isDisabled={!addProductId}
@@ -202,7 +200,7 @@ export default function OrderForm({ onDone, onCancel, embedded = false }: OrderF
             <GridItem colSpan={3}>
               <FormField label="Quantity">
                 <NumberInput value={addQty ?? ''} onChange={(_, v) => setAddQty(Number.isNaN(v) ? undefined : v)}>
-                  <NumberInputField bg="white" />
+                  <NumberInputField />
                 </NumberInput>
               </FormField>
             </GridItem>
@@ -214,7 +212,7 @@ export default function OrderForm({ onDone, onCancel, embedded = false }: OrderF
       </Card>
 
       {relatedSuggestions.length > 0 && (
-        <Box mt={4} bg="brand.50" p={3} borderRadius="lg">
+        <Box mt={4} bg="accent.bg" p={3} borderRadius="lg">
           <Text as="span" fontSize="sm">Customers also buy:&nbsp;</Text>
           {relatedSuggestions.map((rp: any) => (
             <Button
@@ -262,7 +260,7 @@ export default function OrderForm({ onDone, onCancel, embedded = false }: OrderF
         <GridItem colSpan={4}>
           <FormField label="Discount (EGP)">
             <NumberInput value={discount ?? ''} onChange={(_, v) => setDiscount(Number.isNaN(v) ? undefined : v)}>
-              <NumberInputField bg="white" />
+              <NumberInputField />
             </NumberInput>
           </FormField>
         </GridItem>
@@ -347,7 +345,7 @@ function ConfirmedOrderView({ order, reload, api }: { order: any; reload: () => 
   return (
     <Box p={8}>
       <HStack justify="space-between" mb={6}>
-        <Text fontSize="lg" fontWeight="bold" color="gray.800">{`Order ${order.documentId.slice(0, 8)}`}</Text>
+        <Text fontSize="lg" fontWeight="bold" color="text.primary">{`Order ${order.documentId.slice(0, 8)}`}</Text>
         <Badge fontSize="sm">{order.status}</Badge>
       </HStack>
 
@@ -364,23 +362,23 @@ function ConfirmedOrderView({ order, reload, api }: { order: any; reload: () => 
       </DataTable>
 
       <Box pt={6}>
-        <Text fontSize="lg" fontWeight="semibold" color="gray.800">Totals</Text>
+        <Text fontSize="lg" fontWeight="semibold" color="text.primary">Totals</Text>
         <Text>Subtotal: {order.totals.subtotal} | Final: {order.totals.finalTotal} | Profit: {order.totals.netProfit}</Text>
         <Text>Paid: {order.totals.totalPaid} | Balance due: {order.totals.balanceDue}</Text>
       </Box>
 
       <Box pt={6}>
-        <Text fontSize="lg" fontWeight="semibold" pb={2} color="gray.800">Record payment</Text>
+        <Text fontSize="lg" fontWeight="semibold" pb={2} color="text.primary">Record payment</Text>
         <Card>
           <CardBody>
             <HStack spacing={2} align="flex-end">
               <FormField label="Amount">
                 <NumberInput value={amount ?? ''} onChange={(_, v) => setAmount(Number.isNaN(v) ? undefined : v)}>
-                  <NumberInputField bg="white" />
+                  <NumberInputField />
                 </NumberInput>
               </FormField>
               <FormField label="Method">
-                <Select bg="white" value={method} onChange={(e) => setMethod(e.target.value)}>
+                <Select value={method} onChange={(e) => setMethod(e.target.value)}>
                   <option value="cash">cash</option>
                   <option value="transfer">transfer</option>
                 </Select>

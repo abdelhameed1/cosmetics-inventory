@@ -68,7 +68,7 @@ export default function StockPurchase({ onDone, onCancel, embedded = false }: St
     <Card>
       <CardBody>
         <FormField label="Supplier" required>
-          <Select bg="white" value={supplierId} onChange={(e) => setSupplierId(e.target.value)} placeholder="Select supplier">
+          <Select value={supplierId} onChange={(e) => setSupplierId(e.target.value)} placeholder="Select supplier">
             {suppliers.map((s) => <option key={s.documentId} value={s.documentId}>{s.name}</option>)}
           </Select>
         </FormField>
@@ -82,7 +82,7 @@ export default function StockPurchase({ onDone, onCancel, embedded = false }: St
         <Grid templateColumns="repeat(12, 1fr)" gap={4}>
           <GridItem colSpan={4}>
             <FormField label="Product" required>
-              <Select bg="white" value={productId} onChange={(e) => setProductId(e.target.value)} placeholder="Select product">
+              <Select value={productId} onChange={(e) => setProductId(e.target.value)} placeholder="Select product">
                 {products.map((p) => <option key={p.documentId} value={p.documentId}>{p.name}</option>)}
               </Select>
             </FormField>
@@ -90,7 +90,6 @@ export default function StockPurchase({ onDone, onCancel, embedded = false }: St
           <GridItem colSpan={4}>
             <FormField label="Variant" required>
               <Select
-                bg="white"
                 value={variantId}
                 onChange={(e) => setVariantId(e.target.value)}
                 isDisabled={!productId}
@@ -103,31 +102,31 @@ export default function StockPurchase({ onDone, onCancel, embedded = false }: St
           <GridItem colSpan={4}>
             <FormField label="Quantity purchased" required>
               <NumberInput value={qty ?? ''} onChange={(_, v) => setQty(Number.isNaN(v) ? undefined : v)}>
-                <NumberInputField bg="white" />
+                <NumberInputField />
               </NumberInput>
             </FormField>
           </GridItem>
           <GridItem colSpan={4}>
             <FormField label="Cost price (USD)" required>
               <NumberInput value={cost ?? ''} onChange={(_, v) => setCost(Number.isNaN(v) ? undefined : v)}>
-                <NumberInputField bg="white" />
+                <NumberInputField />
               </NumberInput>
             </FormField>
           </GridItem>
           <GridItem colSpan={4} />
           <GridItem colSpan={4}>
             <FormField label="Purchase date" required>
-              <Input bg="white" type="date" value={purchaseDate ?? ''} onChange={(e) => setPurchaseDate(e.target.value || null)} />
+              <Input type="date" value={purchaseDate ?? ''} onChange={(e) => setPurchaseDate(e.target.value || null)} />
             </FormField>
           </GridItem>
           <GridItem colSpan={4}>
             <FormField label="Production date">
-              <Input bg="white" type="date" value={productionDate ?? ''} onChange={(e) => setProductionDate(e.target.value || null)} />
+              <Input type="date" value={productionDate ?? ''} onChange={(e) => setProductionDate(e.target.value || null)} />
             </FormField>
           </GridItem>
           <GridItem colSpan={4}>
             <FormField label="Expiry date">
-              <Input bg="white" type="date" value={expiryDate ?? ''} onChange={(e) => setExpiryDate(e.target.value || null)} />
+              <Input type="date" value={expiryDate ?? ''} onChange={(e) => setExpiryDate(e.target.value || null)} />
             </FormField>
           </GridItem>
         </Grid>

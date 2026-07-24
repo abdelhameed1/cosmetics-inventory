@@ -121,19 +121,19 @@ export default function ProductVariantsForm({ onDone, onCancel, embedded = false
         <Grid templateColumns="repeat(12, 1fr)" gap={4}>
           <GridItem colSpan={4}>
             <FormField label="Name" required>
-              <Input bg="white" value={name} onChange={(e) => setName(e.target.value)} />
+              <Input value={name} onChange={(e) => setName(e.target.value)} />
             </FormField>
           </GridItem>
           <GridItem colSpan={4}>
             <FormField label="Brand" required>
-              <Select bg="white" value={brandId} onChange={(e) => setBrandId(e.target.value)} placeholder="Select brand">
+              <Select value={brandId} onChange={(e) => setBrandId(e.target.value)} placeholder="Select brand">
                 {brands.map((b) => <option key={b.documentId} value={b.documentId}>{b.name}</option>)}
               </Select>
             </FormField>
           </GridItem>
           <GridItem colSpan={4}>
             <FormField label="Category" required>
-              <Select bg="white" value={categoryId} onChange={(e) => setCategoryId(e.target.value)} placeholder="Select category">
+              <Select value={categoryId} onChange={(e) => setCategoryId(e.target.value)} placeholder="Select category">
                 {categories.map((c) => <option key={c.documentId} value={c.documentId}>{c.name}</option>)}
               </Select>
             </FormField>
@@ -146,7 +146,7 @@ export default function ProductVariantsForm({ onDone, onCancel, embedded = false
   const variantsStep = (
     <Box>
       <HStack justify="space-between" pb={2}>
-        <Text fontSize="sm" color="gray.600">Optional — leave empty to keep a single default variant.</Text>
+        <Text fontSize="sm" color="text.secondary">Optional — leave empty to keep a single default variant.</Text>
         <Button variant="outline" onClick={addRow}>Add variant</Button>
       </HStack>
       {rows.length > 0 && (
@@ -156,13 +156,12 @@ export default function ProductVariantsForm({ onDone, onCancel, embedded = false
               <Grid templateColumns="repeat(12, 1fr)" gap={4} key={i} pt={i === 0 ? 0 : 4}>
                 <GridItem colSpan={4}>
                   <FormField label="Label">
-                    <Input bg="white" value={row.label} onChange={(e) => updateRow(i, { label: e.target.value })} />
+                    <Input value={row.label} onChange={(e) => updateRow(i, { label: e.target.value })} />
                   </FormField>
                 </GridItem>
                 <GridItem colSpan={4}>
                   <FormField label="Type">
                     <Select
-                      bg="white"
                       value={row.variantTypeId}
                       onChange={(e) => updateRow(i, { variantTypeId: e.target.value })}
                       placeholder="Select type"
@@ -177,7 +176,7 @@ export default function ProductVariantsForm({ onDone, onCancel, embedded = false
                       value={row.lowStockThreshold ?? ''}
                       onChange={(_, v) => updateRow(i, { lowStockThreshold: Number.isNaN(v) ? undefined : v })}
                     >
-                      <NumberInputField bg="white" />
+                      <NumberInputField />
                     </NumberInput>
                   </FormField>
                 </GridItem>
@@ -197,7 +196,6 @@ export default function ProductVariantsForm({ onDone, onCancel, embedded = false
       <CardBody>
         <FormField label="Add related product">
           <Select
-            bg="white"
             value=""
             onChange={(e) => setRelatedIds((ids) => (ids.includes(e.target.value) ? ids : [...ids, e.target.value]))}
             placeholder="Select product"
