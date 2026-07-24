@@ -28,6 +28,10 @@ export default function ProductVariantsForm({ onDone }: { onDone: () => void }) 
   // How many explicit variants have been successfully created so far, so a
   // retry resumes from the next one instead of re-creating earlier ones.
   const [variantsCreatedCount, setVariantsCreatedCount] = useState(0);
+  // Frozen at the moment the product is first created, so a retry after the
+  // user navigates back and edits variant rows still resumes against exactly
+  // what was decided at that point, not whatever `rows` currently contains.
+  const [variantsSnapshot, setVariantsSnapshot] = useState<VariantRow[] | null>(null);
 
   useEffect(() => {
     api.get<{ results: any[] }>('/resources/brands', { pageSize: 100 }).then((d) => setBrands(d.results));
@@ -56,9 +60,9 @@ export default function ProductVariantsForm({ onDone }: { onDone: () => void }) 
       return;
     }
     setIsSubmitting(true);
+    let productId = savedProductId;
     try {
       // 1) create product (auto-creates one default variant) — skipped on retry
-      let productId = savedProductId;
       if (!productId) {
         const product = await api.post<any>('/resources/products', {
           name, brand: brandId, category: categoryId,
@@ -66,10 +70,13 @@ export default function ProductVariantsForm({ onDone }: { onDone: () => void }) 
         });
         productId = product.documentId;
         setSavedProductId(productId);
+        setVariantsSnapshot(explicitVariants);
       }
 
-      // 2) create explicit variants — on retry, resume after the ones already created
-      const remaining = explicitVariants.slice(variantsCreatedCount);
+      // 2) create explicit variants — on retry, resume after the ones already created,
+      // against the snapshot taken when the product was created (not live `rows`)
+      const toCreate = variantsSnapshot ?? explicitVariants;
+      const remaining = toCreate.slice(variantsCreatedCount);
       for (const row of remaining) {
         await api.post('/resources/variants', {
           label: row.label,
@@ -83,7 +90,7 @@ export default function ProductVariantsForm({ onDone }: { onDone: () => void }) 
 
       // 3) if explicit variants exist, delete the auto-created default
       // (idempotent: if already deleted by a prior attempt, `auto` is simply not found)
-      if (explicitVariants.length > 0) {
+      if (toCreate.length > 0) {
         const all = await api.get<{ results: any[] }>('/resources/variants', { pageSize: 100 });
         const auto = all.results.find(
           (v) => v.product?.documentId === productId && v.isDefault
@@ -95,7 +102,7 @@ export default function ProductVariantsForm({ onDone }: { onDone: () => void }) 
     } catch (e: any) {
       setError(
         e?.response?.data?.error?.message ??
-          (savedProductId ? 'Product was saved, but a later step failed. Click "Retry remaining steps" to continue.' : 'Could not create product')
+          (productId ? 'Product was saved, but a later step failed. Click "Retry remaining steps" to continue.' : 'Could not create product')
       );
     } finally {
       setIsSubmitting(false);
