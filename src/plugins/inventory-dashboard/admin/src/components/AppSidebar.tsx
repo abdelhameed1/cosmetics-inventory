@@ -5,6 +5,7 @@ import { FiPlus } from 'react-icons/fi';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { TOP_LINKS, CATALOG_GROUPS, type IconComponent } from '../config/navConfig';
 import { AddNewModal } from './AddNewModal';
+import { ColorModeToggle } from './ColorModeToggle';
 
 function isLinkActive(pathname: string, to: string): boolean {
   return pathname === to || pathname.startsWith(`${to}/`);
@@ -21,13 +22,13 @@ function NavButton({
       px={3}
       py={2}
       borderRadius="lg"
-      bg={isActive ? 'brand.50' : 'transparent'}
-      _hover={{ bg: isActive ? 'brand.50' : 'gray.50' }}
+      bg={isActive ? 'accent.bg' : 'transparent'}
+      _hover={{ bg: isActive ? 'accent.bg' : 'bg.subtle' }}
       onClick={onClick}
     >
       <HStack spacing={3}>
-        <Icon as={IconComp} boxSize={4} color={isActive ? 'brand.700' : 'gray.500'} />
-        <Text fontSize="sm" fontWeight={isActive ? 'semibold' : 'normal'} color={isActive ? 'brand.700' : 'gray.700'}>
+        <Icon as={IconComp} boxSize={4} color={isActive ? 'accent.fg' : 'text.secondary'} />
+        <Text fontSize="sm" fontWeight={isActive ? 'semibold' : 'normal'} color={isActive ? 'accent.fg' : 'text.secondary'}>
           {label}
         </Text>
       </HStack>
@@ -41,7 +42,19 @@ export function AppSidebar() {
   const [isAddNewOpen, setIsAddNewOpen] = useState(false);
 
   return (
-    <Box as="nav" w="240px" flexShrink={0} bg="white" borderRightWidth="1px" borderColor="gray.100" minH="100%" py={6} px={4}>
+    <Box
+      as="nav"
+      w="240px"
+      flexShrink={0}
+      bg="bg.surface"
+      borderRightWidth="1px"
+      borderColor="border.default"
+      minH="100%"
+      py={6}
+      px={4}
+      display="flex"
+      flexDirection="column"
+    >
       <Button
         leftIcon={<Icon as={FiPlus} boxSize={4} />}
         w="100%"
@@ -65,7 +78,7 @@ export function AppSidebar() {
 
       {CATALOG_GROUPS.map((group) => (
         <Box key={group.label} mb={6}>
-          <Heading size="xs" textTransform="uppercase" color="gray.500" mb={2} px={3}>
+          <Heading size="xs" textTransform="uppercase" color="text.secondary" mb={2} px={3}>
             {group.label}
           </Heading>
           <VStack align="stretch" spacing={1}>
@@ -84,6 +97,9 @@ export function AppSidebar() {
           </VStack>
         </Box>
       ))}
+
+      <Box flex={1} />
+      <ColorModeToggle />
 
       <AddNewModal isOpen={isAddNewOpen} onClose={() => setIsAddNewOpen(false)} />
     </Box>
