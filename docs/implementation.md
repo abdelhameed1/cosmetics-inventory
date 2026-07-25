@@ -5,16 +5,24 @@
 
 ## 1. What this is
 
-A inventory-management and accounting system for a cosmetics wholesale/retail
+An inventory-management and accounting system for a cosmetics wholesale/retail
 business, built on **Strapi v5**. It tracks products and their sellable
 **variants** (shades, sizes, finishes…), and the **stock batches** purchased
 from suppliers — with cost in USD, a daily exchange rate to convert to EGP,
 purchase/production/expiry dates, and remaining quantity. Batches are consumed
-in FIFO order (oldest purchase first). On top of the data model sits a bespoke
-admin plugin that gives the operator a single control center: an at-a-glance
-overview, generic create/edit/delete for every inventory record, and guided
-flows for stock purchase and product creation.
+in FIFO order (oldest purchase first). Orders are recorded against customers,
+FIFO-resolved and priced from a customer's price list, confirmed (which
+atomically decrements stock and snapshots cost), and tracked to payment. On
+top of the data model sits a bespoke admin plugin that gives the operator a
+single control center: an at-a-glance overview, generic create/edit/delete for
+every inventory record, and guided flows for stock purchase, product creation,
+and order entry.
 
+Phases 1–3 are complete: foundation/content-types, the inventory-dashboard
+plugin (generic CRUD + Overview + Stock Purchase), and Orders/FIFO/Pricing
+(order entry, confirm, payments). Phase 4 is also complete: the plugin's
+entire admin UI was reskinned from `@strapi/design-system` to **Chakra UI
+v2** (see §5.2).
 
 ### Tech stack
 
@@ -22,9 +30,9 @@ flows for stock purchase and product creation.
 |-------|-----------|
 | Framework | Strapi `5.49.0` (TypeScript, CommonJS) |
 | Runtime DB | MySQL 8 (`mysql2` driver) |
-| Admin UI | React 18, `@strapi/design-system` v2, `react-router-dom` v6 |
-| Plugin build | `@strapi/sdk-plugin` (`strapi-plugin build`) |
-| Tests (foundation only) | Jest + `ts-jest` |
+| Admin UI | React 18, **Chakra UI v2.10** (`@chakra-ui/react`, `@emotion/react`/`styled`, `framer-motion`, `react-icons`), `react-router-dom` v6 |
+| Plugin build | `@strapi/sdk-plugin` v6 (`strapi-plugin build`) |
+| Tests | Jest + `ts-jest`, `cross-env NODE_ENV=test` |
 
 ---
 
@@ -38,18 +46,19 @@ d:\7meed\cosmtic\                     ← Strapi application root
 ├─ src/
 │  ├─ index.ts                     app register/bootstrap (runs the seed)
 │  ├─ bootstrap/seed.ts            idempotent reference-data seed
+│  ├─ utils/order-totals.ts        pure totals/status/below-cost math (app-level copy)
 │  ├─ api/                         the content types (schema + lifecycles)
 │  │  ├─ brand/  category/  variant-type/  supplier/  customer/
-│  │  ├─ system-settings/  … single-type for exchange rate and global config
-│  │  ├─ price-list/       … named price lists (Retail / Wholesale / VIP)
-│  │  ├─ order/            … order header (Phase 3)
-│  │  ├─ order-line/       … per-line sale record (Phase 3)
-│  │  ├─ payment/          … payment installments against an order (Phase 3)
-│  │  ├─ product/          … content-types/product/schema.json + lifecycles.ts
-│  │  ├─ variant/          … lifecycles.ts (typed-variant guard)
-│  │  └─ stock-batch/      … lifecycles.ts (quantityRemaining seeding)
+│  │  ├─ system-settings/          … single-type for exchange rate and global config
+│  │  ├─ price-list/               … named price lists (Retail / Wholesale / VIP)
+│  │  ├─ product/                  … content-types/product/schema.json + lifecycles.ts
+│  │  ├─ variant/                  … lifecycles.ts (typed-variant guard)
+│  │  ├─ stock-batch/              … lifecycles.ts (qty seeding + delete guard)
+│  │  ├─ order/                    … order header + lifecycles.ts (status/edit guard)
+│  │  ├─ order-line/               … per-line sale record + lifecycles.ts (edit guard)
+│  │  └─ payment/                  … payment installments + lifecycles.ts (status recompute)
 │  └─ plugins/inventory-dashboard/ the admin plugin (see §5)
-├─ tests/                          smoke + master-types Jest suites
+├─ tests/                          app-level Jest suites (see §8)
 └─ docs/                           this file + superpowers specs/plans
 ```
 
@@ -64,12 +73,12 @@ immediately). They fall into three groups.
 
 | Type | Key fields | Notes |
 |------|-----------|-------|
-| **Brand** | `name` (required, unique), `notes` | `products` (1‑many) |
-| **Category** | `name` (required, unique), `notes` | `products` (1‑many); four entries are seeded (see §3.5) but the operator can add more at any time |
-| **Variant Type** | `name` (required, unique) | classifies a variant (Shade/Size/…); `variants` (1‑many) |
+| **Brand** | `name` (required, unique), `notes` | `products` (1‑many); delete blocked if products reference it |
+| **Category** | `name` (required, unique), `notes` | `products` (1‑many); four entries are seeded (see §3.5); delete blocked if products reference it |
+| **Variant Type** | `name` (required, unique) | classifies a variant (Shade/Size/…); `variants` (1‑many); delete blocked if variants reference it |
 | **Supplier** | `name` (required), `phone`, `notes` | `batches` (1‑many) |
 | **Customer** | `name` (required), `phone`, `address`, `notes`, `priceList` → Price List | `priceList` determines default pricing on new orders; can be overridden per order |
-| **Price List** | `name` (required, unique), `type` (enum: `retail` / `wholesale` / `vip`), `marginPercent` (decimal), `wholesaleMinQty` (integer, wholesale only), `vipDiscountPercent` (decimal, VIP only), `notes` | Three lists are seeded (see §3.5); operator can add more |
+| **Price List** | `name` (required, unique), `type` (enum: `retail` / `wholesale` / `vip`), `marginPercent` (decimal), `wholesaleMinQty` (integer, wholesale only), `vipDiscountPercent` (decimal, VIP only), `notes` | Three lists are seeded (see §3.5); delete blocked if customers are assigned to it |
 | **System Settings** | *(single-type)* `exchangeRate` (decimal, **required**), `exchangeRateUpdatedAt` (datetime) | One row only; the operator updates `exchangeRate` daily from the Overview screen. Changing it recalculates EGP cost display everywhere — stored costs in USD are never mutated |
 
 ### 3.2 Core inventory data
@@ -104,19 +113,20 @@ variant, not per product.
 > means a single rate change instantly updates the EGP cost shown everywhere
 > without touching any stored data.
 
-### 3.3 Order data *(Phase 3 — planned)*
+### 3.3 Order data
 
 **Order** — one sales transaction with one customer.
-- `customer` → Customer (many‑to‑one, **required**)
+- `customer` → Customer (many‑to‑one)
+- `priceList` → Price List (many‑to‑one) — snapshot of which pricing mode was used; defaults from the customer but can be overridden per order
 - `orderDate` (date, **required**)
-- `status` (enum: `draft` / `confirmed` / `partially_paid` / `paid`)
+- `status` (enum: `draft` / `confirmed` / `partially_paid` / `paid`, default `draft`, **required**) — never write this field directly; see §4
 - `discountAmount` (decimal, default 0) — flat EGP discount on the whole order
 - `shippingNotes` (text)
 - `notes` (text)
 - `lines` → Order Line (one‑to‑many, inverse)
 - `payments` → Payment (one‑to‑many, inverse)
 
-Computed (not stored, derived on read):
+Computed (not stored, derived on read by `computeTotals()` — see §4):
 - `subtotal` = Σ (line.sellPrice × line.quantitySold)
 - `totalCostEgp` = Σ (line.costPriceUsdSnapshot × exchangeRate × line.quantitySold)
 - `finalTotal` = subtotal − discountAmount
@@ -129,7 +139,7 @@ Computed (not stored, derived on read):
 - `stockBatch` → Stock Batch (many‑to‑one, **required**) — selected automatically by FIFO (see §4); operator can override
 - `quantitySold` (integer ≥ 1, **required**)
 - `costPriceUsdSnapshot` (decimal) — copied from `stockBatch.costPriceUsd` at confirmation time; never changes after
-- `sellPrice` (decimal, **required**) — entered manually by the operator in EGP; system warns if below `costPriceUsdSnapshot × exchangeRate`
+- `sellPrice` (decimal, **required**) — entered manually by the operator in EGP; the API flags (does not block) a line priced below `costPriceUsdSnapshot × exchangeRate`
 - `referenceRetailPrice` (decimal, optional) — for display/comparison only
 - `lineNotes` (text — e.g. "includes Cairo shipping")
 
@@ -151,8 +161,8 @@ Category ─1:M─┘    │
                    M:M (self, relatedProducts)
 
 Price List ─M:1─ Customer ─1:M─ Order ─1:M─ Order Line ─M:1─ Stock Batch
-                                    │
-                                 Payment
+                            │        │
+                     (priceList)  Payment
 ```
 
 ### 3.5 Seed data
@@ -188,7 +198,11 @@ set the real rate before using cost calculations.
 ## 4. Business rules (lifecycle hooks)
 
 All rules live on the model so they apply no matter how a record is
-created — dashboard plugin, Strapi content manager, or API.
+created — dashboard plugin, Strapi content manager, or API. **Every**
+`lifecycles.ts` hook fires identically whether the write comes through
+`strapi.documents(uid)` or `strapi.db.query(uid)` — content-type lifecycles are
+wired at the `@strapi/database` model level, so there is no bypass via
+`db.query`.
 
 ### Product → auto default variant
 `src/api/product/content-types/product/lifecycles.ts` — **`afterCreate`**:
@@ -211,46 +225,123 @@ on an existing variant is also guarded. Violations throw an `ApplicationError`
 `quantityPurchased`. A freshly recorded purchase starts with its full quantity
 remaining.
 
-### Stock Batch → FIFO consumption *(Phase 3)*
-When an Order is **confirmed**, the system resolves which batch to consume for
-each order line using FIFO:
+### FIFO batch resolution
+`src/plugins/inventory-dashboard/server/src/services/fifo.ts` —
+`resolve(variantDocumentId, quantity)`:
 
 1. For the chosen variant, fetch all batches where `quantityRemaining > 0`,
-   ordered by `purchaseDate ASC` (oldest first). Ties broken by `createdAt ASC`.
-2. Deduct `quantitySold` from the oldest batch. If that batch is exhausted
-   before the quantity is covered, continue to the next oldest batch and
-   so on, splitting across as many batches as needed.
-3. Each consumed batch segment becomes one Order Line record with its own
-   `costPriceUsdSnapshot`.
-4. The operator sees the FIFO-resolved lines pre-filled and may override the
-   batch assignment manually before confirming.
-5. Expired batches are included in FIFO resolution by default (expired stock
-   is not blocked from sale — the expiry flag is informational only).
+   ordered by `purchaseDate ASC` (ties broken by `createdAt ASC`).
+2. Deduct the requested quantity from the oldest batch first. If that batch is
+   exhausted before the quantity is covered, continue to the next oldest batch,
+   splitting across as many batches as needed.
+3. Returns `{ segments, shortfall }` — one segment per batch consumed
+   (`batchDocumentId`, `costPriceUsd`, `quantityFromBatch`, dates), plus any
+   quantity that couldn't be covered by remaining stock.
+4. The Order form pre-fills one draft Order Line per segment; the operator can
+   inspect or override the batch assignment before saving/confirming.
+5. Expired batches are **included** in FIFO resolution (expiry is
+   informational only — it is not blocked from sale).
 
 > **Why FIFO:** the operator buys multiple shipments of the same product at
 > different dollar costs. FIFO ensures the oldest (and often cheapest) stock is
 > cleared first, and profit is calculated against the actual historical cost of
 > what was sold — not an average.
 
-### Order → status auto-update from payments *(Phase 3)*
-`src/api/order/content-types/order/lifecycles.ts` — **`afterCreate`** and
-**`afterUpdate`** on Payment: recalculate `totalPaid` vs `finalTotal` and set
-`order.status` to `paid` (if totalPaid ≥ finalTotal), `partially_paid` (if
-totalPaid > 0), or `confirmed` (if totalPaid = 0).
+### Order confirmation — atomic FIFO consumption
+`src/plugins/inventory-dashboard/server/src/services/orders.ts` —
+`confirm(documentId)`:
 
-### Order Line → below-cost warning *(Phase 3)*
-When `sellPrice` is saved on an Order Line, the system checks:
-`sellPrice < costPriceUsdSnapshot × currentExchangeRate`. If true, the API
-returns a warning flag (not a blocking error) and the UI displays a visible
-alert: "Sell price is below cost — you are selling at a loss." The operator
-can choose to proceed.
+1. Loads the order with its lines + each line's stock batch; rejects if the
+   order isn't `draft`, has no lines, or any line lacks a `stockBatch`.
+2. Aggregates requested quantity per batch and fast-fails with a friendly
+   "insufficient stock" error if any batch's aggregate exceeds
+   `quantityRemaining` (common case, no concurrent activity).
+3. Wraps the actual mutation in `strapi.db.transaction(...)`:
+   - Each batch's decrement is an **atomic conditional UPDATE** —
+     `queryBuilder(BATCH).where({ id, quantityRemaining: { $gte: qty } }).decrement(column, qty)`
+     — so a concurrent confirm that already consumed the stock causes this one
+     to affect 0 rows, which throws and rolls back the whole transaction
+     (no half-confirmed order, no oversold batch).
+   - Each line's `costPriceUsdSnapshot` is copied from its batch's
+     `costPriceUsd`.
+   - The order's `status` is set to `confirmed` via a **trusted write** (see
+     "Order/Order-line CRUD guards" below).
+4. Returns the recomputed order (`getWithTotals`).
+
+**Gotchas baked into this code, worth knowing before touching it again:**
+- `strapi.db.transaction(async () => {...})` is a real Knex transaction;
+  nested `strapi.db.query()` / `strapi.documents()` / `strapi.db.queryBuilder()`
+  calls join it automatically via Node's `AsyncLocalStorage` as long as they
+  stay inside the same async callback (no detached promises/`setTimeout`) — no
+  manual `{ transacting }` threading needed.
+- `queryBuilder(uid).increment()/.decrement()` do **not** translate the Strapi
+  attribute name to the actual DB column name (unlike `.where()`, which does).
+  Resolve the real column first: `strapi.db.metadata.get(uid).attributes.<attr>.columnName`.
+  Passing the raw camelCase attribute name fails with `Unknown column '...' in
+  'field list'`.
+- `execute()` on a non-select `queryBuilder` query returns the raw MySQL
+  affected-row count — `0` means the conditional UPDATE's WHERE clause didn't
+  match, i.e. you lost a race.
+
+### Order / Order-line CRUD guards
+`src/api/order/content-types/order/lifecycles.ts` and
+`src/api/order-line/content-types/order-line/lifecycles.ts`. The plugin's
+generic `/resources/orders` and `/resources/order-lines` CRUD endpoints (same
+generic layer used for every other resource) would otherwise let a client
+bypass `confirm()` entirely — setting `status` directly, editing a
+confirmed order's lines, or deleting a confirmed order outright. These hooks
+close that gap:
+
+- **Order `beforeUpdate`**: rejects any update once `status !== 'draft'`
+  (the order is locked once confirmed), and separately rejects setting
+  `status` directly unless the write carries a `__trusted: true` marker —
+  which the hook strips out before persisting. `confirm()` and the payment
+  lifecycle's `recomputeOrderStatus()` are the only two legitimate internal
+  callers that set `__trusted`.
+- **Order `beforeDelete`**: rejects deleting a non-draft order (its stock
+  decrement can't be undone automatically).
+- **Order-line `beforeUpdate`/`beforeDelete`**: look up the parent order's
+  status (`strapi.db.query(LINE_UID).findOne({ where, populate: { order: true } })`)
+  and reject touching a line once the parent order is no longer `draft`.
+
+There is no built-in "skip lifecycle for this call" API in Strapi v5 — the
+`__trusted`-marker-and-strip idiom above is the pattern to reuse for any future
+internal-only status transition that needs to bypass its own guard.
+
+### Order → status auto-update from payments
+`src/api/payment/content-types/payment/lifecycles.ts` — **`afterCreate`**,
+**`afterUpdate`**, **`afterDelete`** recompute the order's status from
+`computeTotals()`/`statusFromPayments()` (`src/utils/order-totals.ts`) and
+write it back with `{ status: nextStatus, __trusted: true }`: `paid` once
+`totalPaid ≥ finalTotal` (and `finalTotal > 0`), `partially_paid` once
+`totalPaid > 0`, else `confirmed`. A `draft` order is never touched by this
+(payments can't be recorded against a draft in the UI). `beforeDelete` stashes
+the order's `documentId` onto `event.state` before the payment row is gone, so
+`afterDelete` can still recompute against the right order.
+
+> Known edge case (documented, not yet fixed): `statusFromPayments` only
+> returns `'paid'` when `finalTotal > 0`, so a 100%-discounted order
+> (`finalTotal = 0`) can never leave `'confirmed'` status even though nothing
+> is owed.
+
+### Order Line → below-cost warning
+`getWithTotals()` (orders service) computes `isBelowCost(sellPrice,
+costPriceUsdSnapshot, exchangeRate)` per line and returns a `belowCost` flag;
+the Order form renders a visible "Below cost" badge. This is advisory only —
+the operator can still save/confirm a below-cost line.
 
 ### Deletion guards
-- Deleting a **Brand** or **Category** that has products is blocked with a
-  clear error message.
+- Deleting a **Brand** or **Category** that has products is blocked.
 - Deleting a **Variant Type** that has variants is blocked.
 - Deleting a **Price List** that is assigned to one or more customers is blocked.
 - Deleting a **Stock Batch** that is referenced by an Order Line is blocked.
+- Deleting a **confirmed Order** (or any Order Line on a confirmed order) is
+  blocked (see "Order / Order-line CRUD guards" above).
+
+> **Cleanup note (deferred, not fixed):** the beforeDelete/beforeDeleteMany
+> guard logic is ~140 near-identical lines copy-pasted across 5 lifecycle
+> files (brand/category/price-list/variant-type/stock-batch) instead of a
+> shared factory. Functionally correct, just a refactor opportunity.
 
 ---
 
@@ -262,8 +353,15 @@ A local Strapi plugin at `src/plugins/inventory-dashboard`, enabled in
 **schema-auto-driven**: the server exposes a small allow-list of content types
 plus metadata describing each one's fields, and the admin renders its list
 tables and edit forms generically from that metadata. There is almost no
-per-entity UI code — the exceptions (Overview and the product-with-variants
-flow) are intentional, curated screens.
+per-entity UI code — the exceptions (Overview, Stock Purchase, product-with-
+variants, and the Order flow) are intentional, curated screens.
+
+> **Strapi loads this plugin from its built `dist/`, not from `server/src` /
+> `admin/src`.** After any plugin source change, run
+> `cd src/plugins/inventory-dashboard && npm run build` before the app will
+> see it (and before running the plugin's own Jest tests, which import from
+> `dist`). `dist/` and the plugin's `node_modules` are gitignored — source is
+> the git source of truth.
 
 ### 5.1 Server engine (`server/src`)
 
@@ -271,17 +369,21 @@ flow) are intentional, curated screens.
 slug to `{ uid, populate? }`:
 
 ```ts
-brands, categories, variant-types, suppliers, customers, price-lists,
+brands, categories, variant-types, suppliers,
+customers      → populate priceList
+price-lists,
 products       → populate brand, category, variants, relatedProducts
 variants       → populate product, variantType, batches
 stock-batches  → populate variant, supplier
-orders         → populate customer, lines, payments          // Phase 3
-order-lines    → populate order, stockBatch                 // Phase 3
-payments       → populate order                             // Phase 3
+orders         → populate customer, priceList, lines, payments
+order-lines    → populate order, stockBatch
+payments       → populate order
 ```
 
 This map is both the **security boundary** (any UID not listed 404s) and the
-source of the navigation.
+source of the navigation. Note it is the boundary for the *generic* CRUD
+service only — see §4's CRUD guards for why `orders`/`order-lines` also need
+content-type-level lifecycle guards on top of this allow-list.
 
 **Resource service — `services/resource.ts`.** Generic CRUD over
 `strapi.documents(uid)` for any allow-listed slug: `find` (paginated,
@@ -291,7 +393,7 @@ source of the navigation.
 attributes into the `FieldMeta[]` the admin renders from: `type`, `required`,
 `min`/`max`, `unique`, enum `values`, and for relations `{ resource, kind,
 mainField }`. System fields are marked hidden; relations whose target is not
-allow-listed are also hidden.
+allow-listed (or is a `*-to-many`) are also hidden.
 
 **Overview service — `services/overview.ts`.** Aggregates the dashboard's
 landing data:
@@ -305,6 +407,30 @@ landing data:
 - Expiry bucketing: batches with an `expiryDate` are classified as **expired**
   (before today) or **expiring soon** (within **90 days** from today). Expiry
   dates are parsed at local midnight for the UTC+2/+3 deployment timezone.
+
+**FIFO service — `services/fifo.ts`.** See §4.
+
+**Pricing service — `services/pricing.ts`.** `suggest({ priceListDocumentId,
+costPriceUsd, quantity })` → `{ sellPrice, retailPrice, exchangeRate }`:
+- `retail`: `egpCost × (1 + marginPercent/100)`.
+- `wholesale`: same formula **if** `quantity ≥ wholesaleMinQty`, else falls
+  back to the retail price/margin.
+- `vip`: `retailPrice × (1 − vipDiscountPercent/100)`.
+
+> Callers must pass the customer's **total requested quantity** for the line
+> item, not a single FIFO segment's own quantity — see the Order form note in
+> §6. (Also: `pricing.ts` re-declares its own local `round2` instead of
+> importing the identical helper already exported from
+> `utils/order-totals.ts` in the same package — deferred cleanup, no
+> correctness impact.)
+
+**Orders service — `services/orders.ts`.** `getWithTotals(documentId)`
+(populate customer/priceList/payments/lines.stockBatch, compute per-line
+`belowCost` + order totals via `computeTotals`) and `confirm(documentId)` (see
+§4). Imports `order-totals` from a **plugin-local copy**
+(`server/src/utils/order-totals.ts`, byte-identical to `src/utils/order-totals.ts`)
+because the plugin's Vite/Rollup bundler cannot resolve imports outside its
+own package root — keep both copies in sync if the math ever changes.
 
 **Exchange rate endpoint — `controllers/settings.ts`.**
 - `GET /inventory-dashboard/settings` — returns current `exchangeRate` and
@@ -329,8 +455,10 @@ under `type: 'admin'`:
 | POST | `/inventory-dashboard/resources/:resource` | create |
 | PUT | `/inventory-dashboard/resources/:resource/:documentId` | update |
 | DELETE | `/inventory-dashboard/resources/:resource/:documentId` | delete |
-| GET | `/inventory-dashboard/fifo/:variantDocumentId` | FIFO batch preview for a variant *(Phase 3)* |
-| POST | `/inventory-dashboard/orders/:documentId/confirm` | confirm order + trigger FIFO *(Phase 3)* |
+| GET | `/inventory-dashboard/fifo/:variantDocumentId?quantity=N` | FIFO batch preview for a variant |
+| GET | `/inventory-dashboard/orders/:documentId` | order + computed totals + per-line belowCost |
+| POST | `/inventory-dashboard/orders/:documentId/confirm` | confirm order (atomic FIFO consumption) |
+| POST | `/inventory-dashboard/pricing/suggest` | suggested sell price for a price list + cost + quantity |
 
 > **Error handling note.** The plugin externalizes `@strapi/utils` (peer
 > dependency). Without that, errors thrown inside the plugin bundle would be a
@@ -341,10 +469,11 @@ under `type: 'admin'`:
 
 - **`utils/api.ts` — `useApi()`** — typed wrapper over `useFetchClient`.
 - **Hooks** — `useResources` (nav), `useSchema` (per-resource metadata),
-  `useOverview`, `useSettings` (exchange rate).
+  `useOverview`, `useSettings` (exchange rate), `useOrder` (documentId-driven
+  fetch/reload/confirm for the Order form).
 - **Router — `pages/App.tsx`** — routes: `/` (Overview), `stock-purchase`,
   `r/:resource` (list), `r/:resource/new` (create), `r/:resource/:id` (edit),
-  `orders/new` *(Phase 3)*, `orders/:id` *(Phase 3)*.
+  `orders/new`, `orders/:id`.
 - **Generic list — `pages/ResourceListPage.tsx`** — searchable table built from
   `SchemaMeta`; create/edit/delete with guarded delete confirmation.
 - **Generic form — `pages/ResourceFormPage.tsx` + `components/FieldRenderer.tsx`
@@ -354,7 +483,52 @@ under `type: 'admin'`:
   window), stock value shown in both USD and EGP.
 - **Bespoke flows — `pages/StockPurchase.tsx`** and
   **`components/ProductVariantsForm.tsx`** — see §6.
-- **Order flow — `pages/OrderForm.tsx`** *(Phase 3)* — see §6.
+- **Order flow — `pages/OrderForm.tsx`** — new-order entry + read-only
+  confirmed view with payment recording; see §6.
+
+#### 5.2.1 Chakra UI architecture (Phase 4)
+
+The plugin's UI was migrated from `@strapi/design-system` to Chakra UI v2.
+Because this is an in-process Strapi plugin (not an iframe), Chakra's styling
+had to be scoped so it never leaks onto Strapi's own admin shell, which
+shares the same DOM tree.
+
+- **`theme/index.ts`** — `extendTheme` config (brand color scale, fonts,
+  Button/Badge/Table style overrides). Deliberately has **no `styles.global`
+  key** — a global-style entry would apply to the real `document.body`
+  regardless of `resetCSS`, leaking onto Strapi's own shell.
+- **`components/ChakraRoot.tsx`** — the **only** place `ChakraProvider` is
+  instantiated, with `resetCSS={false}` (Chakra's CSS reset would otherwise
+  also leak onto the shared shell). Wraps its children in a scoped
+  `<Box bg="gray.50" color="gray.800" minH="100%">` — page background/text
+  color live here, not in the theme, for the same leak-avoidance reason.
+- **Three independent top-level entry points**, each needing exactly one
+  `ChakraRoot` ancestor (never zero, never double-nested):
+  1. `pages/App.tsx` — wraps its own `<Routes>` in `<ChakraRoot>` once, at
+     the router root. Covers Overview, the generic list/form pages, and the
+     nested `stock-purchase`/`orders/*` routes when reached through the
+     router.
+  2. `pages/StockPurchaseStandalone.tsx` — a thin wrapper
+     (`<ChakraRoot><StockPurchase /></ChakraRoot>`) registered as its own
+     top-level Strapi `addMenuLink` in `admin/src/index.ts`, bypassing
+     `App.tsx` entirely (this is how the left-nav "Stock purchase" link is
+     actually reached).
+  3. `pages/OrderFormStandalone.tsx` — same pattern for the left-nav "New
+     Order" link (`<ChakraRoot><OrderForm /></ChakraRoot>`).
+
+  Because of entry points 2 and 3, `StockPurchase.tsx` and `OrderForm.tsx`
+  themselves must stay **bare** components with no self-wrapping
+  `ChakraRoot` — self-wrapping either one would double-nest `ChakraProvider`
+  when the same component is reached via `App.tsx`'s own `stock-purchase`/
+  `orders/*` routes instead of the standalone link.
+- **Shared primitives — `components/ui/`** — `PageHeader`, `StatCard`,
+  `DataTable` (owns the table header + empty-state; callers own row
+  content), `FormField` (label + required-asterisk wrapper). Every
+  migrated screen reuses these rather than reinventing markup.
+- **No `@strapi/design-system` imports remain** anywhere under `admin/src`
+  after the migration; the only remaining `@strapi/*` UI import is
+  `@strapi/icons` for nav icons (`index.ts`, `PluginIcon.tsx`), which is
+  Strapi's own left-nav chrome, not plugin content, and was left as-is.
 
 ---
 
@@ -384,26 +558,52 @@ updates System Settings. All EGP cost displays (Overview stock value, Order
 Line cost reference, below-cost warning) recalculate immediately on next load.
 No stored costs are mutated.
 
-### Create and confirm an order *(Phase 3)*
-`OrderForm.tsx`:
+### Create and confirm an order
+`OrderForm.tsx` (new order) / `useOrder` hook:
 
 1. Operator selects a customer. Their assigned Price List auto-fills as the
    pricing mode for the order (can be changed per order).
-2. Operator adds a product. The system fetches the FIFO-resolved batch(es)
-   for that variant via `GET /fifo/:variantDocumentId` and pre-fills the batch,
-   cost snapshot, and suggested sell price based on the active price list
-   formula. The operator can override any value.
-3. If `sellPrice < costPriceUsdSnapshot × exchangeRate`, a warning banner
-   appears on that line: "Sell price is below cost — selling at a loss."
-4. When adding a product, the UI checks `relatedProducts` and displays a
-   suggestion strip: "Customers also buy: [Brush X] [Sponge Y] — add to order?"
+2. Operator picks a product + variant + quantity and clicks **Add**. The form
+   fetches the FIFO-resolved batch(es) via `GET /fifo/:variantDocumentId` and,
+   for each segment, calls `POST /pricing/suggest` with the segment's cost
+   **and the customer's total requested quantity** (not the segment's own
+   split quantity — this matters for the wholesale `minQty` gate, see §5) to
+   get a suggested sell price. One draft Order Line is added per segment. The
+   operator can override any value.
+3. If a line's `sellPrice` is below `costPriceUsdSnapshot × exchangeRate`, a
+   "Below cost" badge appears on that line.
+4. Adding a product checks its `relatedProducts` and shows a "Customers also
+   buy" suggestion strip; clicking one pre-fills the product picker.
 5. Operator enters a flat discount at the order footer. Totals update live.
-6. On **Confirm**: `POST /orders/:id/confirm` triggers FIFO consumption,
-   decrements `quantityRemaining` on each affected batch, snapshots
-   `costPriceUsdSnapshot` on each line, and locks the order (lines become
-   read-only).
-7. Operator records payments via the Payment panel. Status updates automatically
-   (confirmed → partially_paid → paid).
+6. **Save draft** creates the `orders` row (`status: 'draft'`) then each
+   `order-lines` row, and navigates to `orders/:id`.
+7. On that order's page, **Confirm** calls `POST /orders/:id/confirm`, which
+   atomically resolves FIFO consumption, decrements `quantityRemaining` on
+   each affected batch, snapshots `costPriceUsdSnapshot` on each line, and
+   locks the order (see §4). The view switches to the read-only
+   `ConfirmedOrderView`.
+8. Operator records payments via the Payment panel (`POST /resources/payments`).
+   `order.status` updates automatically (`confirmed` → `partially_paid` →
+   `paid`) via the payment lifecycle.
+
+> **Known gaps in this flow (documented, deferred — not correctness bugs in
+> the confirmed/locked state, but real UX rough edges):**
+> - A brand-new, not-yet-saved order has no `order.exchangeRate` yet (it comes
+>   from the loaded order), so the below-cost badge can't render correctly
+>   until after the first Save draft + reload.
+>   Cross-sell suggestions are display-only — no automatic add-to-order.
+> - Revisiting an existing **draft** order's URL (`orders/:id` with
+>   `status: 'draft'`) re-renders the empty "new order" form instead of
+>   pre-populating `draftLines` from the saved lines — clicking Save draft
+>   again creates a second, separate order rather than updating the existing
+>   one. Avoid navigating away from an unsaved draft; finish Save draft →
+>   Confirm in one sitting.
+> - `getSuggestedPrice()` silently returns `0` on any pricing-endpoint error
+>   (e.g. a deleted price list) instead of surfacing it — watch for an
+>   unexpectedly-0 sell price on a new line.
+> - `saveDraft()` posts order-lines sequentially with no rollback; a mid-loop
+>   failure leaves a persisted partial draft, and retrying creates a
+>   duplicate order rather than resuming the partial one.
 
 ### Expiry / low-stock computation
 `overview.ts` walks every stock batch once:
@@ -419,44 +619,62 @@ No stored costs are mutated.
 
 The runtime database is **MySQL**. Connection settings come from the environment
 via [`config/database.ts`](../config/database.ts) — credentials are never
-hardcoded. Relevant `.env` keys:
+hardcoded and `.env` is gitignored. Relevant `.env` keys:
 
 ```
-DATABASE_HOST       (default localhost)
-DATABASE_PORT       (default 3306)
-DATABASE_NAME       runtime database (this project uses `3mto`)
-DATABASE_USERNAME
-DATABASE_PASSWORD
-DATABASE_SSL        (default false)
+DATABASE_HOST       127.0.0.1
+DATABASE_PORT       3306
+DATABASE_NAME       cosmetics        (runtime database)
+DATABASE_USERNAME   user1
+DATABASE_PASSWORD   password
+DATABASE_SSL        false
+DATABASE_TEST_NAME  cosmetics_test   (test database)
 ```
 
-- **Runtime DB:** `3mto`.
-- **Test DB:** `3mto_test` (used by Jest suites so tests never touch real data).
+- **Runtime DB:** `cosmetics`.
+- **Test DB:** `cosmetics_test` (used by Jest suites so tests never touch real data).
+- This is a clean rebuild — the legacy `3mto`/`3mto_test` databases and the
+  old `d:\7meed\3mto` codebase are unrelated and must never be reused.
 
 ---
 
 ## 8. Running, building, and the quality gate
 
-From the app root (`d:\7meed\3mto`):
+From the app root (`d:\7meed\cosmtic`):
 
 ```bash
 npm run develop          # start Strapi with auto-reload
-npm run build            # build the Strapi admin
-npm test                 # foundation Jest suites (smoke + master-types)
+npm run build             # build the Strapi admin
+npm test                  # app-level Jest suites (see below)
+npx tsc --noEmit           # whole-app type check (EXCLUDES src/plugins/**)
 ```
 
-**Plugin quality gate** (run after changing plugin source):
+App-level Jest suites (`tests/*.test.ts`, run via
+`cross-env NODE_ENV=test jest --runInBand --forceExit`): `smoke`,
+`master-types`, `seed`, `order-totals`, `order-lifecycle`, `order-guards` —
+currently 13 suites / 41 tests passing counting the plugin suites below (app
+Jest config also picks up the plugin's `server/tests/*.test.ts`).
+
+**Plugin quality gate** (run after changing plugin source — the app's own
+`tsc`/`build` do NOT check plugin code):
 
 ```bash
 cd src/plugins/inventory-dashboard
-npm run build            # strapi-plugin build → dist/server + dist/admin
-npm run lint             # eslint over {server,admin}/src
+npm run build              # strapi-plugin build → dist/server + dist/admin (MUST run before jest/dev pick up changes)
+npm run test:ts:back       # tsc -p server/tsconfig.json --noEmit — authoritative server/plugin type gate
+npm run test:ts:front      # tsc -p admin/tsconfig.json --noEmit — authoritative admin type gate (strict; catches noImplicitAny)
 cd ../../..
-npx tsc --noEmit         # whole-app type check
+npx tsc --noEmit            # whole-app type check
+npm test                    # full suite (app + plugin tests)
 ```
 
-All four must be clean. The foundation Jest suites cover the data-model
-lifecycle and require the test database.
+There is no `npm run lint` script in this plugin (the `@strapi/sdk-plugin` v6
+scaffold ships without one) — `test:ts:front`/`test:ts:back` are the real
+gates. All of the above must be clean before considering plugin work done.
+
+Plugin-only test suites (`src/plugins/inventory-dashboard/server/tests/`):
+`resource`, `metadata`, `settings`, `overview`, `fifo`, `pricing`, `confirm`
+(includes a concurrent-confirm race test).
 
 ---
 
@@ -470,13 +688,19 @@ lifecycle and require the test database.
 ```
 
 Rebuild the plugin and restart — the resource appears in navigation with
-generic list + create/edit/delete. No further UI code needed.
+generic list + create/edit/delete. No further UI code needed. **If the new
+type has its own confirm/lock-style state machine (like Order), it also needs
+its own `lifecycles.ts` guard** — the generic allow-list is a routing/visibility
+boundary only, not a business-rule boundary (see §4).
 
 **Change a field** — edit the content type's `schema.json`. The list and form
 update automatically.
 
 **Add business rules** — add a `lifecycles.ts` next to `schema.json`. Rules
-belong on the model so they apply everywhere.
+belong on the model so they apply everywhere. To let one internal code path
+write a field that's otherwise guarded (like `order.status`), use the
+`__trusted`-marker-and-strip idiom documented in §4 rather than reaching for
+`strapi.db.query` as a bypass (it isn't one).
 
 **Add a bespoke screen** — create a page under `admin/src/pages`, add a route
 in `pages/App.tsx`, and a nav entry if needed.
@@ -502,20 +726,56 @@ in `pages/App.tsx`, and a nav entry if needed.
   order confirmation.
 - **Relation pickers load up to 100 options with no search/pagination.** Fine
   for current dataset sizes; revisit if any related set exceeds 100 rows.
+- **The generic layer's search/relation-display assumes every resource has a
+  `name` field.** `resource.ts`'s search filter and `metadata.ts`'s
+  `mainField: 'name'` both hardcode it, but `variants` uses `label` and
+  `stock-batches` has no name-like field — searching those two resources
+  returns nothing and relation pickers targeting them show a blank display
+  field. Would need a per-resource `searchField`/`mainField` in `RESOURCES`.
 - **Plugin-local `@strapi/utils` must stay externalized.** If `npm install`
   inside the plugin pulls a local copy, re-verify error mapping (a dual
   `@strapi/utils` instance reintroduces the 500-instead-of-400 bug).
+- **`statusFromPayments` can't reach `'paid'` on a 100%-discounted order**
+  (see §4) — `finalTotal > 0` is required, so `finalTotal = 0` stays
+  `'confirmed'` forever even with nothing owed.
+- **OrderForm has several deferred UX gaps** — see the callout at the end of
+  §6 (below-cost badge on a new unsaved order, draft-revisit not
+  pre-populating lines, silently-swallowed pricing errors, non-atomic
+  multi-line draft save). None of these affect a *confirmed* order's
+  correctness (which is guarded server-side); they affect the drafting
+  experience only.
+- **~140 lines of copy-pasted delete-guard logic** across 5 lifecycle files
+  (brand/category/price-list/variant-type/stock-batch) — same shape, different
+  field/message. A shared factory would remove the duplication; not done, no
+  correctness impact.
 - **Mobile push notifications for expiry are not implemented.** The Overview
   flags expiry within 90 days visually. A push notification system (e.g. a
   background cron + FCM) is a future addition.
 - **Cross-selling suggestions are display-only.** The `relatedProducts` field
   exists on Product and is shown in the Order form as a suggestion strip. There
   is no automatic add-to-order; the operator clicks to add manually.
-- **Excel import is out of scope for Phase 3.** Export to Excel is planned for
-  reports. Import will be addressed in a later phase.
-- **Stock restoration on order cancellation is manual.** If a confirmed order
-  is cancelled, the operator must manually adjust `quantityRemaining` on the
-  affected batches. Automatic restoration is a future improvement.
+- **Excel import/export is out of scope for the current phases.** A later
+  phase may add reporting/export and import.
+- **Stock restoration on order cancellation is manual.** There is currently no
+  "cancel a confirmed order" flow at all (confirmed orders are locked, and
+  deleting one is blocked — see §4). If that need arises, it should restore
+  `quantityRemaining` on the affected batches atomically, mirroring the
+  `confirm()` transaction pattern.
+- **Minor cosmetic items carried over from the Chakra UI reskin (Phase 4),
+  not correctness bugs:**
+  - `ConfirmedOrderView`'s lines table header reads "Variant" but the cell
+    renders the stock batch's id, not a variant label — pre-existing
+    mislabel, not introduced by the reskin.
+  - `ConfirmedOrderView` is the one screen that doesn't use the shared
+    `PageHeader` primitive (it needs a right-aligned status badge next to
+    the title) — visually slightly different from every other screen's
+    heading.
+  - `Overview.tsx`'s stat-card grid is a fixed 4-up (`SimpleGrid
+    columns={4}`), not responsive; cards will crowd on narrow viewports
+    (no functional breakage — confirmed no horizontal overflow at 900px).
+  - There is no frontend automated test harness for the admin UI (no
+    change from the Strapi-DS era) — admin screens are gated by
+    `test:ts:front`/`build` plus manual browser click-through, not unit
+    tests.
 
 ---
-
