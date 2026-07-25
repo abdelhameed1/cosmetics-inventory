@@ -5,6 +5,10 @@ import { Database, Briefcase, ShoppingCart, Folder } from "@strapi/icons";
 
 import type { StrapiApp } from "@strapi/strapi/admin";
 
+const REQUIRED_PERMISSIONS = [
+  { action: 'plugin::inventory-dashboard.access', subject: null },
+];
+
 const plugin: StrapiApp["appPlugins"][string] = {
   register(app) {
     app.addMenuLink({
@@ -15,7 +19,7 @@ const plugin: StrapiApp["appPlugins"][string] = {
         defaultMessage: 'Inventory',
       },
       Component: () => import("./pages/App"),
-      permissions: [],
+      permissions: REQUIRED_PERMISSIONS,
     });
 
     app.addMenuLink({
@@ -26,7 +30,7 @@ const plugin: StrapiApp["appPlugins"][string] = {
         defaultMessage: 'Stock purchase',
       },
       Component: () => import("./pages/StockPurchaseStandalone"),
-      permissions: [],
+      permissions: REQUIRED_PERMISSIONS,
     });
 
     app.addMenuLink({
@@ -37,7 +41,7 @@ const plugin: StrapiApp["appPlugins"][string] = {
         defaultMessage: 'New Order',
       },
       Component: () => import("./pages/OrderFormStandalone"),
-      permissions: [],
+      permissions: REQUIRED_PERMISSIONS,
     });
 
     app.addMenuLink({
@@ -48,7 +52,7 @@ const plugin: StrapiApp["appPlugins"][string] = {
         defaultMessage: 'Catalog',
       },
       Component: () => import("./pages/CatalogStandalone"),
-      permissions: [],
+      permissions: REQUIRED_PERMISSIONS,
     });
 
     app.registerPlugin({
