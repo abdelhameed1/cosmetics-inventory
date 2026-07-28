@@ -1,19 +1,23 @@
 import {
   Input, Textarea, NumberInput, NumberInputField, Switch, Select,
 } from '@chakra-ui/react';
+import { useIntl } from 'react-intl';
 import { FormField } from './ui/FormField';
 import { RelationSelect } from './RelationSelect';
+import { getFieldLabel, getEnumValueLabel } from '../i18n/fieldLabels';
 import { type FieldMeta } from '../utils/api';
 
 export function FieldRenderer({
   field, value, onChange,
 }: { field: FieldMeta; value: any; onChange: (v: any) => void }) {
+  const intl = useIntl();
   if (field.hidden) return null;
+  const label = getFieldLabel(intl, field.name);
 
   switch (field.type) {
     case 'text':
       return (
-        <FormField label={field.name} required={field.required}>
+        <FormField label={label} required={field.required}>
           <Textarea
             value={value ?? ''}
             onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => onChange(e.target.value)}
@@ -25,7 +29,7 @@ export function FieldRenderer({
     case 'biginteger':
     case 'float':
       return (
-        <FormField label={field.name} required={field.required}>
+        <FormField label={label} required={field.required}>
           <NumberInput
             value={value ?? ''}
             onChange={(_, valueAsNumber) => onChange(Number.isNaN(valueAsNumber) ? undefined : valueAsNumber)}
@@ -36,7 +40,7 @@ export function FieldRenderer({
       );
     case 'boolean':
       return (
-        <FormField label={field.name} required={field.required}>
+        <FormField label={label} required={field.required}>
           <Switch
             isChecked={Boolean(value)}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) => onChange(e.target.checked)}
@@ -45,7 +49,7 @@ export function FieldRenderer({
       );
     case 'date':
       return (
-        <FormField label={field.name} required={field.required}>
+        <FormField label={label} required={field.required}>
           <Input
             type="date"
             value={value ?? ''}
@@ -55,7 +59,7 @@ export function FieldRenderer({
       );
     case 'datetime':
       return (
-        <FormField label={field.name} required={field.required}>
+        <FormField label={label} required={field.required}>
           <Input
             type="datetime-local"
             value={value ? toDateTimeLocal(value) : ''}
@@ -66,10 +70,10 @@ export function FieldRenderer({
       );
     case 'enumeration':
       return (
-        <FormField label={field.name} required={field.required}>
+        <FormField label={label} required={field.required}>
           <Select value={value ?? ''} onChange={(e) => onChange(e.target.value)}>
             {(field.values ?? []).map((opt) => (
-              <option key={opt} value={opt}>{opt}</option>
+              <option key={opt} value={opt}>{getEnumValueLabel(intl, opt)}</option>
             ))}
           </Select>
         </FormField>
@@ -78,7 +82,7 @@ export function FieldRenderer({
       return <RelationSelect field={field} value={value} onChange={onChange} />;
     default:
       return (
-        <FormField label={field.name} required={field.required}>
+        <FormField label={label} required={field.required}>
           <Input
             value={value ?? ''}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) => onChange(e.target.value)}

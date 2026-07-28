@@ -3,6 +3,7 @@ import {
   HStack, IconButton, Modal, ModalBody, ModalCloseButton, ModalContent, ModalHeader, ModalOverlay, Select,
 } from '@chakra-ui/react';
 import { FiPlus } from 'react-icons/fi';
+import { useIntl } from 'react-intl';
 import { FormField } from './ui/FormField';
 import { InlineResourceForm } from './InlineResourceForm';
 
@@ -21,6 +22,7 @@ interface QuickCreateSelectProps {
 export function QuickCreateSelect({
   resource, label, value, onChange, options, onCreated, required, isDisabled, mainField = 'name',
 }: QuickCreateSelectProps) {
+  const intl = useIntl();
   const [isCreateOpen, setIsCreateOpen] = useState(false);
 
   const handleCreated = (created?: any) => {
@@ -39,7 +41,10 @@ export function QuickCreateSelect({
             value={value}
             onChange={(e) => onChange(e.target.value)}
             isDisabled={isDisabled}
-            placeholder={`Select ${label.toLowerCase()}`}
+            placeholder={intl.formatMessage(
+              { id: 'quickCreate.selectPlaceholder', defaultMessage: 'Select {label}' },
+              { label: label.toLowerCase() }
+            )}
           >
             {options.map((o) => (
               <option key={o.documentId} value={o.documentId}>
@@ -48,7 +53,10 @@ export function QuickCreateSelect({
             ))}
           </Select>
           <IconButton
-            aria-label={`Create new ${label}`}
+            aria-label={intl.formatMessage(
+              { id: 'quickCreate.createNewAria', defaultMessage: 'Create new {label}' },
+              { label }
+            )}
             icon={<FiPlus />}
             variant="outline"
             onClick={() => setIsCreateOpen(true)}
@@ -59,7 +67,9 @@ export function QuickCreateSelect({
       <Modal isOpen={isCreateOpen} onClose={() => setIsCreateOpen(false)} size="md">
         <ModalOverlay />
         <ModalContent>
-          <ModalHeader>{`New ${label}`}</ModalHeader>
+          <ModalHeader>
+            {intl.formatMessage({ id: 'addNew.newItemTitle', defaultMessage: 'New {label}' }, { label })}
+          </ModalHeader>
           <ModalCloseButton />
           <ModalBody pb={6}>
             <InlineResourceForm

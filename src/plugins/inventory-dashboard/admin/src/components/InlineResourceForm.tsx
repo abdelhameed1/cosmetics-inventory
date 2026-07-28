@@ -1,6 +1,7 @@
 // src/plugins/inventory-dashboard/admin/src/components/InlineResourceForm.tsx
 import { useMemo, useState } from 'react';
 import { Box, Button, Grid, GridItem, HStack, Text } from '@chakra-ui/react';
+import { useIntl } from 'react-intl';
 import { useApi } from '../utils/api';
 import { useSchema } from '../hooks/useSchema';
 import { FieldRenderer } from './FieldRenderer';
@@ -13,6 +14,7 @@ interface InlineResourceFormProps {
 
 export function InlineResourceForm({ resource, onDone, onCancel }: InlineResourceFormProps) {
   const api = useApi();
+  const intl = useIntl();
   const { schema } = useSchema(resource);
   const [values, setValues] = useState<Record<string, any>>({});
   const [error, setError] = useState<string | null>(null);
@@ -33,7 +35,7 @@ export function InlineResourceForm({ resource, onDone, onCancel }: InlineResourc
       const created = await api.post<any>(`/resources/${resource}`, payload);
       onDone(created);
     } catch (e: any) {
-      setError(e?.response?.data?.error?.message ?? 'Save failed');
+      setError(e?.response?.data?.error?.message ?? intl.formatMessage({ id: 'error.saveFailed', defaultMessage: 'Save failed' }));
     } finally {
       setIsSubmitting(false);
     }
@@ -50,9 +52,13 @@ export function InlineResourceForm({ resource, onDone, onCancel }: InlineResourc
         ))}
       </Grid>
       <HStack spacing={2} pt={6}>
-        <Button onClick={submit} isLoading={isSubmitting} isDisabled={isSubmitting}>Save</Button>
+        <Button onClick={submit} isLoading={isSubmitting} isDisabled={isSubmitting}>
+          {intl.formatMessage({ id: 'common.save', defaultMessage: 'Save' })}
+        </Button>
         {onCancel && (
-          <Button variant="ghost" onClick={onCancel} isDisabled={isSubmitting}>Cancel</Button>
+          <Button variant="ghost" onClick={onCancel} isDisabled={isSubmitting}>
+            {intl.formatMessage({ id: 'common.cancel', defaultMessage: 'Cancel' })}
+          </Button>
         )}
       </HStack>
     </Box>

@@ -4,9 +4,11 @@ import {
   Badge, Box, Card, CardBody, Center, Heading, HStack, Icon, IconButton, Modal, ModalBody, ModalCloseButton,
   ModalContent, ModalHeader, ModalOverlay, SimpleGrid, Spinner, Text, VStack,
 } from '@chakra-ui/react';
-import { FiArrowLeft } from 'react-icons/fi';
+import { FiArrowLeft, FiArrowRight } from 'react-icons/fi';
+import { useIntl } from 'react-intl';
 import { useNavigate } from 'react-router-dom';
 import { ADD_NEW_GROUPS, type AddNewItem } from '../config/addNewConfig';
+import { useLocale } from '../i18n/LocaleProvider';
 
 // Lazy-loaded: AddNewModal is rendered unconditionally on every page via
 // AppShell/AppSidebar, so a static import here would bundle every wizard's
@@ -22,6 +24,8 @@ const OrderForm = lazy(() => import('../pages/OrderForm'));
 
 export function AddNewModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
   const navigate = useNavigate();
+  const intl = useIntl();
+  const { locale } = useLocale();
   const [active, setActive] = useState<AddNewItem | null>(null);
 
   const backToGrid = () => setActive(null);
@@ -46,9 +50,22 @@ export function AddNewModal({ isOpen, onClose }: { isOpen: boolean; onClose: () 
         <ModalHeader>
           <HStack spacing={2}>
             {active && (
-              <IconButton aria-label="Back" icon={<FiArrowLeft />} size="sm" variant="ghost" onClick={backToGrid} />
+              <IconButton
+                aria-label={intl.formatMessage({ id: 'common.back', defaultMessage: 'Back' })}
+                icon={locale === 'ar' ? <FiArrowRight /> : <FiArrowLeft />}
+                size="sm"
+                variant="ghost"
+                onClick={backToGrid}
+              />
             )}
-            <Text>{active ? `New ${active.label}` : 'Add new'}</Text>
+            <Text>
+              {active
+                ? intl.formatMessage(
+                    { id: 'addNew.newItemTitle', defaultMessage: 'New {label}' },
+                    { label: intl.formatMessage({ id: active.labelId }) }
+                  )
+                : intl.formatMessage({ id: 'addNew.buttonLabel', defaultMessage: 'Add new' })}
+            </Text>
           </HStack>
         </ModalHeader>
         <ModalCloseButton />
@@ -56,16 +73,16 @@ export function AddNewModal({ isOpen, onClose }: { isOpen: boolean; onClose: () 
           {!active && (
             <>
               {ADD_NEW_GROUPS.map((group) => (
-                <Box key={group.label} pb={6}>
+                <Box key={group.labelId} pb={6}>
                   <Heading size="xs" textTransform="uppercase" color="text.secondary" pb={3}>
-                    {group.label}
+                    {intl.formatMessage({ id: group.labelId })}
                   </Heading>
                   <SimpleGrid columns={{ base: 1, md: 2 }} spacing={3}>
                     {group.items.map((item) => (
                       <Card
                         key={item.slug}
                         as="button"
-                        textAlign="left"
+                        textAlign="start"
                         cursor="pointer"
                         transition="box-shadow 0.15s, border-color 0.15s"
                         _hover={{ borderColor: 'brand.200', boxShadow: 'cardHover' }}
@@ -77,9 +94,15 @@ export function AddNewModal({ isOpen, onClose }: { isOpen: boolean; onClose: () 
                               <VStack align="center" justify="center" bg="accent.bg" borderRadius="lg" boxSize={9} flexShrink={0}>
                                 <Icon as={item.icon} boxSize={4} color="accent.fg" />
                               </VStack>
-                              <Text fontSize="sm" fontWeight="semibold" color="text.primary">{item.label}</Text>
+                              <Text fontSize="sm" fontWeight="semibold" color="text.primary">
+                                {intl.formatMessage({ id: item.labelId })}
+                              </Text>
                             </HStack>
-                            {item.kind === 'wizard' && <Badge colorScheme="brand">Guided</Badge>}
+                            {item.kind === 'wizard' && (
+                              <Badge colorScheme="brand">
+                                {intl.formatMessage({ id: 'addNew.guidedBadge', defaultMessage: 'Guided' })}
+                              </Badge>
+                            )}
                           </HStack>
                         </CardBody>
                       </Card>
