@@ -13,12 +13,14 @@ import { PageHeader } from '../components/ui/PageHeader';
 import { DataTable } from '../components/ui/DataTable';
 import { getFieldLabel } from '../i18n/fieldLabels';
 import { getResourceLabel } from '../i18n/resourceLabels';
+import { useLocale } from '../i18n/LocaleProvider';
 
 export default function ResourceListPage() {
   const { resource = '' } = useParams();
   const navigate = useNavigate();
   const api = useApi();
   const intl = useIntl();
+  const { locale } = useLocale();
   const { schema } = useSchema(resource);
   const [rows, setRows] = useState<any[]>([]);
   const [search, setSearch] = useState('');
@@ -118,7 +120,7 @@ export default function ResourceListPage() {
 
       <AlertDialog isOpen={!!toDelete} leastDestructiveRef={cancelRef} onClose={() => setToDelete(null)}>
         <AlertDialogOverlay>
-          <AlertDialogContent borderRadius="xl">
+          <AlertDialogContent borderRadius="xl" dir={locale === 'ar' ? 'rtl' : 'ltr'}>
             <AlertDialogHeader>{intl.formatMessage({ id: 'resourceList.confirmDeleteTitle', defaultMessage: 'Confirm delete' })}</AlertDialogHeader>
             <AlertDialogBody>{intl.formatMessage({ id: 'resourceList.confirmDeleteBody', defaultMessage: 'Delete this record? This cannot be undone.' })}</AlertDialogBody>
             <AlertDialogFooter>

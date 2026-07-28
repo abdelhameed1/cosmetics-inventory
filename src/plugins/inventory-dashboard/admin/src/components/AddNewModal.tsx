@@ -46,7 +46,7 @@ export function AddNewModal({ isOpen, onClose }: { isOpen: boolean; onClose: () 
   return (
     <Modal isOpen={isOpen} onClose={close} size={active ? '3xl' : '2xl'} scrollBehavior="inside">
       <ModalOverlay />
-      <ModalContent>
+      <ModalContent dir={locale === 'ar' ? 'rtl' : 'ltr'}>
         <ModalHeader>
           <HStack spacing={2}>
             {active && (

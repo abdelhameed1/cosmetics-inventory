@@ -6,6 +6,7 @@ import { FiPlus } from 'react-icons/fi';
 import { useIntl } from 'react-intl';
 import { FormField } from './ui/FormField';
 import { InlineResourceForm } from './InlineResourceForm';
+import { useLocale } from '../i18n/LocaleProvider';
 
 interface QuickCreateSelectProps {
   resource: string;
@@ -23,6 +24,7 @@ export function QuickCreateSelect({
   resource, label, value, onChange, options, onCreated, required, isDisabled, mainField = 'name',
 }: QuickCreateSelectProps) {
   const intl = useIntl();
+  const { locale } = useLocale();
   const [isCreateOpen, setIsCreateOpen] = useState(false);
 
   const handleCreated = (created?: any) => {
@@ -66,7 +68,7 @@ export function QuickCreateSelect({
 
       <Modal isOpen={isCreateOpen} onClose={() => setIsCreateOpen(false)} size="md">
         <ModalOverlay />
-        <ModalContent>
+        <ModalContent dir={locale === 'ar' ? 'rtl' : 'ltr'}>
           <ModalHeader>
             {intl.formatMessage({ id: 'addNew.newItemTitle', defaultMessage: 'New {label}' }, { label })}
           </ModalHeader>
