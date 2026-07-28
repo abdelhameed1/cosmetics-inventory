@@ -36,18 +36,18 @@ export default function Overview() {
 
   if (error) {
     return (
-      <Box p={8}>
+      <Box p={{ base: 4, md: 8 }}>
         <Text color="red.600">{intl.formatMessage({ id: 'overview.loadError', defaultMessage: 'Could not load overview data' })}</Text>
       </Box>
     );
   }
 
   if (loading || !data) {
-    return <Box p={8}><Text>{intl.formatMessage({ id: 'common.loading', defaultMessage: 'Loading…' })}</Text></Box>;
+    return <Box p={{ base: 4, md: 8 }}><Text>{intl.formatMessage({ id: 'common.loading', defaultMessage: 'Loading…' })}</Text></Box>;
   }
 
   return (
-    <Box p={8}>
+    <Box p={{ base: 4, md: 8 }}>
       <PageHeader title={intl.formatMessage({ id: 'nav.overview', defaultMessage: 'Overview' })} />
 
       <Box pb={6}>
@@ -93,7 +93,7 @@ export default function Overview() {
       </Box>
 
       <Grid templateColumns="repeat(12, 1fr)" gap={4} pt={8}>
-        <GridItem colSpan={6}>
+        <GridItem colSpan={{ base: 12, md: 6 }}>
           <Text fontSize="lg" fontWeight="semibold" pb={3} color="text.primary">
             {intl.formatMessage({ id: 'overview.expiredTitle', defaultMessage: 'Expired' })}
           </Text>
@@ -101,7 +101,7 @@ export default function Overview() {
             <Text key={b.batchId} color="red.600">{b.variantLabel} — {b.expiryDate}</Text>
           ))}
         </GridItem>
-        <GridItem colSpan={6}>
+        <GridItem colSpan={{ base: 12, md: 6 }}>
           <Text fontSize="lg" fontWeight="semibold" pb={3} color="text.primary">
             {intl.formatMessage({ id: 'overview.expiringSoonTitle', defaultMessage: 'Expiring soon (90 days)' })}
           </Text>
