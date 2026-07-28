@@ -5,6 +5,7 @@ import { useApi } from '../utils/api';
 import { PageHeader } from '../components/ui/PageHeader';
 import { FormField } from '../components/ui/FormField';
 import { WizardShell, type WizardStep } from '../components/WizardShell';
+import { QuickCreateSelect } from '../components/QuickCreateSelect';
 
 interface StockPurchaseProps {
   onDone?: () => void;
@@ -67,11 +68,15 @@ export default function StockPurchase({ onDone, onCancel, embedded = false }: St
   const supplierStep = (
     <Card>
       <CardBody>
-        <FormField label="Supplier" required>
-          <Select value={supplierId} onChange={(e) => setSupplierId(e.target.value)} placeholder="Select supplier">
-            {suppliers.map((s) => <option key={s.documentId} value={s.documentId}>{s.name}</option>)}
-          </Select>
-        </FormField>
+        <QuickCreateSelect
+          resource="suppliers"
+          label="Supplier"
+          required
+          value={supplierId}
+          onChange={setSupplierId}
+          options={suppliers}
+          onCreated={(s) => setSuppliers((prev) => [...prev, s])}
+        />
       </CardBody>
     </Card>
   );
