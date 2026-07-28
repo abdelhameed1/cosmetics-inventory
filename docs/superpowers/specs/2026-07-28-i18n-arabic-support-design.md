@@ -61,7 +61,7 @@ Font stack (`theme/index.ts`) gets `'Noto Sans Arabic'` and `Tahoma` appended as
 
 ### `LanguageToggle`
 
-New component, `admin/src/components/LanguageToggle.tsx`, structurally identical to the existing `ColorModeToggle.tsx`: a full-width button in `AppSidebar`, placed directly above/below `ColorModeToggle`, showing the language you'd switch **to** (e.g. "العربية" while in English, "English" while in Arabic) — same convention `ColorModeToggle` already uses for "Light mode"/"Dark mode".
+New component, `admin/src/components/LanguageToggle.tsx`, structurally identical to the existing `ColorModeToggle.tsx`: a full-width button in `AppSidebar`, rendered directly above `ColorModeToggle` (locale is the more consequential setting; appearance follows), showing the language you'd switch **to** (e.g. "العربية" while in English, "English" while in Arabic) — same convention `ColorModeToggle` already uses for "Light mode"/"Dark mode".
 
 ### String extraction
 
