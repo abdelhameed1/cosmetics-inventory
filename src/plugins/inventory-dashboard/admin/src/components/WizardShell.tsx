@@ -44,7 +44,7 @@ export function WizardShell({ steps, onSubmit, submitLabel, isSubmitting, submit
                 active={<StepNumber>{i + 1}</StepNumber>}
               />
             </StepIndicator>
-            <Box flexShrink={0}>
+            <Box flexShrink={0} display={{ base: 'none', md: 'block' }}>
               <StepTitle>{step.label}</StepTitle>
             </Box>
             <StepSeparator />
