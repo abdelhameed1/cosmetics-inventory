@@ -67,7 +67,7 @@ export default function Overview() {
         {saveError && <Text color="red.600" pt={1}>{saveError}</Text>}
       </Box>
 
-      <SimpleGrid columns={4} spacing={4}>
+      <SimpleGrid columns={{ base: 1, sm: 2, lg: 4 }} spacing={4}>
         <StatCard label={intl.formatMessage({ id: 'overview.stat.totalStockUnits', defaultMessage: 'Total stock units' })} value={String(data.totalStockUnits)} icon={FiArchive} />
         <StatCard label={intl.formatMessage({ id: 'overview.stat.stockValueUsd', defaultMessage: 'Stock value (USD)' })} value={`$${data.stockValueUsd.toFixed(2)}`} icon={FiTrendingUp} />
         <StatCard label={intl.formatMessage({ id: 'overview.stat.stockValueEgp', defaultMessage: 'Stock value (EGP)' })} value={`E£${data.stockValueEgp.toFixed(2)}`} icon={FiPieChart} />
