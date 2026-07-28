@@ -50,6 +50,15 @@ export const en = {
   'enumValue.vip': 'vip',
 
   'error.saveFailed': 'Save failed',
+  'error.deleteFailed': 'Delete failed',
+
+  'resourceList.searchAria': 'Search',
+  'resourceList.searchPlaceholder': 'Search by name',
+  'resourceList.clearSearchAria': 'Clear search',
+  'resourceList.actionsColumn': 'Actions',
+  'resourceList.confirmDeleteTitle': 'Confirm delete',
+  'resourceList.confirmDeleteBody': 'Delete this record? This cannot be undone.',
+  'resourceForm.editTitle': 'Edit {label}',
 
   'addNew.newItemTitle': 'New {label}',
   'addNew.guidedBadge': 'Guided',

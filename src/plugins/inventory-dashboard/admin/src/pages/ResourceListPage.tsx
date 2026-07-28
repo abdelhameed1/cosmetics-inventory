@@ -6,15 +6,19 @@ import {
   InputGroup, InputLeftElement, InputRightElement, Text, Td, Tr,
 } from '@chakra-ui/react';
 import { FiSearch, FiTrash2, FiX } from 'react-icons/fi';
+import { useIntl } from 'react-intl';
 import { useApi } from '../utils/api';
 import { useSchema } from '../hooks/useSchema';
 import { PageHeader } from '../components/ui/PageHeader';
 import { DataTable } from '../components/ui/DataTable';
+import { getFieldLabel } from '../i18n/fieldLabels';
+import { getResourceLabel } from '../i18n/resourceLabels';
 
 export default function ResourceListPage() {
   const { resource = '' } = useParams();
   const navigate = useNavigate();
   const api = useApi();
+  const intl = useIntl();
   const { schema } = useSchema(resource);
   const [rows, setRows] = useState<any[]>([]);
   const [search, setSearch] = useState('');
@@ -44,7 +48,7 @@ export default function ResourceListPage() {
       setError(null);
       load();
     } catch (e: any) {
-      setError(e?.response?.data?.error?.message ?? 'Delete failed');
+      setError(e?.response?.data?.error?.message ?? intl.formatMessage({ id: 'error.deleteFailed', defaultMessage: 'Delete failed' }));
       setToDelete(null);
     }
   };
@@ -52,23 +56,23 @@ export default function ResourceListPage() {
   return (
     <Box p={8}>
       <PageHeader
-        title={resource}
-        actions={<Button onClick={() => navigate('new')}>New</Button>}
+        title={getResourceLabel(intl, resource)}
+        actions={<Button onClick={() => navigate('new')}>{intl.formatMessage({ id: 'common.new', defaultMessage: 'New' })}</Button>}
       />
 
       <Box pb={4}>
         <InputGroup maxW="sm">
           <InputLeftElement pointerEvents="none"><FiSearch color="var(--chakra-colors-gray-400)" /></InputLeftElement>
           <Input
-            aria-label="Search"
-            placeholder="Search by name"
+            aria-label={intl.formatMessage({ id: 'resourceList.searchAria', defaultMessage: 'Search' })}
+            placeholder={intl.formatMessage({ id: 'resourceList.searchPlaceholder', defaultMessage: 'Search by name' })}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
           {search && (
             <InputRightElement>
               <IconButton
-                aria-label="Clear search"
+                aria-label={intl.formatMessage({ id: 'resourceList.clearSearchAria', defaultMessage: 'Clear search' })}
                 icon={<FiX />}
                 size="sm"
                 variant="ghost"
@@ -82,7 +86,10 @@ export default function ResourceListPage() {
       {error && <Text color="red.600" pb={4}>{error}</Text>}
 
       <DataTable
-        columns={[...visibleFields.map((f) => f.name), 'Actions']}
+        columns={[
+          ...visibleFields.map((f) => getFieldLabel(intl, f.name)),
+          intl.formatMessage({ id: 'resourceList.actionsColumn', defaultMessage: 'Actions' }),
+        ]}
         isEmpty={rows.length === 0}
       >
         {rows.map((row) => (
@@ -97,7 +104,7 @@ export default function ResourceListPage() {
             ))}
             <Td onClick={(e) => e.stopPropagation()}>
               <IconButton
-                aria-label="Delete"
+                aria-label={intl.formatMessage({ id: 'common.delete', defaultMessage: 'Delete' })}
                 icon={<FiTrash2 />}
                 size="sm"
                 variant="ghost"
@@ -112,11 +119,15 @@ export default function ResourceListPage() {
       <AlertDialog isOpen={!!toDelete} leastDestructiveRef={cancelRef} onClose={() => setToDelete(null)}>
         <AlertDialogOverlay>
           <AlertDialogContent borderRadius="xl">
-            <AlertDialogHeader>Confirm delete</AlertDialogHeader>
-            <AlertDialogBody>Delete this record? This cannot be undone.</AlertDialogBody>
+            <AlertDialogHeader>{intl.formatMessage({ id: 'resourceList.confirmDeleteTitle', defaultMessage: 'Confirm delete' })}</AlertDialogHeader>
+            <AlertDialogBody>{intl.formatMessage({ id: 'resourceList.confirmDeleteBody', defaultMessage: 'Delete this record? This cannot be undone.' })}</AlertDialogBody>
             <AlertDialogFooter>
-              <Button ref={cancelRef} variant="ghost" onClick={() => setToDelete(null)}>Cancel</Button>
-              <Button colorScheme="red" onClick={confirmDelete} ml={3}>Delete</Button>
+              <Button ref={cancelRef} variant="ghost" onClick={() => setToDelete(null)}>
+                {intl.formatMessage({ id: 'common.cancel', defaultMessage: 'Cancel' })}
+              </Button>
+              <Button colorScheme="red" onClick={confirmDelete} ms={3}>
+                {intl.formatMessage({ id: 'common.delete', defaultMessage: 'Delete' })}
+              </Button>
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialogOverlay>

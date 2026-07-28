@@ -52,6 +52,15 @@ export const ar: Record<keyof typeof en, string> = {
   'enumValue.vip': 'كبار العملاء',
 
   'error.saveFailed': 'فشل الحفظ',
+  'error.deleteFailed': 'فشل الحذف',
+
+  'resourceList.searchAria': 'بحث',
+  'resourceList.searchPlaceholder': 'ابحث بالاسم',
+  'resourceList.clearSearchAria': 'مسح البحث',
+  'resourceList.actionsColumn': 'إجراءات',
+  'resourceList.confirmDeleteTitle': 'تأكيد الحذف',
+  'resourceList.confirmDeleteBody': 'هل تريد حذف هذا السجل؟ لا يمكن التراجع عن هذا الإجراء.',
+  'resourceForm.editTitle': 'تعديل {label}',
 
   'addNew.newItemTitle': 'إنشاء {label}',
   'addNew.guidedBadge': 'موجّه',

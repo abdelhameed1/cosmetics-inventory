@@ -1,17 +1,20 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Box, Button, Card, CardBody, Grid, GridItem, HStack, Text } from '@chakra-ui/react';
+import { useIntl } from 'react-intl';
 import { useApi } from '../utils/api';
 import { useSchema } from '../hooks/useSchema';
 import { FieldRenderer } from '../components/FieldRenderer';
 import ProductVariantsForm from '../components/ProductVariantsForm';
 import { PageHeader } from '../components/ui/PageHeader';
+import { getResourceLabel } from '../i18n/resourceLabels';
 
 export default function ResourceFormPage() {
   const { resource = '', id } = useParams();
   const isEdit = Boolean(id);
   const navigate = useNavigate();
   const api = useApi();
+  const intl = useIntl();
   const { schema } = useSchema(resource);
   const [values, setValues] = useState<Record<string, any>>({});
   const [error, setError] = useState<string | null>(null);
@@ -40,7 +43,7 @@ export default function ResourceFormPage() {
       }
       navigate('..', { relative: 'path' });
     } catch (e: any) {
-      setError(e?.response?.data?.error?.message ?? 'Save failed');
+      setError(e?.response?.data?.error?.message ?? intl.formatMessage({ id: 'error.saveFailed', defaultMessage: 'Save failed' }));
     }
   };
 
@@ -49,9 +52,17 @@ export default function ResourceFormPage() {
     return <ProductVariantsForm onDone={() => navigate('..', { relative: 'path' })} />;
   }
 
+  const resourceLabel = getResourceLabel(intl, resource);
+
   return (
     <Box p={8}>
-      <PageHeader title={isEdit ? `Edit ${resource}` : `New ${resource}`} />
+      <PageHeader
+        title={
+          isEdit
+            ? intl.formatMessage({ id: 'resourceForm.editTitle', defaultMessage: 'Edit {label}' }, { label: resourceLabel })
+            : intl.formatMessage({ id: 'addNew.newItemTitle', defaultMessage: 'New {label}' }, { label: resourceLabel })
+        }
+      />
       {error && <Text color="red.600" pb={2}>{error}</Text>}
       <Card>
         <CardBody>
@@ -65,8 +76,10 @@ export default function ResourceFormPage() {
         </CardBody>
       </Card>
       <HStack spacing={2} pt={6}>
-        <Button onClick={submit}>Save</Button>
-        <Button variant="ghost" onClick={() => navigate('..', { relative: 'path' })}>Cancel</Button>
+        <Button onClick={submit}>{intl.formatMessage({ id: 'common.save', defaultMessage: 'Save' })}</Button>
+        <Button variant="ghost" onClick={() => navigate('..', { relative: 'path' })}>
+          {intl.formatMessage({ id: 'common.cancel', defaultMessage: 'Cancel' })}
+        </Button>
       </HStack>
     </Box>
   );
