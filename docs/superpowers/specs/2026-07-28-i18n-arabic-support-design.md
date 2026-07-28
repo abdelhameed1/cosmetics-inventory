@@ -67,6 +67,16 @@ New component, `admin/src/components/LanguageToggle.tsx`, structurally identical
 
 Every hardcoded string literal in JSX across the in-scope files becomes `useIntl().formatMessage({ id, defaultMessage })` or `<FormattedMessage id="..." defaultMessage="..." />`, with a matching entry added to both `en.ts` (English, matches the current literal exactly — zero visible change in English mode) and `ar.ts` (Arabic translation). IDs are flat, dotted, and namespaced by area, e.g. `orderForm.title`, `wizard.back`, `nav.overview`, `addNew.backButton.ariaLabel`. `config/navConfig.ts` and `config/addNewConfig.ts` currently export plain label strings consumed by `AppSidebar`/`AddNewModal`; these become message IDs resolved at render time in the consuming component (the config files themselves stay locale-agnostic data, not JSX).
 
+## Addendum: dynamic/schema-driven labels
+
+`FieldRenderer.tsx` and `RelationSelect.tsx` (used by `InlineResourceForm` and the generic `ResourceFormPage`, both already in scope) render a form-field caption directly from the raw Strapi attribute name — `label={field.name}` — where `field.name` comes live from a backend schema endpoint (`/resources/:resource/schema`), not from any file this design otherwise touches. `ResourceListPage` does the same for its table column headers, and both `ResourceListPage` and `ResourceFormPage` use the raw resource *slug* (`brands`, `price-lists`, ...) as their page title. Left alone, these would stay untranslated English even after every static JSX string is converted — a visible, obvious gap in "everything is translated."
+
+Both surfaces are handled with small lookup dictionaries, each falling back gracefully instead of being tsc-enforced like the rest of the catalog (schema fields can change at runtime; a missing translation shouldn't be a build break here):
+
+- **Field labels**: a `field.*` dictionary in the catalog, keyed by raw attribute name, covering every currently-visible field across the 8 resources reachable through the generic list/form pages (`name`, `notes`, `phone`, `address`, `priceList`, `type`, `marginPercent`, `wholesaleMinQty`, `vipDiscountPercent`, `brand`, `category`, `label`, `lowStockThreshold`, `isDefault`, `product`, `variantType`, plus `supplier`/`customer` reused by the wizards' own field captions for the same concepts). An unmapped field name (a future schema addition) falls back to today's behavior: the raw name, still passed through `FormField`'s existing `textTransform="capitalize"`.
+- **Enum values**: the same graceful-fallback treatment for `price-list`'s `type` enum (`retail`/`wholesale`/`vip`) via a small `enumValue.*` dictionary.
+- **Resource-slug page titles**: resolved by looking up the slug in the already-localized `CATALOG_GROUPS`/`TOP_LINKS` nav config (`nav.*` catalog keys) instead of rendering the raw slug; unmapped slugs (there are none among the 8 today) fall back to the raw slug.
+
 ## Data flow
 
 1. Plugin mounts. `LocaleProvider` reads `localStorage`, defaults to `'en'` if unset.
