@@ -76,4 +76,22 @@ export const en = {
   'quickCreate.createNewAria': 'Create new {label}',
 
   'relationSelect.placeholder': 'Select {field}',
+
+  'dataTable.emptyLabel': 'No records found',
+  'overview.exchangeRateLabel': 'Exchange rate (EGP per USD)',
+  'overview.saveRateButton': 'Save rate',
+  'overview.updatedLabel': 'Updated: {date}',
+  'overview.invalidRateError': 'Enter a valid exchange rate',
+  'overview.saveRateError': 'Could not save rate',
+  'overview.loadError': 'Could not load overview data',
+  'overview.stat.totalStockUnits': 'Total stock units',
+  'overview.stat.stockValueUsd': 'Stock value (USD)',
+  'overview.stat.stockValueEgp': 'Stock value (EGP)',
+  'overview.stat.exchangeRate': 'Exchange rate',
+  'overview.lowStockTitle': 'Low stock',
+  'overview.col.variant': 'Variant',
+  'overview.col.qty': 'Qty',
+  'overview.col.threshold': 'Threshold',
+  'overview.expiredTitle': 'Expired',
+  'overview.expiringSoonTitle': 'Expiring soon (90 days)',
 } as const;

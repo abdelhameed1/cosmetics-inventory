@@ -78,4 +78,22 @@ export const ar: Record<keyof typeof en, string> = {
   'quickCreate.createNewAria': 'إنشاء {label}',
 
   'relationSelect.placeholder': 'اختر {field}',
+
+  'dataTable.emptyLabel': 'لا توجد سجلات',
+  'overview.exchangeRateLabel': 'سعر الصرف (جنيه مصري لكل دولار)',
+  'overview.saveRateButton': 'حفظ السعر',
+  'overview.updatedLabel': 'آخر تحديث: {date}',
+  'overview.invalidRateError': 'أدخل سعر صرف صالح',
+  'overview.saveRateError': 'تعذّر حفظ السعر',
+  'overview.loadError': 'تعذّر تحميل بيانات النظرة العامة',
+  'overview.stat.totalStockUnits': 'إجمالي وحدات المخزون',
+  'overview.stat.stockValueUsd': 'قيمة المخزون (دولار)',
+  'overview.stat.stockValueEgp': 'قيمة المخزون (جنيه مصري)',
+  'overview.stat.exchangeRate': 'سعر الصرف',
+  'overview.lowStockTitle': 'المخزون المنخفض',
+  'overview.col.variant': 'المتغير',
+  'overview.col.qty': 'الكمية',
+  'overview.col.threshold': 'الحد الأدنى',
+  'overview.expiredTitle': 'منتهي الصلاحية',
+  'overview.expiringSoonTitle': 'قريب الانتهاء (90 يومًا)',
 };

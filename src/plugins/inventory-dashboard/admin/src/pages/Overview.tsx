@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Box, Button, Grid, GridItem, HStack, NumberInput, NumberInputField, SimpleGrid, Td, Text, Tr } from '@chakra-ui/react';
 import { FiArchive, FiTrendingUp, FiPieChart, FiRepeat } from 'react-icons/fi';
+import { useIntl } from 'react-intl';
 import { useOverview } from '../hooks/useOverview';
 import { useSettings } from '../hooks/useSettings';
 import { PageHeader } from '../components/ui/PageHeader';
@@ -9,6 +10,7 @@ import { DataTable } from '../components/ui/DataTable';
 import { FormField } from '../components/ui/FormField';
 
 export default function Overview() {
+  const intl = useIntl();
   const { data, loading, error, reload } = useOverview();
   const { exchangeRate, exchangeRateUpdatedAt, save } = useSettings();
   const [rateInput, setRateInput] = useState<number | undefined>(undefined);
@@ -21,56 +23,69 @@ export default function Overview() {
   const onSaveRate = async () => {
     setSaveError(null);
     if (rateInput == null || Number.isNaN(rateInput)) {
-      setSaveError('Enter a valid exchange rate');
+      setSaveError(intl.formatMessage({ id: 'overview.invalidRateError', defaultMessage: 'Enter a valid exchange rate' }));
       return;
     }
     try {
       await save(rateInput);
       reload();
     } catch (e: any) {
-      setSaveError(e?.response?.data?.error?.message ?? 'Could not save rate');
+      setSaveError(e?.response?.data?.error?.message ?? intl.formatMessage({ id: 'overview.saveRateError', defaultMessage: 'Could not save rate' }));
     }
   };
 
   if (error) {
     return (
       <Box p={8}>
-        <Text color="red.600">Could not load overview data</Text>
+        <Text color="red.600">{intl.formatMessage({ id: 'overview.loadError', defaultMessage: 'Could not load overview data' })}</Text>
       </Box>
     );
   }
 
-  if (loading || !data) return <Box p={8}><Text>Loading…</Text></Box>;
+  if (loading || !data) {
+    return <Box p={8}><Text>{intl.formatMessage({ id: 'common.loading', defaultMessage: 'Loading…' })}</Text></Box>;
+  }
 
   return (
     <Box p={8}>
-      <PageHeader title="Overview" />
+      <PageHeader title={intl.formatMessage({ id: 'nav.overview', defaultMessage: 'Overview' })} />
 
       <Box pb={6}>
         <HStack spacing={2} align="flex-end">
-          <FormField label="Exchange rate (EGP per USD)" maxW="xs">
+          <FormField label={intl.formatMessage({ id: 'overview.exchangeRateLabel', defaultMessage: 'Exchange rate (EGP per USD)' })} maxW="xs">
             <NumberInput value={rateInput ?? ''} onChange={(_, v) => setRateInput(Number.isNaN(v) ? undefined : v)}>
               <NumberInputField />
             </NumberInput>
           </FormField>
-          <Button onClick={onSaveRate}>Save rate</Button>
+          <Button onClick={onSaveRate}>{intl.formatMessage({ id: 'overview.saveRateButton', defaultMessage: 'Save rate' })}</Button>
         </HStack>
         {exchangeRateUpdatedAt && (
-          <Text fontSize="xs" color="text.secondary" pt={1}>Updated: {exchangeRateUpdatedAt}</Text>
+          <Text fontSize="xs" color="text.secondary" pt={1}>
+            {intl.formatMessage({ id: 'overview.updatedLabel', defaultMessage: 'Updated: {date}' }, { date: exchangeRateUpdatedAt })}
+          </Text>
         )}
         {saveError && <Text color="red.600" pt={1}>{saveError}</Text>}
       </Box>
 
       <SimpleGrid columns={4} spacing={4}>
-        <StatCard label="Total stock units" value={String(data.totalStockUnits)} icon={FiArchive} />
-        <StatCard label="Stock value (USD)" value={`$${data.stockValueUsd.toFixed(2)}`} icon={FiTrendingUp} />
-        <StatCard label="Stock value (EGP)" value={`E£${data.stockValueEgp.toFixed(2)}`} icon={FiPieChart} />
-        <StatCard label="Exchange rate" value={String(data.exchangeRate)} icon={FiRepeat} />
+        <StatCard label={intl.formatMessage({ id: 'overview.stat.totalStockUnits', defaultMessage: 'Total stock units' })} value={String(data.totalStockUnits)} icon={FiArchive} />
+        <StatCard label={intl.formatMessage({ id: 'overview.stat.stockValueUsd', defaultMessage: 'Stock value (USD)' })} value={`$${data.stockValueUsd.toFixed(2)}`} icon={FiTrendingUp} />
+        <StatCard label={intl.formatMessage({ id: 'overview.stat.stockValueEgp', defaultMessage: 'Stock value (EGP)' })} value={`E£${data.stockValueEgp.toFixed(2)}`} icon={FiPieChart} />
+        <StatCard label={intl.formatMessage({ id: 'overview.stat.exchangeRate', defaultMessage: 'Exchange rate' })} value={String(data.exchangeRate)} icon={FiRepeat} />
       </SimpleGrid>
 
       <Box pt={8}>
-        <Text fontSize="lg" fontWeight="semibold" pb={3} color="text.primary">Low stock</Text>
-        <DataTable columns={['Variant', 'Qty', 'Threshold']} isEmpty={data.lowStock.length === 0}>
+        <Text fontSize="lg" fontWeight="semibold" pb={3} color="text.primary">
+          {intl.formatMessage({ id: 'overview.lowStockTitle', defaultMessage: 'Low stock' })}
+        </Text>
+        <DataTable
+          columns={[
+            intl.formatMessage({ id: 'overview.col.variant', defaultMessage: 'Variant' }),
+            intl.formatMessage({ id: 'overview.col.qty', defaultMessage: 'Qty' }),
+            intl.formatMessage({ id: 'overview.col.threshold', defaultMessage: 'Threshold' }),
+          ]}
+          isEmpty={data.lowStock.length === 0}
+        >
           {data.lowStock.map((r: any) => (
             <Tr key={r.variantId}><Td>{r.label}</Td><Td>{r.quantity}</Td><Td>{r.threshold}</Td></Tr>
           ))}
@@ -79,13 +94,17 @@ export default function Overview() {
 
       <Grid templateColumns="repeat(12, 1fr)" gap={4} pt={8}>
         <GridItem colSpan={6}>
-          <Text fontSize="lg" fontWeight="semibold" pb={3} color="text.primary">Expired</Text>
+          <Text fontSize="lg" fontWeight="semibold" pb={3} color="text.primary">
+            {intl.formatMessage({ id: 'overview.expiredTitle', defaultMessage: 'Expired' })}
+          </Text>
           {data.expired.map((b: any) => (
             <Text key={b.batchId} color="red.600">{b.variantLabel} — {b.expiryDate}</Text>
           ))}
         </GridItem>
         <GridItem colSpan={6}>
-          <Text fontSize="lg" fontWeight="semibold" pb={3} color="text.primary">Expiring soon (90 days)</Text>
+          <Text fontSize="lg" fontWeight="semibold" pb={3} color="text.primary">
+            {intl.formatMessage({ id: 'overview.expiringSoonTitle', defaultMessage: 'Expiring soon (90 days)' })}
+          </Text>
           {data.expiringSoon.map((b: any) => (
             <Text key={b.batchId} color="orange.600">{b.variantLabel} — {b.expiryDate}</Text>
           ))}
