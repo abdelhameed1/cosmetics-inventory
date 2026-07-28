@@ -89,7 +89,7 @@ export default function StockPurchase({ onDone, onCancel, embedded = false }: St
     <Card>
       <CardBody>
         <Grid templateColumns="repeat(12, 1fr)" gap={4}>
-          <GridItem colSpan={4}>
+          <GridItem colSpan={{ base: 12, sm: 6, md: 4 }}>
             <FormField label={intl.formatMessage({ id: 'field.product', defaultMessage: 'Product' })} required>
               <Select
                 value={productId}
@@ -100,7 +100,7 @@ export default function StockPurchase({ onDone, onCancel, embedded = false }: St
               </Select>
             </FormField>
           </GridItem>
-          <GridItem colSpan={4}>
+          <GridItem colSpan={{ base: 12, sm: 6, md: 4 }}>
             <FormField label={intl.formatMessage({ id: 'stockPurchase.variantFieldLabel', defaultMessage: 'Variant' })} required>
               <Select
                 value={variantId}
@@ -112,32 +112,32 @@ export default function StockPurchase({ onDone, onCancel, embedded = false }: St
               </Select>
             </FormField>
           </GridItem>
-          <GridItem colSpan={4}>
+          <GridItem colSpan={{ base: 12, sm: 6, md: 4 }}>
             <FormField label={intl.formatMessage({ id: 'stockPurchase.quantityPurchasedLabel', defaultMessage: 'Quantity purchased' })} required>
               <NumberInput value={qty ?? ''} onChange={(_, v) => setQty(Number.isNaN(v) ? undefined : v)}>
                 <NumberInputField />
               </NumberInput>
             </FormField>
           </GridItem>
-          <GridItem colSpan={4}>
+          <GridItem colSpan={{ base: 12, sm: 6, md: 4 }}>
             <FormField label={intl.formatMessage({ id: 'stockPurchase.costPriceLabel', defaultMessage: 'Cost price (USD)' })} required>
               <NumberInput value={cost ?? ''} onChange={(_, v) => setCost(Number.isNaN(v) ? undefined : v)}>
                 <NumberInputField />
               </NumberInput>
             </FormField>
           </GridItem>
-          <GridItem colSpan={4} />
-          <GridItem colSpan={4}>
+          <GridItem colSpan={{ base: 12, sm: 6, md: 4 }} display={{ base: 'none', md: 'block' }} />
+          <GridItem colSpan={{ base: 12, sm: 6, md: 4 }}>
             <FormField label={intl.formatMessage({ id: 'stockPurchase.purchaseDateLabel', defaultMessage: 'Purchase date' })} required>
               <Input type="date" value={purchaseDate ?? ''} onChange={(e) => setPurchaseDate(e.target.value || null)} />
             </FormField>
           </GridItem>
-          <GridItem colSpan={4}>
+          <GridItem colSpan={{ base: 12, sm: 6, md: 4 }}>
             <FormField label={intl.formatMessage({ id: 'stockPurchase.productionDateLabel', defaultMessage: 'Production date' })}>
               <Input type="date" value={productionDate ?? ''} onChange={(e) => setProductionDate(e.target.value || null)} />
             </FormField>
           </GridItem>
-          <GridItem colSpan={4}>
+          <GridItem colSpan={{ base: 12, sm: 6, md: 4 }}>
             <FormField label={intl.formatMessage({ id: 'stockPurchase.expiryDateLabel', defaultMessage: 'Expiry date' })}>
               <Input type="date" value={expiryDate ?? ''} onChange={(e) => setExpiryDate(e.target.value || null)} />
             </FormField>
@@ -181,7 +181,7 @@ export default function StockPurchase({ onDone, onCancel, embedded = false }: St
   ];
 
   return (
-    <Box p={embedded ? 0 : 8}>
+    <Box p={embedded ? 0 : { base: 4, md: 8 }}>
       {!embedded && <PageHeader title={intl.formatMessage({ id: 'stockPurchase.pageTitle', defaultMessage: 'Record stock purchase' })} />}
       <WizardShell
         steps={steps}

@@ -134,12 +134,12 @@ export default function ProductVariantsForm({ onDone, onCancel, embedded = false
     <Card>
       <CardBody>
         <Grid templateColumns="repeat(12, 1fr)" gap={4}>
-          <GridItem colSpan={4}>
+          <GridItem colSpan={{ base: 12, sm: 6, md: 4 }}>
             <FormField label={nameLabel} required>
               <Input value={name} onChange={(e) => setName(e.target.value)} />
             </FormField>
           </GridItem>
-          <GridItem colSpan={4}>
+          <GridItem colSpan={{ base: 12, sm: 6, md: 4 }}>
             <QuickCreateSelect
               resource="brands"
               label={brandLabel}
@@ -150,7 +150,7 @@ export default function ProductVariantsForm({ onDone, onCancel, embedded = false
               onCreated={(b) => setBrands((prev) => [...prev, b])}
             />
           </GridItem>
-          <GridItem colSpan={4}>
+          <GridItem colSpan={{ base: 12, sm: 6, md: 4 }}>
             <QuickCreateSelect
               resource="categories"
               label={categoryLabel}
@@ -181,12 +181,12 @@ export default function ProductVariantsForm({ onDone, onCancel, embedded = false
           <CardBody>
             {rows.map((row, i) => (
               <Grid templateColumns="repeat(12, 1fr)" gap={4} key={i} pt={i === 0 ? 0 : 4}>
-                <GridItem colSpan={4}>
+                <GridItem colSpan={{ base: 12, sm: 6, md: 4 }}>
                   <FormField label={rowLabelLabel}>
                     <Input value={row.label} onChange={(e) => updateRow(i, { label: e.target.value })} />
                   </FormField>
                 </GridItem>
-                <GridItem colSpan={4}>
+                <GridItem colSpan={{ base: 12, sm: 6, md: 4 }}>
                   <QuickCreateSelect
                     resource="variant-types"
                     label={variantTypeLabel}
@@ -196,7 +196,7 @@ export default function ProductVariantsForm({ onDone, onCancel, embedded = false
                     onCreated={(t) => setVariantTypes((prev) => [...prev, t])}
                   />
                 </GridItem>
-                <GridItem colSpan={3}>
+                <GridItem colSpan={{ base: 12, sm: 6, md: 3 }}>
                   <FormField label={lowStockThresholdLabel}>
                     <NumberInput
                       value={row.lowStockThreshold ?? ''}
@@ -206,7 +206,7 @@ export default function ProductVariantsForm({ onDone, onCancel, embedded = false
                     </NumberInput>
                   </FormField>
                 </GridItem>
-                <GridItem colSpan={1} display="flex" alignItems="flex-end">
+                <GridItem colSpan={{ base: 12, sm: 6, md: 1 }} display="flex" alignItems="flex-end">
                   <IconButton
                     aria-label={intl.formatMessage({ id: 'productWizard.removeVariantAria', defaultMessage: 'Remove' })}
                     icon={<FiTrash2 />}
@@ -291,7 +291,7 @@ export default function ProductVariantsForm({ onDone, onCancel, embedded = false
   ];
 
   return (
-    <Box p={embedded ? 0 : 8}>
+    <Box p={embedded ? 0 : { base: 4, md: 8 }}>
       {!embedded && <PageHeader title={intl.formatMessage({ id: 'productWizard.pageTitle', defaultMessage: 'New product' })} />}
       <WizardShell
         steps={steps}
