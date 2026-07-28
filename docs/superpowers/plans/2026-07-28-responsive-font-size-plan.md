@@ -28,6 +28,7 @@
 
 - `localStorage` key for the font-size preference: `inventory-dashboard-font-size` (values: `'small' | 'medium' | 'large'`, default `'medium'`) — mirrors the existing `inventory-dashboard-locale` key used by `LocaleProvider`.
 - Chakra's `Drawer` `placement` prop natively supports the logical values `'start'`/`'end'` (confirmed in `@chakra-ui/react`'s `DrawerOptions` type) — use these, not `'left'`/`'right'`, so it flips correctly for the existing RTL (Arabic) support.
+- Established convention already in this codebase (commit `b50072e`, "Fix RTL direction not propagating into Chakra modal/dialog portals"): Chakra portals `ModalContent`/`AlertDialogContent` to `document.body`, outside the `dir="rtl"` wrapper `Box` in `ChakraRoot.tsx`, so each of those already sets `dir={locale === 'ar' ? 'rtl' : 'ltr'}` explicitly (see `AddNewModal.tsx`, `QuickCreateSelect.tsx`, `ResourceListPage.tsx`). `Drawer`'s `DrawerContent` uses the exact same portal mechanism (confirmed: `@chakra-ui/react`'s `drawer.d.ts` re-exports `DrawerBody`/`DrawerCloseButton`/etc. directly from the `modal` internals) — Task 3's `DrawerContent` must set the same `dir` prop, for the same reason.
 - Verification command for every task in this plan (no frontend test harness exists in this plugin — this is the authoritative gate, same as every prior UI plan in this repo):
   ```bash
   cd src/plugins/inventory-dashboard && npm run test:ts:front
@@ -595,7 +596,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         </Box>
         <Drawer isOpen={isOpen} placement={locale === 'ar' ? 'end' : 'start'} onClose={onClose}>
           <DrawerOverlay />
-          <DrawerContent maxW="240px">
+          <DrawerContent maxW="240px" dir={locale === 'ar' ? 'rtl' : 'ltr'}>
             <DrawerBody p={0}>
               <AppSidebar />
             </DrawerBody>
