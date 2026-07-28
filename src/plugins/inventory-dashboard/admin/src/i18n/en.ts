@@ -9,9 +9,14 @@ export const en = {
 
   'theme.lightMode': 'Light mode',
   'theme.darkMode': 'Dark mode',
+  'fontSize.label': 'Text size',
+  'fontSize.small': 'Small',
+  'fontSize.medium': 'Medium',
+  'fontSize.large': 'Large',
 
   'addNew.buttonLabel': 'Add new',
 
+  'nav.openMenuAria': 'Open menu',
   'nav.overview': 'Overview',
   'nav.stockPurchase': 'Stock Purchase',
   'nav.newOrder': 'New Order',

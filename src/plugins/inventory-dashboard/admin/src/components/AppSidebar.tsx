@@ -7,6 +7,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { TOP_LINKS, CATALOG_GROUPS, type IconComponent } from '../config/navConfig';
 import { AddNewModal } from './AddNewModal';
 import { ColorModeToggle } from './ColorModeToggle';
+import { FontSizeToggle } from './FontSizeToggle';
 import { LanguageToggle } from './LanguageToggle';
 
 function isLinkActive(pathname: string, to: string): boolean {
@@ -103,6 +104,7 @@ export function AppSidebar() {
 
       <Box flex={1} />
       <LanguageToggle />
+      <FontSizeToggle />
       <ColorModeToggle />
 
       <AddNewModal isOpen={isAddNewOpen} onClose={() => setIsAddNewOpen(false)} />

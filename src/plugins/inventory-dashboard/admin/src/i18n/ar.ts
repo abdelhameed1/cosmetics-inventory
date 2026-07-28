@@ -11,9 +11,14 @@ export const ar: Record<keyof typeof en, string> = {
 
   'theme.lightMode': 'الوضع الفاتح',
   'theme.darkMode': 'الوضع الداكن',
+  'fontSize.label': 'حجم النص',
+  'fontSize.small': 'صغير',
+  'fontSize.medium': 'متوسط',
+  'fontSize.large': 'كبير',
 
   'addNew.buttonLabel': 'إضافة جديد',
 
+  'nav.openMenuAria': 'فتح القائمة',
   'nav.overview': 'نظرة عامة',
   'nav.stockPurchase': 'شراء مخزون',
   'nav.newOrder': 'طلب جديد',
