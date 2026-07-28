@@ -9,44 +9,44 @@ export type IconComponent = IconType;
 
 export interface NavLink {
   to: string;
-  label: string;
+  labelId: string;
   icon: IconComponent;
 }
 
 export interface CatalogItem {
   slug: string;
-  label: string;
+  labelId: string;
   icon: IconComponent;
 }
 
 export interface CatalogGroup {
-  label: string;
+  labelId: string;
   items: CatalogItem[];
 }
 
 export const TOP_LINKS: NavLink[] = [
-  { to: '/plugins/inventory-dashboard', label: 'Overview', icon: FiHome },
-  { to: '/plugins/inventory-stock', label: 'Stock Purchase', icon: FiBriefcase },
-  { to: '/plugins/inventory-orders', label: 'New Order', icon: FiShoppingCart },
+  { to: '/plugins/inventory-dashboard', labelId: 'nav.overview', icon: FiHome },
+  { to: '/plugins/inventory-stock', labelId: 'nav.stockPurchase', icon: FiBriefcase },
+  { to: '/plugins/inventory-orders', labelId: 'nav.newOrder', icon: FiShoppingCart },
 ];
 
 export const CATALOG_GROUPS: CatalogGroup[] = [
   {
-    label: 'Catalog',
+    labelId: 'nav.catalog',
     items: [
-      { slug: 'products', label: 'Products', icon: FiBox },
-      { slug: 'variants', label: 'Variants', icon: FiLayers },
-      { slug: 'variant-types', label: 'Variant Types', icon: FiSliders },
-      { slug: 'categories', label: 'Categories', icon: FiGrid },
-      { slug: 'brands', label: 'Brands', icon: FiTag },
+      { slug: 'products', labelId: 'nav.products', icon: FiBox },
+      { slug: 'variants', labelId: 'nav.variants', icon: FiLayers },
+      { slug: 'variant-types', labelId: 'nav.variantTypes', icon: FiSliders },
+      { slug: 'categories', labelId: 'nav.categories', icon: FiGrid },
+      { slug: 'brands', labelId: 'nav.brands', icon: FiTag },
     ],
   },
   {
-    label: 'Partners & Pricing',
+    labelId: 'nav.partnersPricing',
     items: [
-      { slug: 'suppliers', label: 'Suppliers', icon: FiTruck },
-      { slug: 'customers', label: 'Customers', icon: FiUsers },
-      { slug: 'price-lists', label: 'Price Lists', icon: FiDollarSign },
+      { slug: 'suppliers', labelId: 'nav.suppliers', icon: FiTruck },
+      { slug: 'customers', labelId: 'nav.customers', icon: FiUsers },
+      { slug: 'price-lists', labelId: 'nav.priceLists', icon: FiDollarSign },
     ],
   },
 ];

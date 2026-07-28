@@ -1,10 +1,15 @@
-import { extendTheme } from '@chakra-ui/react';
+import { extendTheme, type ThemeConfig } from '@chakra-ui/react';
+import { type Locale } from '../i18n/LocaleProvider';
 
-const theme = extendTheme({
-  config: {
-    initialColorMode: 'light',
-    useSystemColorMode: false,
-  },
+export const themeConfig: ThemeConfig = {
+  initialColorMode: 'light',
+  useSystemColorMode: false,
+};
+
+const fontStack = `'Noto Sans Arabic', -apple-system, BlinkMacSystemFont, 'Segoe UI', Tahoma, Roboto, sans-serif`;
+
+const baseTheme = {
+  config: themeConfig,
   colors: {
     brand: {
       50: '#eef4ff',
@@ -20,8 +25,8 @@ const theme = extendTheme({
     },
   },
   fonts: {
-    heading: `-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif`,
-    body: `-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif`,
+    heading: fontStack,
+    body: fontStack,
   },
   fontSizes: {
     xs: '0.8125rem',
@@ -99,6 +104,11 @@ const theme = extendTheme({
       baseStyle: { borderRadius: 'lg', bg: 'bg.surface' },
     },
   },
-});
+};
 
-export default theme;
+export function getTheme(locale: Locale) {
+  return extendTheme({
+    ...baseTheme,
+    direction: locale === 'ar' ? 'rtl' : 'ltr',
+  });
+}

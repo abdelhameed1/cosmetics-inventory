@@ -2,10 +2,12 @@
 import { useState } from 'react';
 import { Box, Button, Heading, HStack, Icon, VStack, Text } from '@chakra-ui/react';
 import { FiPlus } from 'react-icons/fi';
+import { useIntl } from 'react-intl';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { TOP_LINKS, CATALOG_GROUPS, type IconComponent } from '../config/navConfig';
 import { AddNewModal } from './AddNewModal';
 import { ColorModeToggle } from './ColorModeToggle';
+import { LanguageToggle } from './LanguageToggle';
 
 function isLinkActive(pathname: string, to: string): boolean {
   return pathname === to || pathname.startsWith(`${to}/`);
@@ -18,7 +20,7 @@ function NavButton({
     <Box
       as="button"
       w="100%"
-      textAlign="left"
+      textAlign="start"
       px={3}
       py={2}
       borderRadius="lg"
@@ -39,6 +41,7 @@ function NavButton({
 export function AppSidebar() {
   const { pathname } = useLocation();
   const navigate = useNavigate();
+  const intl = useIntl();
   const [isAddNewOpen, setIsAddNewOpen] = useState(false);
 
   return (
@@ -47,7 +50,7 @@ export function AppSidebar() {
       w="240px"
       flexShrink={0}
       bg="bg.surface"
-      borderRightWidth="1px"
+      borderInlineEndWidth="1px"
       borderColor="border.default"
       minH="100%"
       py={6}
@@ -61,14 +64,14 @@ export function AppSidebar() {
         mb={4}
         onClick={() => setIsAddNewOpen(true)}
       >
-        Add new
+        {intl.formatMessage({ id: 'addNew.buttonLabel', defaultMessage: 'Add new' })}
       </Button>
 
       <VStack align="stretch" spacing={1} pb={6}>
         {TOP_LINKS.map((link) => (
           <NavButton
             key={link.to}
-            label={link.label}
+            label={intl.formatMessage({ id: link.labelId })}
             icon={link.icon}
             isActive={isLinkActive(pathname, link.to)}
             onClick={() => navigate(link.to)}
@@ -77,9 +80,9 @@ export function AppSidebar() {
       </VStack>
 
       {CATALOG_GROUPS.map((group) => (
-        <Box key={group.label} mb={6}>
+        <Box key={group.labelId} mb={6}>
           <Heading size="xs" textTransform="uppercase" color="text.secondary" mb={2} px={3}>
-            {group.label}
+            {intl.formatMessage({ id: group.labelId })}
           </Heading>
           <VStack align="stretch" spacing={1}>
             {group.items.map((item) => {
@@ -87,7 +90,7 @@ export function AppSidebar() {
               return (
                 <NavButton
                   key={item.slug}
-                  label={item.label}
+                  label={intl.formatMessage({ id: item.labelId })}
                   icon={item.icon}
                   isActive={isLinkActive(pathname, to)}
                   onClick={() => navigate(to)}
@@ -99,6 +102,7 @@ export function AppSidebar() {
       ))}
 
       <Box flex={1} />
+      <LanguageToggle />
       <ColorModeToggle />
 
       <AddNewModal isOpen={isAddNewOpen} onClose={() => setIsAddNewOpen(false)} />
