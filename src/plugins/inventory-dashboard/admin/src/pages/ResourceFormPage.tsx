@@ -55,7 +55,7 @@ export default function ResourceFormPage() {
   const resourceLabel = getResourceLabel(intl, resource);
 
   return (
-    <Box p={8}>
+    <Box p={{ base: 4, md: 8 }}>
       <PageHeader
         title={
           isEdit
@@ -68,7 +68,7 @@ export default function ResourceFormPage() {
         <CardBody>
           <Grid templateColumns="repeat(12, 1fr)" gap={4}>
             {editableFields.map((f) => (
-              <GridItem key={f.name} colSpan={6}>
+              <GridItem key={f.name} colSpan={{ base: 12, md: 6 }}>
                 <FieldRenderer field={f} value={values[f.name]} onChange={(v) => setField(f.name, v)} />
               </GridItem>
             ))}

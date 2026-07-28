@@ -56,7 +56,7 @@ export default function ResourceListPage() {
   };
 
   return (
-    <Box p={8}>
+    <Box p={{ base: 4, md: 8 }}>
       <PageHeader
         title={getResourceLabel(intl, resource)}
         actions={<Button onClick={() => navigate('new')}>{intl.formatMessage({ id: 'common.new', defaultMessage: 'New' })}</Button>}
