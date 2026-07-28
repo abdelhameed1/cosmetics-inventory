@@ -11,6 +11,7 @@ import { PageHeader } from '../components/ui/PageHeader';
 import { FormField } from '../components/ui/FormField';
 import { DataTable } from '../components/ui/DataTable';
 import { WizardShell, type WizardStep } from '../components/WizardShell';
+import { QuickCreateSelect } from '../components/QuickCreateSelect';
 
 interface DraftLine {
   variantDocumentId: string;
@@ -152,11 +153,15 @@ export default function OrderForm({ onDone, onCancel, embedded = false }: OrderF
       <CardBody>
         <Grid templateColumns="repeat(12, 1fr)" gap={4}>
           <GridItem colSpan={4}>
-            <FormField label="Customer" required>
-              <Select value={customerId} onChange={(e) => setCustomerId(e.target.value)} placeholder="Select customer">
-                {customers.map((c) => <option key={c.documentId} value={c.documentId}>{c.name}</option>)}
-              </Select>
-            </FormField>
+            <QuickCreateSelect
+              resource="customers"
+              label="Customer"
+              required
+              value={customerId}
+              onChange={setCustomerId}
+              options={customers}
+              onCreated={(c) => setCustomers((prev) => [...prev, c])}
+            />
           </GridItem>
           <GridItem colSpan={4}>
             <FormField label="Order date">
