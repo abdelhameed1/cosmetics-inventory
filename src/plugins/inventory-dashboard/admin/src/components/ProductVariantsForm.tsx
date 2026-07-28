@@ -6,6 +6,7 @@ import { useApi } from '../utils/api';
 import { PageHeader } from './ui/PageHeader';
 import { FormField } from './ui/FormField';
 import { WizardShell, type WizardStep } from './WizardShell';
+import { QuickCreateSelect } from './QuickCreateSelect';
 
 interface VariantRow { label: string; variantTypeId: string; lowStockThreshold?: number; }
 
@@ -125,18 +126,26 @@ export default function ProductVariantsForm({ onDone, onCancel, embedded = false
             </FormField>
           </GridItem>
           <GridItem colSpan={4}>
-            <FormField label="Brand" required>
-              <Select value={brandId} onChange={(e) => setBrandId(e.target.value)} placeholder="Select brand">
-                {brands.map((b) => <option key={b.documentId} value={b.documentId}>{b.name}</option>)}
-              </Select>
-            </FormField>
+            <QuickCreateSelect
+              resource="brands"
+              label="Brand"
+              required
+              value={brandId}
+              onChange={setBrandId}
+              options={brands}
+              onCreated={(b) => setBrands((prev) => [...prev, b])}
+            />
           </GridItem>
           <GridItem colSpan={4}>
-            <FormField label="Category" required>
-              <Select value={categoryId} onChange={(e) => setCategoryId(e.target.value)} placeholder="Select category">
-                {categories.map((c) => <option key={c.documentId} value={c.documentId}>{c.name}</option>)}
-              </Select>
-            </FormField>
+            <QuickCreateSelect
+              resource="categories"
+              label="Category"
+              required
+              value={categoryId}
+              onChange={setCategoryId}
+              options={categories}
+              onCreated={(c) => setCategories((prev) => [...prev, c])}
+            />
           </GridItem>
         </Grid>
       </CardBody>
@@ -160,15 +169,14 @@ export default function ProductVariantsForm({ onDone, onCancel, embedded = false
                   </FormField>
                 </GridItem>
                 <GridItem colSpan={4}>
-                  <FormField label="Type">
-                    <Select
-                      value={row.variantTypeId}
-                      onChange={(e) => updateRow(i, { variantTypeId: e.target.value })}
-                      placeholder="Select type"
-                    >
-                      {variantTypes.map((t) => <option key={t.documentId} value={t.documentId}>{t.name}</option>)}
-                    </Select>
-                  </FormField>
+                  <QuickCreateSelect
+                    resource="variant-types"
+                    label="Variant Type"
+                    value={row.variantTypeId}
+                    onChange={(v) => updateRow(i, { variantTypeId: v })}
+                    options={variantTypes}
+                    onCreated={(t) => setVariantTypes((prev) => [...prev, t])}
+                  />
                 </GridItem>
                 <GridItem colSpan={3}>
                   <FormField label="Low-stock threshold">
