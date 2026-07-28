@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react';
 import { Box, Button, Card, CardBody, Grid, GridItem, HStack, IconButton, Input, NumberInput, NumberInputField, Select, Text } from '@chakra-ui/react';
 import { FiTrash2 } from 'react-icons/fi';
+import { useIntl } from 'react-intl';
 import { useApi } from '../utils/api';
 import { PageHeader } from './ui/PageHeader';
 import { FormField } from './ui/FormField';
@@ -18,6 +19,7 @@ interface ProductVariantsFormProps {
 
 export default function ProductVariantsForm({ onDone, onCancel, embedded = false }: ProductVariantsFormProps) {
   const api = useApi();
+  const intl = useIntl();
   const [name, setName] = useState('');
   const [brandId, setBrandId] = useState('');
   const [categoryId, setCategoryId] = useState('');
@@ -63,7 +65,7 @@ export default function ProductVariantsForm({ onDone, onCancel, embedded = false
     // after the product and earlier variants are already persisted, leaving a
     // half-built product behind with no rollback.
     if (explicitVariants.some((r) => !r.variantTypeId)) {
-      setError('Each variant needs a type.');
+      setError(intl.formatMessage({ id: 'productWizard.variantNeedsTypeError', defaultMessage: 'Each variant needs a type.' }));
       return;
     }
     setIsSubmitting(true);
@@ -109,26 +111,38 @@ export default function ProductVariantsForm({ onDone, onCancel, embedded = false
     } catch (e: any) {
       setError(
         e?.response?.data?.error?.message ??
-          (productId ? 'Product was saved, but a later step failed. Click "Retry remaining steps" to continue.' : 'Could not create product')
+          (productId
+            ? intl.formatMessage({
+                id: 'productWizard.partialSaveError',
+                defaultMessage: 'Product was saved, but a later step failed. Click "Retry remaining steps" to continue.',
+              })
+            : intl.formatMessage({ id: 'productWizard.createError', defaultMessage: 'Could not create product' }))
       );
     } finally {
       setIsSubmitting(false);
     }
   };
 
+  const nameLabel = intl.formatMessage({ id: 'field.name', defaultMessage: 'Name' });
+  const brandLabel = intl.formatMessage({ id: 'field.brand', defaultMessage: 'Brand' });
+  const categoryLabel = intl.formatMessage({ id: 'field.category', defaultMessage: 'Category' });
+  const rowLabelLabel = intl.formatMessage({ id: 'field.label', defaultMessage: 'Label' });
+  const variantTypeLabel = intl.formatMessage({ id: 'field.variantType', defaultMessage: 'Variant Type' });
+  const lowStockThresholdLabel = intl.formatMessage({ id: 'field.lowStockThreshold', defaultMessage: 'Low-stock Threshold' });
+
   const productInfoStep = (
     <Card>
       <CardBody>
         <Grid templateColumns="repeat(12, 1fr)" gap={4}>
           <GridItem colSpan={4}>
-            <FormField label="Name" required>
+            <FormField label={nameLabel} required>
               <Input value={name} onChange={(e) => setName(e.target.value)} />
             </FormField>
           </GridItem>
           <GridItem colSpan={4}>
             <QuickCreateSelect
               resource="brands"
-              label="Brand"
+              label={brandLabel}
               required
               value={brandId}
               onChange={setBrandId}
@@ -139,7 +153,7 @@ export default function ProductVariantsForm({ onDone, onCancel, embedded = false
           <GridItem colSpan={4}>
             <QuickCreateSelect
               resource="categories"
-              label="Category"
+              label={categoryLabel}
               required
               value={categoryId}
               onChange={setCategoryId}
@@ -155,8 +169,12 @@ export default function ProductVariantsForm({ onDone, onCancel, embedded = false
   const variantsStep = (
     <Box>
       <HStack justify="space-between" pb={2}>
-        <Text fontSize="sm" color="text.secondary">Optional — leave empty to keep a single default variant.</Text>
-        <Button variant="outline" onClick={addRow}>Add variant</Button>
+        <Text fontSize="sm" color="text.secondary">
+          {intl.formatMessage({ id: 'productWizard.variantsHint', defaultMessage: 'Optional — leave empty to keep a single default variant.' })}
+        </Text>
+        <Button variant="outline" onClick={addRow}>
+          {intl.formatMessage({ id: 'productWizard.addVariantButton', defaultMessage: 'Add variant' })}
+        </Button>
       </HStack>
       {rows.length > 0 && (
         <Card>
@@ -164,14 +182,14 @@ export default function ProductVariantsForm({ onDone, onCancel, embedded = false
             {rows.map((row, i) => (
               <Grid templateColumns="repeat(12, 1fr)" gap={4} key={i} pt={i === 0 ? 0 : 4}>
                 <GridItem colSpan={4}>
-                  <FormField label="Label">
+                  <FormField label={rowLabelLabel}>
                     <Input value={row.label} onChange={(e) => updateRow(i, { label: e.target.value })} />
                   </FormField>
                 </GridItem>
                 <GridItem colSpan={4}>
                   <QuickCreateSelect
                     resource="variant-types"
-                    label="Variant Type"
+                    label={variantTypeLabel}
                     value={row.variantTypeId}
                     onChange={(v) => updateRow(i, { variantTypeId: v })}
                     options={variantTypes}
@@ -179,7 +197,7 @@ export default function ProductVariantsForm({ onDone, onCancel, embedded = false
                   />
                 </GridItem>
                 <GridItem colSpan={3}>
-                  <FormField label="Low-stock threshold">
+                  <FormField label={lowStockThresholdLabel}>
                     <NumberInput
                       value={row.lowStockThreshold ?? ''}
                       onChange={(_, v) => updateRow(i, { lowStockThreshold: Number.isNaN(v) ? undefined : v })}
@@ -189,7 +207,11 @@ export default function ProductVariantsForm({ onDone, onCancel, embedded = false
                   </FormField>
                 </GridItem>
                 <GridItem colSpan={1} display="flex" alignItems="flex-end">
-                  <IconButton aria-label="Remove" icon={<FiTrash2 />} onClick={() => removeRow(i)} />
+                  <IconButton
+                    aria-label={intl.formatMessage({ id: 'productWizard.removeVariantAria', defaultMessage: 'Remove' })}
+                    icon={<FiTrash2 />}
+                    onClick={() => removeRow(i)}
+                  />
                 </GridItem>
               </Grid>
             ))}
@@ -202,11 +224,11 @@ export default function ProductVariantsForm({ onDone, onCancel, embedded = false
   const relatedStep = (
     <Card>
       <CardBody>
-        <FormField label="Add related product">
+        <FormField label={intl.formatMessage({ id: 'productWizard.addRelatedProductLabel', defaultMessage: 'Add related product' })}>
           <Select
             value=""
             onChange={(e) => setRelatedIds((ids) => (ids.includes(e.target.value) ? ids : [...ids, e.target.value]))}
-            placeholder="Select product"
+            placeholder={intl.formatMessage({ id: 'productWizard.selectProductPlaceholder', defaultMessage: 'Select product' })}
           >
             {products.map((p) => <option key={p.documentId} value={p.documentId}>{p.name}</option>)}
           </Select>
@@ -214,7 +236,7 @@ export default function ProductVariantsForm({ onDone, onCancel, embedded = false
         <Box pt={2}>
           {relatedIds.map((id) => {
             const p = products.find((x) => x.documentId === id);
-            return <Text key={id} display="inline-block" pr={2}>{p?.name ?? id}</Text>;
+            return <Text key={id} display="inline-block" pe={2}>{p?.name ?? id}</Text>;
           })}
         </Box>
       </CardBody>
@@ -224,39 +246,67 @@ export default function ProductVariantsForm({ onDone, onCancel, embedded = false
   const reviewStep = (
     <Card>
       <CardBody>
-        <Text><b>Name:</b> {name || '—'}</Text>
-        <Text><b>Brand:</b> {brands.find((b) => b.documentId === brandId)?.name ?? '—'}</Text>
-        <Text><b>Category:</b> {categories.find((c) => c.documentId === categoryId)?.name ?? '—'}</Text>
+        <Text><b>{intl.formatMessage({ id: 'productWizard.review.nameLabel', defaultMessage: 'Name:' })}</b> {name || '—'}</Text>
+        <Text><b>{intl.formatMessage({ id: 'productWizard.review.brandLabel', defaultMessage: 'Brand:' })}</b> {brands.find((b) => b.documentId === brandId)?.name ?? '—'}</Text>
+        <Text><b>{intl.formatMessage({ id: 'productWizard.review.categoryLabel', defaultMessage: 'Category:' })}</b> {categories.find((c) => c.documentId === categoryId)?.name ?? '—'}</Text>
         <Text pt={2}>
-          <b>Variants:</b>{' '}
-          {explicitVariants.length === 0 ? 'Single default variant' : explicitVariants.map((r) => r.label || '(unnamed)').join(', ')}
+          <b>{intl.formatMessage({ id: 'productWizard.review.variantsLabel', defaultMessage: 'Variants:' })}</b>{' '}
+          {explicitVariants.length === 0
+            ? intl.formatMessage({ id: 'productWizard.review.singleDefaultVariant', defaultMessage: 'Single default variant' })
+            : explicitVariants
+                .map((r) => r.label || intl.formatMessage({ id: 'productWizard.review.unnamed', defaultMessage: '(unnamed)' }))
+                .join(', ')}
         </Text>
         <Text pt={2}>
-          <b>Related products:</b>{' '}
-          {relatedIds.length === 0 ? 'None' : relatedIds.map((id) => products.find((p) => p.documentId === id)?.name ?? id).join(', ')}
+          <b>{intl.formatMessage({ id: 'productWizard.review.relatedProductsLabel', defaultMessage: 'Related products:' })}</b>{' '}
+          {relatedIds.length === 0
+            ? intl.formatMessage({ id: 'productWizard.review.none', defaultMessage: 'None' })
+            : relatedIds.map((id) => products.find((p) => p.documentId === id)?.name ?? id).join(', ')}
         </Text>
       </CardBody>
     </Card>
   );
 
   const steps: WizardStep[] = [
-    { label: 'Product Info', content: productInfoStep, isValid: () => Boolean(name && brandId && categoryId) },
-    { label: 'Variants', content: variantsStep, isValid: () => explicitVariants.every((r) => r.variantTypeId) },
-    { label: 'Related Products', content: relatedStep, isValid: () => true },
-    { label: 'Review', content: reviewStep, isValid: () => true },
+    {
+      label: intl.formatMessage({ id: 'productWizard.step.productInfo', defaultMessage: 'Product Info' }),
+      content: productInfoStep,
+      isValid: () => Boolean(name && brandId && categoryId),
+    },
+    {
+      label: intl.formatMessage({ id: 'productWizard.step.variants', defaultMessage: 'Variants' }),
+      content: variantsStep,
+      isValid: () => explicitVariants.every((r) => r.variantTypeId),
+    },
+    {
+      label: intl.formatMessage({ id: 'productWizard.step.relatedProducts', defaultMessage: 'Related Products' }),
+      content: relatedStep,
+      isValid: () => true,
+    },
+    {
+      label: intl.formatMessage({ id: 'productWizard.step.review', defaultMessage: 'Review' }),
+      content: reviewStep,
+      isValid: () => true,
+    },
   ];
 
   return (
     <Box p={embedded ? 0 : 8}>
-      {!embedded && <PageHeader title="New product" />}
+      {!embedded && <PageHeader title={intl.formatMessage({ id: 'productWizard.pageTitle', defaultMessage: 'New product' })} />}
       <WizardShell
         steps={steps}
         onSubmit={save}
-        submitLabel={savedProductId ? 'Retry remaining steps' : 'Create product'}
+        submitLabel={
+          savedProductId
+            ? intl.formatMessage({ id: 'productWizard.retryButton', defaultMessage: 'Retry remaining steps' })
+            : intl.formatMessage({ id: 'productWizard.createButton', defaultMessage: 'Create product' })
+        }
         isSubmitting={isSubmitting}
         submitError={error}
       />
-      <Button variant="ghost" mt={4} onClick={onCancel ?? onDone} isDisabled={isSubmitting}>Cancel</Button>
+      <Button variant="ghost" mt={4} onClick={onCancel ?? onDone} isDisabled={isSubmitting}>
+        {intl.formatMessage({ id: 'common.cancel', defaultMessage: 'Cancel' })}
+      </Button>
     </Box>
   );
 }
