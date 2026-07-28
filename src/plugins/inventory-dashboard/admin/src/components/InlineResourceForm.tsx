@@ -7,7 +7,7 @@ import { FieldRenderer } from './FieldRenderer';
 
 interface InlineResourceFormProps {
   resource: string;
-  onDone: () => void;
+  onDone: (created?: any) => void;
   onCancel?: () => void;
 }
 
@@ -30,8 +30,8 @@ export function InlineResourceForm({ resource, onDone, onCancel }: InlineResourc
     setIsSubmitting(true);
     try {
       const payload = serialize(values, editableFields);
-      await api.post(`/resources/${resource}`, payload);
-      onDone();
+      const created = await api.post<any>(`/resources/${resource}`, payload);
+      onDone(created);
     } catch (e: any) {
       setError(e?.response?.data?.error?.message ?? 'Save failed');
     } finally {
