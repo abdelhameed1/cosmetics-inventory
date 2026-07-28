@@ -2,12 +2,14 @@ import { ChakraProvider, ColorModeScript, Box } from '@chakra-ui/react';
 import { type ReactNode } from 'react';
 import { getTheme, themeConfig } from '../theme';
 import { LocaleProvider, useLocale } from '../i18n/LocaleProvider';
+import { FontSizeProvider, useFontSizePreset } from '../theme/FontSizeProvider';
 
 function ThemedShell({ children }: { children: ReactNode }) {
   const { locale } = useLocale();
+  const { fontSizePreset } = useFontSizePreset();
 
   return (
-    <ChakraProvider theme={getTheme(locale)} resetCSS={false}>
+    <ChakraProvider theme={getTheme(locale, fontSizePreset)} resetCSS={false}>
       <Box bg="bg.canvas" color="text.primary" minH="100%" dir={locale === 'ar' ? 'rtl' : 'ltr'}>
         {children}
       </Box>
@@ -20,7 +22,9 @@ export function ChakraRoot({ children }: { children: ReactNode }) {
     <>
       <ColorModeScript initialColorMode={themeConfig.initialColorMode} />
       <LocaleProvider>
-        <ThemedShell>{children}</ThemedShell>
+        <FontSizeProvider>
+          <ThemedShell>{children}</ThemedShell>
+        </FontSizeProvider>
       </LocaleProvider>
     </>
   );

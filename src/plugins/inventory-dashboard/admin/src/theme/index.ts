@@ -1,5 +1,6 @@
 import { extendTheme, type ThemeConfig } from '@chakra-ui/react';
 import { type Locale } from '../i18n/LocaleProvider';
+import { type FontSizePreset } from './FontSizeProvider';
 
 export const themeConfig: ThemeConfig = {
   initialColorMode: 'light',
@@ -7,6 +8,36 @@ export const themeConfig: ThemeConfig = {
 };
 
 const fontStack = `'Noto Sans Arabic', -apple-system, BlinkMacSystemFont, 'Segoe UI', Tahoma, Roboto, sans-serif`;
+
+const fontSizeScales: Record<FontSizePreset, Record<string, string>> = {
+  small: {
+    xs: '0.75rem',
+    sm: '0.875rem',
+    md: '1rem',
+    lg: '1.125rem',
+    xl: '1.25rem',
+    '2xl': '1.5rem',
+    '3xl': '1.875rem',
+  },
+  medium: {
+    xs: '0.8125rem',
+    sm: '0.9375rem',
+    md: '1.0625rem',
+    lg: '1.1875rem',
+    xl: '1.375rem',
+    '2xl': '1.625rem',
+    '3xl': '2rem',
+  },
+  large: {
+    xs: '0.875rem',
+    sm: '1rem',
+    md: '1.125rem',
+    lg: '1.25rem',
+    xl: '1.5rem',
+    '2xl': '1.75rem',
+    '3xl': '2.125rem',
+  },
+};
 
 const baseTheme = {
   config: themeConfig,
@@ -27,15 +58,6 @@ const baseTheme = {
   fonts: {
     heading: fontStack,
     body: fontStack,
-  },
-  fontSizes: {
-    xs: '0.8125rem',
-    sm: '0.9375rem',
-    md: '1.0625rem',
-    lg: '1.1875rem',
-    xl: '1.375rem',
-    '2xl': '1.625rem',
-    '3xl': '2rem',
   },
   shadows: {
     card: '0 1px 3px rgba(17, 24, 39, 0.06), 0 1px 2px rgba(17, 24, 39, 0.04)',
@@ -106,9 +128,10 @@ const baseTheme = {
   },
 };
 
-export function getTheme(locale: Locale) {
+export function getTheme(locale: Locale, fontSizePreset: FontSizePreset) {
   return extendTheme({
     ...baseTheme,
+    fontSizes: fontSizeScales[fontSizePreset],
     direction: locale === 'ar' ? 'rtl' : 'ltr',
   });
 }
