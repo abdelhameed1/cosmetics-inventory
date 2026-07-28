@@ -5,6 +5,7 @@ import {
   Badge, Box, Button, Card, CardBody, Grid, GridItem, HStack, Input, NumberInput, NumberInputField,
   Select, Td, Text, Tr,
 } from '@chakra-ui/react';
+import { useIntl } from 'react-intl';
 import { useApi } from '../utils/api';
 import { useOrder } from '../hooks/useOrder';
 import { PageHeader } from '../components/ui/PageHeader';
@@ -42,6 +43,7 @@ export default function OrderForm({ onDone, onCancel, embedded = false }: OrderF
   const id = embedded ? undefined : params.id;
   const navigate = useNavigate();
   const api = useApi();
+  const intl = useIntl();
   const { order, reload, confirm } = useOrder(id);
 
   const [customers, setCustomers] = useState<any[]>([]);
@@ -74,6 +76,7 @@ export default function OrderForm({ onDone, onCancel, embedded = false }: OrderF
   }, [customerId, customers]);
 
   const variantsForProduct = variants.filter((v) => v.product?.documentId === addProductId);
+  const defaultVariantLabel = intl.formatMessage({ id: 'orderForm.defaultVariantLabel', defaultMessage: 'Default' });
 
   const addLine = async () => {
     if (!addVariantId || !priceListId) return;
@@ -82,7 +85,12 @@ export default function OrderForm({ onDone, onCancel, embedded = false }: OrderF
     const fifo = await api.get<{ segments: any[]; shortfall: number }>(
       `/fifo/${addVariantId}`, { quantity: addQty ?? 1 }
     );
-    if (fifo.shortfall > 0) setError(`Not enough stock: short by ${fifo.shortfall} unit(s).`);
+    if (fifo.shortfall > 0) {
+      setError(intl.formatMessage(
+        { id: 'orderForm.shortfallError', defaultMessage: 'Not enough stock: short by {count} unit(s).' },
+        { count: fifo.shortfall }
+      ));
+    }
 
     const variant = variants.find((v) => v.documentId === addVariantId);
     const newLines: DraftLine[] = [];
@@ -94,7 +102,7 @@ export default function OrderForm({ onDone, onCancel, embedded = false }: OrderF
       const priced = await getSuggestedPrice(api, priceListId, seg.costPriceUsd, addQty ?? 1);
       newLines.push({
         variantDocumentId: addVariantId,
-        variantLabel: variant?.label ?? 'Default',
+        variantLabel: variant?.label ?? defaultVariantLabel,
         stockBatchDocumentId: seg.batchDocumentId,
         costPriceUsd: seg.costPriceUsd,
         quantitySold: seg.quantityFromBatch,
@@ -131,7 +139,7 @@ export default function OrderForm({ onDone, onCancel, embedded = false }: OrderF
       navigate(`/plugins/inventory-dashboard/orders/${created.documentId}`);
       onDone?.();
     } catch (e: any) {
-      setError(e?.response?.data?.error?.message ?? 'Could not save order');
+      setError(e?.response?.data?.error?.message ?? intl.formatMessage({ id: 'orderForm.saveDraftError', defaultMessage: 'Could not save order' }));
     } finally {
       setIsSubmitting(false);
     }
@@ -140,7 +148,7 @@ export default function OrderForm({ onDone, onCancel, embedded = false }: OrderF
   const onConfirm = async () => {
     setError(null);
     try { await confirm(); reload(); }
-    catch (e: any) { setError(e?.response?.data?.error?.message ?? 'Could not confirm order'); }
+    catch (e: any) { setError(e?.response?.data?.error?.message ?? intl.formatMessage({ id: 'orderForm.confirmError', defaultMessage: 'Could not confirm order' })); }
   };
 
   // ----- confirmed view (read-only lines + payments) -----
@@ -155,7 +163,7 @@ export default function OrderForm({ onDone, onCancel, embedded = false }: OrderF
           <GridItem colSpan={4}>
             <QuickCreateSelect
               resource="customers"
-              label="Customer"
+              label={intl.formatMessage({ id: 'field.customer', defaultMessage: 'Customer' })}
               required
               value={customerId}
               onChange={setCustomerId}
@@ -164,7 +172,7 @@ export default function OrderForm({ onDone, onCancel, embedded = false }: OrderF
             />
           </GridItem>
           <GridItem colSpan={4}>
-            <FormField label="Order date">
+            <FormField label={intl.formatMessage({ id: 'orderForm.orderDateLabel', defaultMessage: 'Order date' })}>
               <Input type="date" value={orderDate ?? ''} onChange={(e) => setOrderDate(e.target.value || null)} />
             </FormField>
           </GridItem>
@@ -175,42 +183,46 @@ export default function OrderForm({ onDone, onCancel, embedded = false }: OrderF
 
   const lineItemsStep = (
     <Box>
-      <Text fontSize="lg" fontWeight="semibold" pb={2} color="text.primary">Add product</Text>
+      <Text fontSize="lg" fontWeight="semibold" pb={2} color="text.primary">
+        {intl.formatMessage({ id: 'orderForm.addProductTitle', defaultMessage: 'Add product' })}
+      </Text>
       <Card>
         <CardBody>
           <Grid templateColumns="repeat(12, 1fr)" gap={4}>
             <GridItem colSpan={4}>
-              <FormField label="Product">
+              <FormField label={intl.formatMessage({ id: 'field.product', defaultMessage: 'Product' })}>
                 <Select
                   value={addProductId}
                   onChange={(e) => { setAddProductId(e.target.value); setAddVariantId(''); }}
-                  placeholder="Select product"
+                  placeholder={intl.formatMessage({ id: 'orderForm.selectProductPlaceholder', defaultMessage: 'Select product' })}
                 >
                   {products.map((p) => <option key={p.documentId} value={p.documentId}>{p.name}</option>)}
                 </Select>
               </FormField>
             </GridItem>
             <GridItem colSpan={4}>
-              <FormField label="Variant">
+              <FormField label={intl.formatMessage({ id: 'orderForm.variantFieldLabel', defaultMessage: 'Variant' })}>
                 <Select
                   value={addVariantId}
                   onChange={(e) => setAddVariantId(e.target.value)}
                   isDisabled={!addProductId}
-                  placeholder="Select variant"
+                  placeholder={intl.formatMessage({ id: 'orderForm.selectVariantPlaceholder', defaultMessage: 'Select variant' })}
                 >
-                  {variantsForProduct.map((v) => <option key={v.documentId} value={v.documentId}>{v.label ?? 'Default'}</option>)}
+                  {variantsForProduct.map((v) => <option key={v.documentId} value={v.documentId}>{v.label ?? defaultVariantLabel}</option>)}
                 </Select>
               </FormField>
             </GridItem>
             <GridItem colSpan={3}>
-              <FormField label="Quantity">
+              <FormField label={intl.formatMessage({ id: 'orderForm.quantityLabel', defaultMessage: 'Quantity' })}>
                 <NumberInput value={addQty ?? ''} onChange={(_, v) => setAddQty(Number.isNaN(v) ? undefined : v)}>
                   <NumberInputField />
                 </NumberInput>
               </FormField>
             </GridItem>
             <GridItem colSpan={1} display="flex" alignItems="flex-end">
-              <Button onClick={addLine} isDisabled={!addVariantId}>Add</Button>
+              <Button onClick={addLine} isDisabled={!addVariantId}>
+                {intl.formatMessage({ id: 'orderForm.addButton', defaultMessage: 'Add' })}
+              </Button>
             </GridItem>
           </Grid>
         </CardBody>
@@ -218,13 +230,15 @@ export default function OrderForm({ onDone, onCancel, embedded = false }: OrderF
 
       {relatedSuggestions.length > 0 && (
         <Box mt={4} bg="accent.bg" p={3} borderRadius="lg">
-          <Text as="span" fontSize="sm">Customers also buy:&nbsp;</Text>
+          <Text as="span" fontSize="sm">
+            {intl.formatMessage({ id: 'orderForm.crossSellLabel', defaultMessage: 'Customers also buy:' })}&nbsp;
+          </Text>
           {relatedSuggestions.map((rp: any) => (
             <Button
               key={rp.documentId}
               variant="link"
               size="sm"
-              mr={2}
+              me={2}
               onClick={() => { setAddProductId(rp.documentId); setAddVariantId(''); }}
             >
               {rp.name}
@@ -234,7 +248,17 @@ export default function OrderForm({ onDone, onCancel, embedded = false }: OrderF
       )}
 
       <Box pt={6}>
-        <DataTable columns={['Variant', 'Batch', 'Qty', 'Sell (EGP)', 'Cost EGP', 'Flag']} isEmpty={draftLines.length === 0}>
+        <DataTable
+          columns={[
+            intl.formatMessage({ id: 'orderForm.col.variant', defaultMessage: 'Variant' }),
+            intl.formatMessage({ id: 'orderForm.col.batch', defaultMessage: 'Batch' }),
+            intl.formatMessage({ id: 'orderForm.col.qty', defaultMessage: 'Qty' }),
+            intl.formatMessage({ id: 'orderForm.col.sellEgp', defaultMessage: 'Sell (EGP)' }),
+            intl.formatMessage({ id: 'orderForm.col.costEgp', defaultMessage: 'Cost EGP' }),
+            intl.formatMessage({ id: 'orderForm.col.flag', defaultMessage: 'Flag' }),
+          ]}
+          isEmpty={draftLines.length === 0}
+        >
           {draftLines.map((l, i) => {
             const costEgp = l.costPriceUsd * exchangeRate;
             const below = l.sellPrice < costEgp;
@@ -250,11 +274,15 @@ export default function OrderForm({ onDone, onCancel, embedded = false }: OrderF
                     onChange={(_, v) =>
                       setDraftLines((prev) => prev.map((x, idx) => (idx === i ? { ...x, sellPrice: Number.isNaN(v) ? 0 : v } : x)))}
                   >
-                    <NumberInputField aria-label="sell" />
+                    <NumberInputField aria-label={intl.formatMessage({ id: 'orderForm.sellAria', defaultMessage: 'sell' })} />
                   </NumberInput>
                 </Td>
                 <Td>{costEgp.toFixed(2)}</Td>
-                <Td>{below ? <Badge colorScheme="red">Below cost</Badge> : null}</Td>
+                <Td>
+                  {below ? (
+                    <Badge colorScheme="red">{intl.formatMessage({ id: 'orderForm.belowCostBadge', defaultMessage: 'Below cost' })}</Badge>
+                  ) : null}
+                </Td>
               </Tr>
             );
           })}
@@ -263,17 +291,19 @@ export default function OrderForm({ onDone, onCancel, embedded = false }: OrderF
 
       <Grid templateColumns="repeat(12, 1fr)" gap={4} pt={6}>
         <GridItem colSpan={4}>
-          <FormField label="Discount (EGP)">
+          <FormField label={intl.formatMessage({ id: 'orderForm.discountLabel', defaultMessage: 'Discount (EGP)' })}>
             <NumberInput value={discount ?? ''} onChange={(_, v) => setDiscount(Number.isNaN(v) ? undefined : v)}>
               <NumberInputField />
             </NumberInput>
           </FormField>
         </GridItem>
         <GridItem colSpan={4} display="flex" alignItems="flex-end">
-          <Text>Subtotal: {subtotal.toFixed(2)} EGP</Text>
+          <Text>{intl.formatMessage({ id: 'orderForm.subtotalLabel', defaultMessage: 'Subtotal:' })} {subtotal.toFixed(2)} EGP</Text>
         </GridItem>
         <GridItem colSpan={4} display="flex" alignItems="flex-end">
-          <Text fontSize="lg" fontWeight="semibold">Total: {finalTotal.toFixed(2)} EGP</Text>
+          <Text fontSize="lg" fontWeight="semibold">
+            {intl.formatMessage({ id: 'orderForm.totalLabel', defaultMessage: 'Total:' })} {finalTotal.toFixed(2)} EGP
+          </Text>
         </GridItem>
       </Grid>
     </Box>
@@ -282,10 +312,17 @@ export default function OrderForm({ onDone, onCancel, embedded = false }: OrderF
   const reviewStep = (
     <Card>
       <CardBody>
-        <Text><b>Customer:</b> {customers.find((c) => c.documentId === customerId)?.name ?? '—'}</Text>
-        <Text><b>Order date:</b> {orderDate ?? '—'}</Text>
+        <Text><b>{intl.formatMessage({ id: 'orderForm.review.customerLabel', defaultMessage: 'Customer:' })}</b> {customers.find((c) => c.documentId === customerId)?.name ?? '—'}</Text>
+        <Text><b>{intl.formatMessage({ id: 'orderForm.review.orderDateLabel', defaultMessage: 'Order date:' })}</b> {orderDate ?? '—'}</Text>
         <Box pt={4}>
-          <DataTable columns={['Variant', 'Qty', 'Sell (EGP)']} isEmpty={draftLines.length === 0}>
+          <DataTable
+            columns={[
+              intl.formatMessage({ id: 'orderForm.col.variant', defaultMessage: 'Variant' }),
+              intl.formatMessage({ id: 'orderForm.col.qty', defaultMessage: 'Qty' }),
+              intl.formatMessage({ id: 'orderForm.col.sellEgp', defaultMessage: 'Sell (EGP)' }),
+            ]}
+            isEmpty={draftLines.length === 0}
+          >
             {draftLines.map((l, i) => (
               <Tr key={i}>
                 <Td>{l.variantLabel}</Td>
@@ -295,32 +332,58 @@ export default function OrderForm({ onDone, onCancel, embedded = false }: OrderF
             ))}
           </DataTable>
         </Box>
-        <Text pt={4}><b>Discount:</b> {(discount ?? 0).toFixed(2)} EGP</Text>
-        <Text fontSize="lg" fontWeight="semibold">Total: {finalTotal.toFixed(2)} EGP</Text>
+        <Text pt={4}>
+          <b>{intl.formatMessage({ id: 'orderForm.review.discountLabel', defaultMessage: 'Discount:' })}</b> {(discount ?? 0).toFixed(2)} EGP
+        </Text>
+        <Text fontSize="lg" fontWeight="semibold">
+          {intl.formatMessage({ id: 'orderForm.totalLabel', defaultMessage: 'Total:' })} {finalTotal.toFixed(2)} EGP
+        </Text>
       </CardBody>
     </Card>
   );
 
   const steps: WizardStep[] = [
-    { label: 'Customer & Date', content: customerStep, isValid: () => Boolean(customerId) },
-    { label: 'Line Items', content: lineItemsStep, isValid: () => draftLines.length > 0 },
-    { label: 'Review', content: reviewStep, isValid: () => true },
+    {
+      label: intl.formatMessage({ id: 'orderForm.step.customerDate', defaultMessage: 'Customer & Date' }),
+      content: customerStep,
+      isValid: () => Boolean(customerId),
+    },
+    {
+      label: intl.formatMessage({ id: 'orderForm.step.lineItems', defaultMessage: 'Line Items' }),
+      content: lineItemsStep,
+      isValid: () => draftLines.length > 0,
+    },
+    {
+      label: intl.formatMessage({ id: 'orderForm.step.review', defaultMessage: 'Review' }),
+      content: reviewStep,
+      isValid: () => true,
+    },
   ];
 
   return (
     <Box p={embedded ? 0 : 8}>
-      {!embedded && <PageHeader title="New order" />}
+      {!embedded && <PageHeader title={intl.formatMessage({ id: 'orderForm.pageTitle', defaultMessage: 'New order' })} />}
       {error && !isSubmitting && draftLines.length === 0 && <Text color="red.600" pb={2}>{error}</Text>}
-      <WizardShell steps={steps} onSubmit={saveDraft} submitLabel="Save draft" isSubmitting={isSubmitting} submitError={error} />
+      <WizardShell
+        steps={steps}
+        onSubmit={saveDraft}
+        submitLabel={intl.formatMessage({ id: 'orderForm.saveDraftButton', defaultMessage: 'Save draft' })}
+        isSubmitting={isSubmitting}
+        submitError={error}
+      />
       <HStack spacing={2} pt={4}>
         <Button
           variant="ghost"
           onClick={() => (onCancel ? onCancel() : navigate('/plugins/inventory-dashboard/r/orders'))}
           isDisabled={isSubmitting}
         >
-          Cancel
+          {intl.formatMessage({ id: 'common.cancel', defaultMessage: 'Cancel' })}
         </Button>
-        {id && <Button colorScheme="green" onClick={onConfirm}>Confirm order</Button>}
+        {id && (
+          <Button colorScheme="green" onClick={onConfirm}>
+            {intl.formatMessage({ id: 'orderForm.confirmOrderButton', defaultMessage: 'Confirm order' })}
+          </Button>
+        )}
       </HStack>
     </Box>
   );
@@ -336,6 +399,7 @@ async function getSuggestedPrice(api: any, priceListDocumentId: string, costPric
 }
 
 function ConfirmedOrderView({ order, reload, api }: { order: any; reload: () => void; api: any }) {
+  const intl = useIntl();
   const [amount, setAmount] = useState<number | undefined>(0);
   const [method, setMethod] = useState('cash');
 
@@ -350,45 +414,76 @@ function ConfirmedOrderView({ order, reload, api }: { order: any; reload: () => 
   return (
     <Box p={8}>
       <HStack justify="space-between" mb={6}>
-        <Text fontSize="lg" fontWeight="bold" color="text.primary">{`Order ${order.documentId.slice(0, 8)}`}</Text>
+        <Text fontSize="lg" fontWeight="bold" color="text.primary">
+          {intl.formatMessage({ id: 'orderForm.confirmed.orderTitle', defaultMessage: 'Order {id}' }, { id: order.documentId.slice(0, 8) })}
+        </Text>
         <Badge fontSize="sm">{order.status}</Badge>
       </HStack>
 
-      <DataTable columns={['Variant', 'Qty', 'Sell', 'Cost USD snap', 'Flag']} isEmpty={order.lines.length === 0}>
+      <DataTable
+        columns={[
+          intl.formatMessage({ id: 'orderForm.col.variant', defaultMessage: 'Variant' }),
+          intl.formatMessage({ id: 'orderForm.col.qty', defaultMessage: 'Qty' }),
+          intl.formatMessage({ id: 'orderForm.confirmed.col.sell', defaultMessage: 'Sell' }),
+          intl.formatMessage({ id: 'orderForm.confirmed.col.costUsdSnap', defaultMessage: 'Cost USD snap' }),
+          intl.formatMessage({ id: 'orderForm.col.flag', defaultMessage: 'Flag' }),
+        ]}
+        isEmpty={order.lines.length === 0}
+      >
         {order.lines.map((l: any) => (
           <Tr key={l.documentId}>
             <Td>{l.stockBatch?.documentId?.slice(0, 6) ?? '-'}</Td>
             <Td>{l.quantitySold}</Td>
             <Td>{l.sellPrice}</Td>
             <Td>{l.costPriceUsdSnapshot}</Td>
-            <Td>{l.belowCost ? <Badge colorScheme="red">Below cost</Badge> : null}</Td>
+            <Td>
+              {l.belowCost ? (
+                <Badge colorScheme="red">{intl.formatMessage({ id: 'orderForm.belowCostBadge', defaultMessage: 'Below cost' })}</Badge>
+              ) : null}
+            </Td>
           </Tr>
         ))}
       </DataTable>
 
       <Box pt={6}>
-        <Text fontSize="lg" fontWeight="semibold" color="text.primary">Totals</Text>
-        <Text>Subtotal: {order.totals.subtotal} | Final: {order.totals.finalTotal} | Profit: {order.totals.netProfit}</Text>
-        <Text>Paid: {order.totals.totalPaid} | Balance due: {order.totals.balanceDue}</Text>
+        <Text fontSize="lg" fontWeight="semibold" color="text.primary">
+          {intl.formatMessage({ id: 'orderForm.confirmed.totalsTitle', defaultMessage: 'Totals' })}
+        </Text>
+        <Text>
+          {intl.formatMessage(
+            { id: 'orderForm.confirmed.totalsSummary', defaultMessage: 'Subtotal: {subtotal} | Final: {final} | Profit: {profit}' },
+            { subtotal: order.totals.subtotal, final: order.totals.finalTotal, profit: order.totals.netProfit }
+          )}
+        </Text>
+        <Text>
+          {intl.formatMessage(
+            { id: 'orderForm.confirmed.paymentSummary', defaultMessage: 'Paid: {paid} | Balance due: {due}' },
+            { paid: order.totals.totalPaid, due: order.totals.balanceDue }
+          )}
+        </Text>
       </Box>
 
       <Box pt={6}>
-        <Text fontSize="lg" fontWeight="semibold" pb={2} color="text.primary">Record payment</Text>
+        <Text fontSize="lg" fontWeight="semibold" pb={2} color="text.primary">
+          {intl.formatMessage({ id: 'orderForm.confirmed.recordPaymentTitle', defaultMessage: 'Record payment' })}
+        </Text>
         <Card>
           <CardBody>
             <HStack spacing={2} align="flex-end">
-              <FormField label="Amount">
+              <FormField label={intl.formatMessage({ id: 'orderForm.confirmed.amountLabel', defaultMessage: 'Amount' })}>
                 <NumberInput value={amount ?? ''} onChange={(_, v) => setAmount(Number.isNaN(v) ? undefined : v)}>
                   <NumberInputField />
                 </NumberInput>
               </FormField>
-              <FormField label="Method">
+              <FormField label={intl.formatMessage({ id: 'orderForm.confirmed.methodLabel', defaultMessage: 'Method' })}>
                 <Select value={method} onChange={(e) => setMethod(e.target.value)}>
-                  <option value="cash">cash</option>
-                  <option value="transfer">transfer</option>
+                  <option value="cash">{intl.formatMessage({ id: 'orderForm.confirmed.paymentMethodCash', defaultMessage: 'cash' })}</option>
+                  <option value="transfer">{intl.formatMessage({ id: 'orderForm.confirmed.paymentMethodTransfer', defaultMessage: 'transfer' })}</option>
                 </Select>
               </FormField>
-              <Button onClick={addPayment} isDisabled={!amount}>Add payment</Button>
+              <Button onClick={addPayment} isDisabled={!amount}>
+                {intl.formatMessage({ id: 'orderForm.confirmed.addPaymentButton', defaultMessage: 'Add payment' })}
+              </Button>
             </HStack>
           </CardBody>
         </Card>
