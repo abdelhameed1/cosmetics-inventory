@@ -4,6 +4,7 @@ import {
   Box, Button, HStack, Step, StepIcon, StepIndicator, StepNumber, StepSeparator,
   StepStatus, StepTitle, Stepper, Text, useSteps,
 } from '@chakra-ui/react';
+import { useIntl } from 'react-intl';
 
 export interface WizardStep {
   label: string;
@@ -20,6 +21,7 @@ export interface WizardShellProps {
 }
 
 export function WizardShell({ steps, onSubmit, submitLabel, isSubmitting, submitError }: WizardShellProps) {
+  const intl = useIntl();
   const { activeStep, setActiveStep } = useSteps({ index: 0, count: steps.length });
   const isLastStep = activeStep === steps.length - 1;
   const canAdvance = steps[activeStep]?.isValid() ?? false;
@@ -58,10 +60,14 @@ export function WizardShell({ steps, onSubmit, submitLabel, isSubmitting, submit
 
       <HStack spacing={2} pt={6}>
         {activeStep > 0 && (
-          <Button variant="ghost" onClick={goBack} isDisabled={isSubmitting}>Back</Button>
+          <Button variant="ghost" onClick={goBack} isDisabled={isSubmitting}>
+            {intl.formatMessage({ id: 'common.back', defaultMessage: 'Back' })}
+          </Button>
         )}
         {!isLastStep && (
-          <Button onClick={goNext} isDisabled={!canAdvance}>Next</Button>
+          <Button onClick={goNext} isDisabled={!canAdvance}>
+            {intl.formatMessage({ id: 'common.next', defaultMessage: 'Next' })}
+          </Button>
         )}
         {isLastStep && (
           <Button onClick={onSubmit} isDisabled={!canAdvance || isSubmitting} isLoading={isSubmitting}>

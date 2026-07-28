@@ -1,6 +1,7 @@
 // src/plugins/inventory-dashboard/admin/src/pages/CatalogHub.tsx
 import { useEffect, useState } from 'react';
 import { Box, Card, CardBody, Heading, HStack, Icon, SimpleGrid, Text, VStack } from '@chakra-ui/react';
+import { useIntl } from 'react-intl';
 import { useNavigate } from 'react-router-dom';
 import { useApi } from '../utils/api';
 import { PageHeader } from '../components/ui/PageHeader';
@@ -9,6 +10,7 @@ import { CATALOG_GROUPS } from '../config/navConfig';
 export default function CatalogHub() {
   const api = useApi();
   const navigate = useNavigate();
+  const intl = useIntl();
   const [counts, setCounts] = useState<Record<string, number>>({});
 
   useEffect(() => {
@@ -34,18 +36,18 @@ export default function CatalogHub() {
 
   return (
     <Box p={8}>
-      <PageHeader title="Catalog" />
+      <PageHeader title={intl.formatMessage({ id: 'nav.catalog', defaultMessage: 'Catalog' })} />
       {CATALOG_GROUPS.map((group) => (
-        <Box key={group.label} pb={8}>
+        <Box key={group.labelId} pb={8}>
           <Heading size="md" color="text.primary" pb={4}>
-            {group.label}
+            {intl.formatMessage({ id: group.labelId })}
           </Heading>
           <SimpleGrid columns={{ base: 1, md: 3 }} spacing={4}>
             {group.items.map((item) => (
               <Card
                 key={item.slug}
                 as="button"
-                textAlign="left"
+                textAlign="start"
                 cursor="pointer"
                 transition="box-shadow 0.15s, border-color 0.15s"
                 _hover={{ borderColor: 'brand.200', boxShadow: 'cardHover' }}
@@ -58,7 +60,7 @@ export default function CatalogHub() {
                     </VStack>
                     <VStack align="flex-start" spacing={0}>
                       <Text fontSize="sm" color="text.secondary" fontWeight="medium">
-                        {item.label}
+                        {intl.formatMessage({ id: item.labelId })}
                       </Text>
                       <Text fontSize="2xl" fontWeight="bold" color="text.primary">
                         {counts[item.slug] ?? '—'}
