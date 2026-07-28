@@ -160,7 +160,7 @@ export default function OrderForm({ onDone, onCancel, embedded = false }: OrderF
     <Card>
       <CardBody>
         <Grid templateColumns="repeat(12, 1fr)" gap={4}>
-          <GridItem colSpan={4}>
+          <GridItem colSpan={{ base: 12, sm: 6, md: 4 }}>
             <QuickCreateSelect
               resource="customers"
               label={intl.formatMessage({ id: 'field.customer', defaultMessage: 'Customer' })}
@@ -171,7 +171,7 @@ export default function OrderForm({ onDone, onCancel, embedded = false }: OrderF
               onCreated={(c) => setCustomers((prev) => [...prev, c])}
             />
           </GridItem>
-          <GridItem colSpan={4}>
+          <GridItem colSpan={{ base: 12, sm: 6, md: 4 }}>
             <FormField label={intl.formatMessage({ id: 'orderForm.orderDateLabel', defaultMessage: 'Order date' })}>
               <Input type="date" value={orderDate ?? ''} onChange={(e) => setOrderDate(e.target.value || null)} />
             </FormField>
@@ -189,7 +189,7 @@ export default function OrderForm({ onDone, onCancel, embedded = false }: OrderF
       <Card>
         <CardBody>
           <Grid templateColumns="repeat(12, 1fr)" gap={4}>
-            <GridItem colSpan={4}>
+            <GridItem colSpan={{ base: 12, sm: 6, md: 4 }}>
               <FormField label={intl.formatMessage({ id: 'field.product', defaultMessage: 'Product' })}>
                 <Select
                   value={addProductId}
@@ -200,7 +200,7 @@ export default function OrderForm({ onDone, onCancel, embedded = false }: OrderF
                 </Select>
               </FormField>
             </GridItem>
-            <GridItem colSpan={4}>
+            <GridItem colSpan={{ base: 12, sm: 6, md: 4 }}>
               <FormField label={intl.formatMessage({ id: 'orderForm.variantFieldLabel', defaultMessage: 'Variant' })}>
                 <Select
                   value={addVariantId}
@@ -212,14 +212,14 @@ export default function OrderForm({ onDone, onCancel, embedded = false }: OrderF
                 </Select>
               </FormField>
             </GridItem>
-            <GridItem colSpan={3}>
+            <GridItem colSpan={{ base: 12, sm: 6, md: 3 }}>
               <FormField label={intl.formatMessage({ id: 'orderForm.quantityLabel', defaultMessage: 'Quantity' })}>
                 <NumberInput value={addQty ?? ''} onChange={(_, v) => setAddQty(Number.isNaN(v) ? undefined : v)}>
                   <NumberInputField />
                 </NumberInput>
               </FormField>
             </GridItem>
-            <GridItem colSpan={1} display="flex" alignItems="flex-end">
+            <GridItem colSpan={{ base: 12, sm: 6, md: 1 }} display="flex" alignItems="flex-end">
               <Button onClick={addLine} isDisabled={!addVariantId}>
                 {intl.formatMessage({ id: 'orderForm.addButton', defaultMessage: 'Add' })}
               </Button>
@@ -290,17 +290,17 @@ export default function OrderForm({ onDone, onCancel, embedded = false }: OrderF
       </Box>
 
       <Grid templateColumns="repeat(12, 1fr)" gap={4} pt={6}>
-        <GridItem colSpan={4}>
+        <GridItem colSpan={{ base: 12, sm: 6, md: 4 }}>
           <FormField label={intl.formatMessage({ id: 'orderForm.discountLabel', defaultMessage: 'Discount (EGP)' })}>
             <NumberInput value={discount ?? ''} onChange={(_, v) => setDiscount(Number.isNaN(v) ? undefined : v)}>
               <NumberInputField />
             </NumberInput>
           </FormField>
         </GridItem>
-        <GridItem colSpan={4} display="flex" alignItems="flex-end">
+        <GridItem colSpan={{ base: 12, sm: 6, md: 4 }} display="flex" alignItems="flex-end">
           <Text>{intl.formatMessage({ id: 'orderForm.subtotalLabel', defaultMessage: 'Subtotal:' })} {subtotal.toFixed(2)} EGP</Text>
         </GridItem>
-        <GridItem colSpan={4} display="flex" alignItems="flex-end">
+        <GridItem colSpan={{ base: 12, sm: 6, md: 4 }} display="flex" alignItems="flex-end">
           <Text fontSize="lg" fontWeight="semibold">
             {intl.formatMessage({ id: 'orderForm.totalLabel', defaultMessage: 'Total:' })} {finalTotal.toFixed(2)} EGP
           </Text>
@@ -361,7 +361,7 @@ export default function OrderForm({ onDone, onCancel, embedded = false }: OrderF
   ];
 
   return (
-    <Box p={embedded ? 0 : 8}>
+    <Box p={embedded ? 0 : { base: 4, md: 8 }}>
       {!embedded && <PageHeader title={intl.formatMessage({ id: 'orderForm.pageTitle', defaultMessage: 'New order' })} />}
       {error && !isSubmitting && draftLines.length === 0 && <Text color="red.600" pb={2}>{error}</Text>}
       <WizardShell
@@ -412,7 +412,7 @@ function ConfirmedOrderView({ order, reload, api }: { order: any; reload: () => 
   };
 
   return (
-    <Box p={8}>
+    <Box p={{ base: 4, md: 8 }}>
       <HStack justify="space-between" mb={6}>
         <Text fontSize="lg" fontWeight="bold" color="text.primary">
           {intl.formatMessage({ id: 'orderForm.confirmed.orderTitle', defaultMessage: 'Order {id}' }, { id: order.documentId.slice(0, 8) })}
