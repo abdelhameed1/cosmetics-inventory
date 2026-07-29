@@ -203,4 +203,5 @@ export const ar: Record<keyof typeof en, string> = {
   'ordersList.col.status': 'الحالة',
   'ordersList.col.total': 'الإجمالي (جنيه)',
   'ordersList.cancelError': 'تعذّر إلغاء الطلب',
+  'ordersList.showingCount': 'يتم عرض أحدث {shown} طلب من إجمالي {total}.',
 };

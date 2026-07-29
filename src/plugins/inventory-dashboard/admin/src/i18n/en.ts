@@ -201,4 +201,5 @@ export const en = {
   'ordersList.col.status': 'Status',
   'ordersList.col.total': 'Total (EGP)',
   'ordersList.cancelError': 'Could not cancel order',
+  'ordersList.showingCount': 'Showing the {shown} most recent of {total} orders.',
 } as const;

@@ -33,14 +33,16 @@ export default function OrdersList() {
   const intl = useIntl();
   const { locale } = useLocale();
   const [rows, setRows] = useState<any[]>([]);
+  const [total, setTotal] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [toCancel, setToCancel] = useState<any | null>(null);
+  const [isCancelling, setIsCancelling] = useState(false);
   const cancelRef = useRef<HTMLButtonElement>(null);
 
   const load = () => {
     api
-      .get<{ results: any[] }>('/resources/orders', { pageSize: 100 })
-      .then((d) => setRows(d.results))
+      .get<{ results: any[]; pagination: { total: number } }>('/resources/orders', { pageSize: 100 })
+      .then((d) => { setRows(d.results); setTotal(d.pagination.total); })
       .catch((e) => setError(String(e)));
   };
 
@@ -48,6 +50,7 @@ export default function OrdersList() {
 
   const confirmCancel = async () => {
     if (!toCancel) return;
+    setIsCancelling(true);
     try {
       await api.post(`/orders/${toCancel.documentId}/cancel`);
       setError(null);
@@ -55,6 +58,7 @@ export default function OrdersList() {
     } catch (e: any) {
       setError(e?.response?.data?.error?.message ?? intl.formatMessage({ id: 'ordersList.cancelError', defaultMessage: 'Could not cancel order' }));
     } finally {
+      setIsCancelling(false);
       setToCancel(null);
     }
   };
@@ -64,6 +68,14 @@ export default function OrdersList() {
       <PageHeader title={intl.formatMessage({ id: 'nav.orders', defaultMessage: 'Orders' })} />
 
       {error && <Text color="red.600" pb={4}>{error}</Text>}
+      {total !== null && total > rows.length && (
+        <Text color="text.secondary" fontSize="sm" pb={4}>
+          {intl.formatMessage(
+            { id: 'ordersList.showingCount', defaultMessage: 'Showing the {shown} most recent of {total} orders.' },
+            { shown: rows.length, total }
+          )}
+        </Text>
+      )}
 
       <DataTable
         columns={[
@@ -83,7 +95,7 @@ export default function OrdersList() {
             <Td>{orderFinalTotal(row).toFixed(2)}</Td>
             <Td onClick={(e) => e.stopPropagation()}>
               {row.status === 'draft' && (
-                <Button size="sm" variant="ghost" colorScheme="red" onClick={() => setToCancel(row)}>
+                <Button size="sm" variant="ghost" colorScheme="red" onClick={() => setToCancel(row)} isDisabled={isCancelling}>
                   {intl.formatMessage({ id: 'orderForm.confirmed.cancelOrderButton', defaultMessage: 'Cancel order' })}
                 </Button>
               )}
@@ -101,7 +113,7 @@ export default function OrdersList() {
               <Button ref={cancelRef} variant="ghost" onClick={() => setToCancel(null)}>
                 {intl.formatMessage({ id: 'common.cancel', defaultMessage: 'Cancel' })}
               </Button>
-              <Button colorScheme="red" onClick={confirmCancel} ms={3}>
+              <Button colorScheme="red" onClick={confirmCancel} ms={3} isLoading={isCancelling}>
                 {intl.formatMessage({ id: 'orderForm.confirmed.cancelOrderButton', defaultMessage: 'Cancel order' })}
               </Button>
             </AlertDialogFooter>

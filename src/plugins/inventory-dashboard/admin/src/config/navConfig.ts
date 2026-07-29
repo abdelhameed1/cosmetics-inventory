@@ -11,6 +11,7 @@ export interface NavLink {
   to: string;
   labelId: string;
   icon: IconComponent;
+  exact?: boolean;
 }
 
 export interface CatalogItem {
@@ -25,7 +26,7 @@ export interface CatalogGroup {
 }
 
 export const TOP_LINKS: NavLink[] = [
-  { to: '/plugins/inventory-dashboard', labelId: 'nav.overview', icon: FiHome },
+  { to: '/plugins/inventory-dashboard', labelId: 'nav.overview', icon: FiHome, exact: true },
   { to: '/plugins/inventory-dashboard/orders', labelId: 'nav.orders', icon: FiList },
   { to: '/plugins/inventory-stock', labelId: 'nav.stockPurchase', icon: FiBriefcase },
   { to: '/plugins/inventory-orders', labelId: 'nav.newOrder', icon: FiShoppingCart },

@@ -417,6 +417,7 @@ function ConfirmedOrderView({
   const [method, setMethod] = useState('cash');
   const [isCancelOpen, setIsCancelOpen] = useState(false);
   const [cancelError, setCancelError] = useState<string | null>(null);
+  const [isCancelling, setIsCancelling] = useState(false);
   const cancelRef = useRef<HTMLButtonElement>(null);
 
   const addPayment = async () => {
@@ -431,11 +432,13 @@ function ConfirmedOrderView({
 
   const onCancelOrder = async () => {
     setCancelError(null);
+    setIsCancelling(true);
     try {
       await cancel();
     } catch (e: any) {
       setCancelError(e?.response?.data?.error?.message ?? intl.formatMessage({ id: 'orderForm.confirmed.cancelError', defaultMessage: 'Could not cancel order' }));
     } finally {
+      setIsCancelling(false);
       setIsCancelOpen(false);
     }
   };
@@ -449,7 +452,7 @@ function ConfirmedOrderView({
         <HStack spacing={2}>
           <Badge fontSize="sm" colorScheme={STATUS_COLOR_SCHEME[order.status] ?? 'gray'}>{order.status}</Badge>
           {canCancel && (
-            <Button colorScheme="red" variant="outline" size="sm" onClick={() => setIsCancelOpen(true)}>
+            <Button colorScheme="red" variant="outline" size="sm" onClick={() => setIsCancelOpen(true)} isDisabled={isCancelling}>
               {intl.formatMessage({ id: 'orderForm.confirmed.cancelOrderButton', defaultMessage: 'Cancel order' })}
             </Button>
           )}
@@ -537,7 +540,7 @@ function ConfirmedOrderView({
               <Button ref={cancelRef} variant="ghost" onClick={() => setIsCancelOpen(false)}>
                 {intl.formatMessage({ id: 'common.cancel', defaultMessage: 'Cancel' })}
               </Button>
-              <Button colorScheme="red" onClick={onCancelOrder} ms={3}>
+              <Button colorScheme="red" onClick={onCancelOrder} ms={3} isLoading={isCancelling}>
                 {intl.formatMessage({ id: 'orderForm.confirmed.cancelOrderButton', defaultMessage: 'Cancel order' })}
               </Button>
             </AlertDialogFooter>

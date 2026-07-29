@@ -126,4 +126,45 @@ describe('orders.cancel', () => {
     const reloaded = await docs('api::order.order').findOne({ documentId: order.documentId });
     expect(reloaded.status).toBe('cancelled');
   });
+
+  it('rejects exactly one of two concurrent cancels on the same order (no double stock restoration)', async () => {
+    const { batch } = await seedBatch('CancelConcurrent');
+    const customer = await docs('api::customer.customer').create({ data: { name: `CancelConcCust-${Math.random()}` } });
+    const order = await docs('api::order.order').create({ data: { orderDate: '2026-07-01', status: 'draft', customer: customer.documentId } });
+    await docs('api::order-line.order-line').create({
+      data: { quantitySold: 3, sellPrice: 250, order: order.documentId, stockBatch: batch.documentId },
+    });
+    await svc().confirm(order.documentId);
+
+    const results = await Promise.allSettled([svc().cancel(order.documentId), svc().cancel(order.documentId)]);
+    const fulfilled = results.filter((r) => r.status === 'fulfilled');
+    const rejected = results.filter((r) => r.status === 'rejected');
+    expect(fulfilled.length).toBe(1);
+    expect(rejected.length).toBe(1);
+
+    const restored = await docs('api::stock-batch.stock-batch').findOne({ documentId: batch.documentId });
+    expect(restored.quantityRemaining).toBe(10); // NOT 13 — restored exactly once, not twice
+  });
+
+  it('aggregates quantity correctly when two lines reference the same batch', async () => {
+    const { batch } = await seedBatch('CancelSameBatch');
+    const customer = await docs('api::customer.customer').create({ data: { name: `CancelSameBatchCust-${Math.random()}` } });
+    const order = await docs('api::order.order').create({ data: { orderDate: '2026-07-01', status: 'draft', customer: customer.documentId } });
+    await docs('api::order-line.order-line').create({
+      data: { quantitySold: 2, sellPrice: 250, order: order.documentId, stockBatch: batch.documentId },
+    });
+    await docs('api::order-line.order-line').create({
+      data: { quantitySold: 3, sellPrice: 250, order: order.documentId, stockBatch: batch.documentId },
+    });
+    await svc().confirm(order.documentId);
+
+    const decremented = await docs('api::stock-batch.stock-batch').findOne({ documentId: batch.documentId });
+    expect(decremented.quantityRemaining).toBe(5); // 10 - 2 - 3
+
+    const result = await svc().cancel(order.documentId);
+    expect(result.status).toBe('cancelled');
+
+    const restored = await docs('api::stock-batch.stock-batch').findOne({ documentId: batch.documentId });
+    expect(restored.quantityRemaining).toBe(10); // both lines' quantities restored to the one batch
+  });
 });

@@ -10,7 +10,8 @@ import { ColorModeToggle } from './ColorModeToggle';
 import { FontSizeToggle } from './FontSizeToggle';
 import { LanguageToggle } from './LanguageToggle';
 
-function isLinkActive(pathname: string, to: string): boolean {
+function isLinkActive(pathname: string, to: string, exact?: boolean): boolean {
+  if (exact) return pathname === to;
   return pathname === to || pathname.startsWith(`${to}/`);
 }
 
@@ -74,7 +75,7 @@ export function AppSidebar() {
             key={link.to}
             label={intl.formatMessage({ id: link.labelId })}
             icon={link.icon}
-            isActive={isLinkActive(pathname, link.to)}
+            isActive={isLinkActive(pathname, link.to, link.exact)}
             onClick={() => navigate(link.to)}
           />
         ))}

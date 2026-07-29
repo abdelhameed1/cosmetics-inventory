@@ -125,6 +125,9 @@ const orders = ({ strapi }: { strapi: Core.Strapi }) => ({
       populate: { lines: { populate: { stockBatch: true } } },
     } as any);
     if (!order) throw new errors.NotFoundError('Order not found');
+    if (order.status === 'cancelled') {
+      throw new errors.ApplicationError('This order has already been cancelled.');
+    }
     if (!['draft', 'confirmed', 'partially_paid'].includes(order.status)) {
       throw new errors.ApplicationError(
         'Only draft, confirmed, or partially paid orders can be cancelled. A fully paid order needs a refund handled outside the system.'
@@ -132,11 +135,17 @@ const orders = ({ strapi }: { strapi: Core.Strapi }) => ({
     }
 
     if (order.status === 'draft') {
-      // draft orders never reached confirm(), so no batch was ever decremented
-      await strapi.documents(ORDER as any).update({
-        documentId,
-        data: { status: 'cancelled', __trusted: true },
-      } as any);
+      // draft orders never reached confirm(), so no batch was ever decremented.
+      // Conditional update: only succeeds if the order is still draft, guarding
+      // against a concurrent cancel already having won this row.
+      const affected = await strapi.db
+        .queryBuilder(ORDER)
+        .where({ id: order.id, status: 'draft' })
+        .update({ status: 'cancelled' })
+        .execute();
+      if (!affected) {
+        throw new errors.ApplicationError('This order was changed before it could be cancelled.');
+      }
       return this.getWithTotals(documentId);
     }
 
@@ -156,6 +165,18 @@ const orders = ({ strapi }: { strapi: Core.Strapi }) => ({
     const quantityRemainingColumn = (batchMeta.attributes as any).quantityRemaining?.columnName ?? 'quantityRemaining';
 
     await strapi.db.transaction(async () => {
+      // Conditional status flip FIRST: only one concurrent cancel() can win this
+      // row (a losing racer's WHERE matches zero rows and its update is a no-op,
+      // caught below), so at most one caller ever proceeds to restore stock.
+      const affected = await strapi.db
+        .queryBuilder(ORDER)
+        .where({ id: order.id, status: order.status })
+        .update({ status: 'cancelled' })
+        .execute();
+      if (!affected) {
+        throw new errors.ApplicationError('This order was changed before it could be cancelled.');
+      }
+
       for (const [, { batchId, qty }] of perBatch) {
         await strapi.db
           .queryBuilder(BATCH)
@@ -163,11 +184,6 @@ const orders = ({ strapi }: { strapi: Core.Strapi }) => ({
           .increment(quantityRemainingColumn, qty)
           .execute();
       }
-
-      await strapi.documents(ORDER as any).update({
-        documentId,
-        data: { status: 'cancelled', __trusted: true },
-      } as any);
     });
 
     return this.getWithTotals(documentId);
