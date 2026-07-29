@@ -195,4 +195,10 @@ export const en = {
   'orderForm.confirmed.cancelConfirmTitle': 'Cancel this order?',
   'orderForm.confirmed.cancelConfirmBody': 'This restores any deducted stock and cannot be undone.',
   'orderForm.confirmed.cancelError': 'Could not cancel order',
+  'nav.orders': 'Orders',
+  'ordersList.col.date': 'Date',
+  'ordersList.col.customer': 'Customer',
+  'ordersList.col.status': 'Status',
+  'ordersList.col.total': 'Total (EGP)',
+  'ordersList.cancelError': 'Could not cancel order',
 } as const;

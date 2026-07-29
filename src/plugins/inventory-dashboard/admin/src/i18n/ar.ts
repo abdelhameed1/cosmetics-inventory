@@ -197,4 +197,10 @@ export const ar: Record<keyof typeof en, string> = {
   'orderForm.confirmed.cancelConfirmTitle': 'هل تريد إلغاء هذا الطلب؟',
   'orderForm.confirmed.cancelConfirmBody': 'سيؤدي هذا إلى إعادة أي مخزون تم خصمه، ولا يمكن التراجع عن هذا الإجراء.',
   'orderForm.confirmed.cancelError': 'تعذّر إلغاء الطلب',
+  'nav.orders': 'الطلبات',
+  'ordersList.col.date': 'التاريخ',
+  'ordersList.col.customer': 'العميل',
+  'ordersList.col.status': 'الحالة',
+  'ordersList.col.total': 'الإجمالي (جنيه)',
+  'ordersList.cancelError': 'تعذّر إلغاء الطلب',
 };

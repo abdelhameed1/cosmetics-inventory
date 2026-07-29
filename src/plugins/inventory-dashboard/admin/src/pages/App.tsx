@@ -5,6 +5,7 @@ import ResourceListPage from './ResourceListPage';
 import ResourceFormPage from './ResourceFormPage';
 import StockPurchase from './StockPurchase';
 import OrderForm from './OrderForm';
+import OrdersList from './OrdersList';
 import { ChakraRoot } from '../components/ChakraRoot';
 import { AppShell } from '../components/AppShell';
 
@@ -15,6 +16,7 @@ const App = () => {
         <Routes>
           <Route index element={<Overview />} />
           <Route path="stock-purchase" element={<StockPurchase />} />
+          <Route path="orders" element={<OrdersList />} />
           <Route path="orders/new" element={<OrderForm />} />
           <Route path="orders/:id" element={<OrderForm />} />
           <Route path="r/:resource" element={<ResourceListPage />} />

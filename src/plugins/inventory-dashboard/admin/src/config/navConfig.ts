@@ -1,7 +1,7 @@
 // src/plugins/inventory-dashboard/admin/src/config/navConfig.ts
 import { type IconType } from 'react-icons';
 import {
-  FiHome, FiBriefcase, FiShoppingCart,
+  FiHome, FiBriefcase, FiShoppingCart, FiList,
   FiBox, FiLayers, FiSliders, FiGrid, FiTag, FiTruck, FiUsers, FiDollarSign,
 } from 'react-icons/fi';
 
@@ -26,6 +26,7 @@ export interface CatalogGroup {
 
 export const TOP_LINKS: NavLink[] = [
   { to: '/plugins/inventory-dashboard', labelId: 'nav.overview', icon: FiHome },
+  { to: '/plugins/inventory-dashboard/orders', labelId: 'nav.orders', icon: FiList },
   { to: '/plugins/inventory-stock', labelId: 'nav.stockPurchase', icon: FiBriefcase },
   { to: '/plugins/inventory-orders', labelId: 'nav.newOrder', icon: FiShoppingCart },
 ];
