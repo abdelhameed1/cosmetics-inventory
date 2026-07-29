@@ -594,9 +594,9 @@ export function AppShell({ children }: { children: ReactNode }) {
         <Box display={{ base: 'none', md: 'block' }}>
           <AppSidebar />
         </Box>
-        <Drawer isOpen={isOpen} placement={locale === 'ar' ? 'end' : 'start'} onClose={onClose}>
+        <Drawer isOpen={isOpen} placement="start" onClose={onClose}>
           <DrawerOverlay />
-          <DrawerContent maxW="240px" dir={locale === 'ar' ? 'rtl' : 'ltr'}>
+          <DrawerContent maxW="240px" fontSize="md" dir={locale === 'ar' ? 'rtl' : 'ltr'}>
             <DrawerBody p={0}>
               <AppSidebar />
             </DrawerBody>
