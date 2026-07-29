@@ -10,7 +10,7 @@ function ThemedShell({ children }: { children: ReactNode }) {
 
   return (
     <ChakraProvider theme={getTheme(locale, fontSizePreset)} resetCSS={false}>
-      <Box bg="bg.canvas" color="text.primary" minH="100%" dir={locale === 'ar' ? 'rtl' : 'ltr'}>
+      <Box bg="bg.canvas" color="text.primary" minH="100%" fontSize="md" dir={locale === 'ar' ? 'rtl' : 'ltr'}>
         {children}
       </Box>
     </ChakraProvider>

@@ -68,7 +68,7 @@ export function QuickCreateSelect({
 
       <Modal isOpen={isCreateOpen} onClose={() => setIsCreateOpen(false)} size="md">
         <ModalOverlay />
-        <ModalContent dir={locale === 'ar' ? 'rtl' : 'ltr'}>
+        <ModalContent fontSize="md" dir={locale === 'ar' ? 'rtl' : 'ltr'}>
           <ModalHeader>
             {intl.formatMessage({ id: 'addNew.newItemTitle', defaultMessage: 'New {label}' }, { label })}
           </ModalHeader>
