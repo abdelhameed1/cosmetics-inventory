@@ -49,7 +49,7 @@ export function statusFromPayments(
   finalTotal: number,
   currentStatus: string
 ): string {
-  if (currentStatus === 'draft') return 'draft';
+  if (currentStatus === 'draft' || currentStatus === 'cancelled') return currentStatus;
   if (finalTotal > 0 && totalPaid >= finalTotal) return 'paid';
   if (totalPaid > 0) return 'partially_paid';
   return 'confirmed';

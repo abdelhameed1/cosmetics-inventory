@@ -27,6 +27,10 @@ describe('statusFromPayments', () => {
     expect(statusFromPayments(230, 230, 'confirmed')).toBe('paid');
     expect(statusFromPayments(999, 230, 'partially_paid')).toBe('paid');
   });
+  it('keeps a cancelled order cancelled regardless of payments', () => {
+    expect(statusFromPayments(0, 230, 'cancelled')).toBe('cancelled');
+    expect(statusFromPayments(300, 230, 'cancelled')).toBe('cancelled');
+  });
 });
 
 describe('isBelowCost', () => {
