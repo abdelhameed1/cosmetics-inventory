@@ -7,7 +7,7 @@
     "orderDate": { "type": "date", "required": true },
     "status": {
       "type": "enumeration",
-      "enum": ["draft", "confirmed", "partially_paid", "paid"],
+      "enum": ["draft", "confirmed", "partially_paid", "paid", "cancelled"],
       "default": "draft",
       "required": true
     },

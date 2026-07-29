@@ -9,6 +9,10 @@ const orders = ({ strapi }: { strapi: Core.Strapi }) => ({
     const { documentId } = ctx.params;
     ctx.body = await strapi.plugin('inventory-dashboard').service('orders').confirm(documentId);
   },
+  async cancel(ctx) {
+    const { documentId } = ctx.params;
+    ctx.body = await strapi.plugin('inventory-dashboard').service('orders').cancel(documentId);
+  },
   async fifo(ctx) {
     const { variantDocumentId } = ctx.params;
     const quantity = Number(ctx.query.quantity) || 0;

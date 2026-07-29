@@ -118,6 +118,60 @@ const orders = ({ strapi }: { strapi: Core.Strapi }) => ({
 
     return this.getWithTotals(documentId);
   },
+
+  async cancel(documentId: string) {
+    const order = await strapi.documents(ORDER as any).findOne({
+      documentId,
+      populate: { lines: { populate: { stockBatch: true } } },
+    } as any);
+    if (!order) throw new errors.NotFoundError('Order not found');
+    if (!['draft', 'confirmed', 'partially_paid'].includes(order.status)) {
+      throw new errors.ApplicationError(
+        'Only draft, confirmed, or partially paid orders can be cancelled. A fully paid order needs a refund handled outside the system.'
+      );
+    }
+
+    if (order.status === 'draft') {
+      // draft orders never reached confirm(), so no batch was ever decremented
+      await strapi.documents(ORDER as any).update({
+        documentId,
+        data: { status: 'cancelled', __trusted: true },
+      } as any);
+      return this.getWithTotals(documentId);
+    }
+
+    // status is 'confirmed' or 'partially_paid': both are only reachable after
+    // confirm() ran exactly once, so every line's stockBatch was decremented by
+    // exactly quantitySold. Aggregate quantity per batch and restore it.
+    const lines = order.lines ?? [];
+    const perBatch = new Map<string, { batchId: number; qty: number }>();
+    for (const line of lines) {
+      const key = line.stockBatch.documentId;
+      const entry = perBatch.get(key) ?? { batchId: line.stockBatch.id, qty: 0 };
+      entry.qty += Number(line.quantitySold);
+      perBatch.set(key, entry);
+    }
+
+    const batchMeta = strapi.db.metadata.get(BATCH);
+    const quantityRemainingColumn = (batchMeta.attributes as any).quantityRemaining?.columnName ?? 'quantityRemaining';
+
+    await strapi.db.transaction(async () => {
+      for (const [, { batchId, qty }] of perBatch) {
+        await strapi.db
+          .queryBuilder(BATCH)
+          .where({ id: batchId })
+          .increment(quantityRemainingColumn, qty)
+          .execute();
+      }
+
+      await strapi.documents(ORDER as any).update({
+        documentId,
+        data: { status: 'cancelled', __trusted: true },
+      } as any);
+    });
+
+    return this.getWithTotals(documentId);
+  },
 });
 
 export default orders;

@@ -21,6 +21,7 @@ export default {
       { method: 'GET', path: '/fifo/:variantDocumentId', handler: 'orders.fifo', config: { policies: [requireAccess] } },
       { method: 'GET', path: '/orders/:documentId', handler: 'orders.findOne', config: { policies: [requireAccess] } },
       { method: 'POST', path: '/orders/:documentId/confirm', handler: 'orders.confirm', config: { policies: [requireAccess] } },
+      { method: 'POST', path: '/orders/:documentId/cancel', handler: 'orders.cancel', config: { policies: [requireAccess] } },
       { method: 'POST', path: '/pricing/suggest', handler: 'orders.suggest', config: { policies: [requireAccess] } },
     ],
   },
