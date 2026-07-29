@@ -1,13 +1,15 @@
 // src/plugins/inventory-dashboard/admin/src/pages/OrderForm.tsx
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
+  AlertDialog, AlertDialogBody, AlertDialogContent, AlertDialogFooter, AlertDialogHeader, AlertDialogOverlay,
   Badge, Box, Button, Card, CardBody, Grid, GridItem, HStack, Input, NumberInput, NumberInputField,
   Select, Td, Text, Tr,
 } from '@chakra-ui/react';
 import { useIntl } from 'react-intl';
 import { useApi } from '../utils/api';
 import { useOrder } from '../hooks/useOrder';
+import { useLocale } from '../i18n/LocaleProvider';
 import { PageHeader } from '../components/ui/PageHeader';
 import { FormField } from '../components/ui/FormField';
 import { DataTable } from '../components/ui/DataTable';
@@ -44,7 +46,7 @@ export default function OrderForm({ onDone, onCancel, embedded = false }: OrderF
   const navigate = useNavigate();
   const api = useApi();
   const intl = useIntl();
-  const { order, reload, confirm } = useOrder(id);
+  const { order, reload, confirm, cancel } = useOrder(id);
 
   const [customers, setCustomers] = useState<any[]>([]);
   const [products, setProducts] = useState<any[]>([]);
@@ -153,7 +155,7 @@ export default function OrderForm({ onDone, onCancel, embedded = false }: OrderF
 
   // ----- confirmed view (read-only lines + payments) -----
   if (isConfirmed) {
-    return <ConfirmedOrderView order={order} reload={reload} api={api} />;
+    return <ConfirmedOrderView order={order} reload={reload} api={api} cancel={cancel} />;
   }
 
   const customerStep = (
@@ -398,10 +400,24 @@ async function getSuggestedPrice(api: any, priceListDocumentId: string, costPric
   }
 }
 
-function ConfirmedOrderView({ order, reload, api }: { order: any; reload: () => void; api: any }) {
+const STATUS_COLOR_SCHEME: Record<string, string> = {
+  draft: 'gray',
+  confirmed: 'yellow',
+  partially_paid: 'orange',
+  paid: 'green',
+  cancelled: 'red',
+};
+
+function ConfirmedOrderView({
+  order, reload, api, cancel,
+}: { order: any; reload: () => void; api: any; cancel: () => Promise<any> }) {
   const intl = useIntl();
+  const { locale } = useLocale();
   const [amount, setAmount] = useState<number | undefined>(0);
   const [method, setMethod] = useState('cash');
+  const [isCancelOpen, setIsCancelOpen] = useState(false);
+  const [cancelError, setCancelError] = useState<string | null>(null);
+  const cancelRef = useRef<HTMLButtonElement>(null);
 
   const addPayment = async () => {
     await api.post('/resources/payments', {
@@ -411,14 +427,35 @@ function ConfirmedOrderView({ order, reload, api }: { order: any; reload: () => 
     reload();
   };
 
+  const canCancel = order.status === 'confirmed' || order.status === 'partially_paid';
+
+  const onCancelOrder = async () => {
+    setCancelError(null);
+    try {
+      await cancel();
+    } catch (e: any) {
+      setCancelError(e?.response?.data?.error?.message ?? intl.formatMessage({ id: 'orderForm.confirmed.cancelError', defaultMessage: 'Could not cancel order' }));
+    } finally {
+      setIsCancelOpen(false);
+    }
+  };
+
   return (
     <Box p={{ base: 4, md: 8 }}>
       <HStack justify="space-between" mb={6}>
         <Text fontSize="lg" fontWeight="bold" color="text.primary">
           {intl.formatMessage({ id: 'orderForm.confirmed.orderTitle', defaultMessage: 'Order {id}' }, { id: order.documentId.slice(0, 8) })}
         </Text>
-        <Badge fontSize="sm">{order.status}</Badge>
+        <HStack spacing={2}>
+          <Badge fontSize="sm" colorScheme={STATUS_COLOR_SCHEME[order.status] ?? 'gray'}>{order.status}</Badge>
+          {canCancel && (
+            <Button colorScheme="red" variant="outline" size="sm" onClick={() => setIsCancelOpen(true)}>
+              {intl.formatMessage({ id: 'orderForm.confirmed.cancelOrderButton', defaultMessage: 'Cancel order' })}
+            </Button>
+          )}
+        </HStack>
       </HStack>
+      {cancelError && <Text color="red.600" pb={4}>{cancelError}</Text>}
 
       <DataTable
         columns={[
@@ -463,31 +500,50 @@ function ConfirmedOrderView({ order, reload, api }: { order: any; reload: () => 
         </Text>
       </Box>
 
-      <Box pt={6}>
-        <Text fontSize="lg" fontWeight="semibold" pb={2} color="text.primary">
-          {intl.formatMessage({ id: 'orderForm.confirmed.recordPaymentTitle', defaultMessage: 'Record payment' })}
-        </Text>
-        <Card>
-          <CardBody>
-            <HStack spacing={2} align="flex-end">
-              <FormField label={intl.formatMessage({ id: 'orderForm.confirmed.amountLabel', defaultMessage: 'Amount' })}>
-                <NumberInput value={amount ?? ''} onChange={(_, v) => setAmount(Number.isNaN(v) ? undefined : v)}>
-                  <NumberInputField />
-                </NumberInput>
-              </FormField>
-              <FormField label={intl.formatMessage({ id: 'orderForm.confirmed.methodLabel', defaultMessage: 'Method' })}>
-                <Select value={method} onChange={(e) => setMethod(e.target.value)}>
-                  <option value="cash">{intl.formatMessage({ id: 'orderForm.confirmed.paymentMethodCash', defaultMessage: 'cash' })}</option>
-                  <option value="transfer">{intl.formatMessage({ id: 'orderForm.confirmed.paymentMethodTransfer', defaultMessage: 'transfer' })}</option>
-                </Select>
-              </FormField>
-              <Button onClick={addPayment} isDisabled={!amount}>
-                {intl.formatMessage({ id: 'orderForm.confirmed.addPaymentButton', defaultMessage: 'Add payment' })}
+      {order.status !== 'cancelled' && (
+        <Box pt={6}>
+          <Text fontSize="lg" fontWeight="semibold" pb={2} color="text.primary">
+            {intl.formatMessage({ id: 'orderForm.confirmed.recordPaymentTitle', defaultMessage: 'Record payment' })}
+          </Text>
+          <Card>
+            <CardBody>
+              <HStack spacing={2} align="flex-end">
+                <FormField label={intl.formatMessage({ id: 'orderForm.confirmed.amountLabel', defaultMessage: 'Amount' })}>
+                  <NumberInput value={amount ?? ''} onChange={(_, v) => setAmount(Number.isNaN(v) ? undefined : v)}>
+                    <NumberInputField />
+                  </NumberInput>
+                </FormField>
+                <FormField label={intl.formatMessage({ id: 'orderForm.confirmed.methodLabel', defaultMessage: 'Method' })}>
+                  <Select value={method} onChange={(e) => setMethod(e.target.value)}>
+                    <option value="cash">{intl.formatMessage({ id: 'orderForm.confirmed.paymentMethodCash', defaultMessage: 'cash' })}</option>
+                    <option value="transfer">{intl.formatMessage({ id: 'orderForm.confirmed.paymentMethodTransfer', defaultMessage: 'transfer' })}</option>
+                  </Select>
+                </FormField>
+                <Button onClick={addPayment} isDisabled={!amount}>
+                  {intl.formatMessage({ id: 'orderForm.confirmed.addPaymentButton', defaultMessage: 'Add payment' })}
+                </Button>
+              </HStack>
+            </CardBody>
+          </Card>
+        </Box>
+      )}
+
+      <AlertDialog isOpen={isCancelOpen} leastDestructiveRef={cancelRef} onClose={() => setIsCancelOpen(false)}>
+        <AlertDialogOverlay>
+          <AlertDialogContent borderRadius="xl" fontSize="md" dir={locale === 'ar' ? 'rtl' : 'ltr'}>
+            <AlertDialogHeader>{intl.formatMessage({ id: 'orderForm.confirmed.cancelConfirmTitle', defaultMessage: 'Cancel this order?' })}</AlertDialogHeader>
+            <AlertDialogBody>{intl.formatMessage({ id: 'orderForm.confirmed.cancelConfirmBody', defaultMessage: 'This restores any deducted stock and cannot be undone.' })}</AlertDialogBody>
+            <AlertDialogFooter>
+              <Button ref={cancelRef} variant="ghost" onClick={() => setIsCancelOpen(false)}>
+                {intl.formatMessage({ id: 'common.cancel', defaultMessage: 'Cancel' })}
               </Button>
-            </HStack>
-          </CardBody>
-        </Card>
-      </Box>
+              <Button colorScheme="red" onClick={onCancelOrder} ms={3}>
+                {intl.formatMessage({ id: 'orderForm.confirmed.cancelOrderButton', defaultMessage: 'Cancel order' })}
+              </Button>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialogOverlay>
+      </AlertDialog>
     </Box>
   );
 }

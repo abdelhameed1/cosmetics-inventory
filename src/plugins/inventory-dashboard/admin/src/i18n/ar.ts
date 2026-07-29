@@ -193,4 +193,8 @@ export const ar: Record<keyof typeof en, string> = {
   'orderForm.confirmed.paymentMethodTransfer': 'تحويل',
   'orderForm.confirmed.addPaymentButton': 'إضافة دفعة',
   'orderForm.shortfallError': 'المخزون غير كافٍ — ينقص {count} وحدة.',
+  'orderForm.confirmed.cancelOrderButton': 'إلغاء الطلب',
+  'orderForm.confirmed.cancelConfirmTitle': 'هل تريد إلغاء هذا الطلب؟',
+  'orderForm.confirmed.cancelConfirmBody': 'سيؤدي هذا إلى إعادة أي مخزون تم خصمه، ولا يمكن التراجع عن هذا الإجراء.',
+  'orderForm.confirmed.cancelError': 'تعذّر إلغاء الطلب',
 };

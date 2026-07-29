@@ -21,5 +21,12 @@ export function useOrder(documentId?: string) {
     return updated;
   }, [documentId]);
 
-  return { order, loading, reload, confirm };
+  const cancel = useCallback(async () => {
+    if (!documentId) return;
+    const updated = await api.post(`/orders/${documentId}/cancel`);
+    setOrder(updated);
+    return updated;
+  }, [documentId]);
+
+  return { order, loading, reload, confirm, cancel };
 }

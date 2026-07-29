@@ -120,7 +120,7 @@ export default function ResourceListPage() {
 
       <AlertDialog isOpen={!!toDelete} leastDestructiveRef={cancelRef} onClose={() => setToDelete(null)}>
         <AlertDialogOverlay>
-          <AlertDialogContent borderRadius="xl" dir={locale === 'ar' ? 'rtl' : 'ltr'}>
+          <AlertDialogContent borderRadius="xl" fontSize="md" dir={locale === 'ar' ? 'rtl' : 'ltr'}>
             <AlertDialogHeader>{intl.formatMessage({ id: 'resourceList.confirmDeleteTitle', defaultMessage: 'Confirm delete' })}</AlertDialogHeader>
             <AlertDialogBody>{intl.formatMessage({ id: 'resourceList.confirmDeleteBody', defaultMessage: 'Delete this record? This cannot be undone.' })}</AlertDialogBody>
             <AlertDialogFooter>

@@ -191,4 +191,8 @@ export const en = {
   'orderForm.confirmed.paymentMethodTransfer': 'transfer',
   'orderForm.confirmed.addPaymentButton': 'Add payment',
   'orderForm.shortfallError': 'Not enough stock: short by {count} unit(s).',
+  'orderForm.confirmed.cancelOrderButton': 'Cancel order',
+  'orderForm.confirmed.cancelConfirmTitle': 'Cancel this order?',
+  'orderForm.confirmed.cancelConfirmBody': 'This restores any deducted stock and cannot be undone.',
+  'orderForm.confirmed.cancelError': 'Could not cancel order',
 } as const;
