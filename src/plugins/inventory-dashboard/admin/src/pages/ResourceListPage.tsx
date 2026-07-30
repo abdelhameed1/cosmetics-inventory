@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   AlertDialog, AlertDialogBody, AlertDialogContent, AlertDialogFooter,
@@ -9,8 +9,10 @@ import { FiSearch, FiTrash2, FiX } from 'react-icons/fi';
 import { useIntl } from 'react-intl';
 import { useApi } from '../utils/api';
 import { useSchema } from '../hooks/useSchema';
+import { useAsyncResource } from '../hooks/useAsyncResource';
 import { PageHeader } from '../components/ui/PageHeader';
 import { DataTable } from '../components/ui/DataTable';
+import { LoadingState } from '../components/ui/LoadingState';
 import { getFieldLabel } from '../i18n/fieldLabels';
 import { getResourceLabel } from '../i18n/resourceLabels';
 import { useLocale } from '../i18n/LocaleProvider';
@@ -22,10 +24,16 @@ export default function ResourceListPage() {
   const intl = useIntl();
   const { locale } = useLocale();
   const { schema } = useSchema(resource);
-  const [rows, setRows] = useState<any[]>([]);
   const [search, setSearch] = useState('');
+  const { data, error: loadError, isInitialLoading, reload } = useAsyncResource<{ results: any[] }>(
+    () => (resource
+      ? api.get<{ results: any[] }>(`/resources/${resource}`, { search, pageSize: 100 })
+      : Promise.resolve({ results: [] })),
+    [resource, search]
+  );
+  const rows = data?.results ?? [];
   const [toDelete, setToDelete] = useState<any | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
   const cancelRef = useRef<HTMLButtonElement>(null);
 
   const visibleFields = useMemo(
@@ -33,27 +41,22 @@ export default function ResourceListPage() {
     [schema]
   );
 
-  const load = () => {
-    api
-      .get<{ results: any[] }>(`/resources/${resource}`, { search, pageSize: 100 })
-      .then((d) => setRows(d.results))
-      .catch((e) => setError(String(e)));
-  };
-
-  useEffect(() => { if (resource) load(); /* eslint-disable-next-line */ }, [resource, search]);
+  const displayError = actionError ?? (loadError ? String(loadError) : null);
 
   const confirmDelete = async () => {
     if (!toDelete) return;
     try {
       await api.del(`/resources/${resource}/${toDelete.documentId}`);
       setToDelete(null);
-      setError(null);
-      load();
+      setActionError(null);
+      reload();
     } catch (e: any) {
-      setError(e?.response?.data?.error?.message ?? intl.formatMessage({ id: 'error.deleteFailed', defaultMessage: 'Delete failed' }));
+      setActionError(e?.response?.data?.error?.message ?? intl.formatMessage({ id: 'error.deleteFailed', defaultMessage: 'Delete failed' }));
       setToDelete(null);
     }
   };
+
+  if (isInitialLoading) return <LoadingState />;
 
   return (
     <Box p={{ base: 4, md: 8 }}>
@@ -85,7 +88,7 @@ export default function ResourceListPage() {
         </InputGroup>
       </Box>
 
-      {error && <Text color="red.600" pb={4}>{error}</Text>}
+      {displayError && <Text color="red.600" pb={4}>{displayError}</Text>}
 
       <DataTable
         columns={[
