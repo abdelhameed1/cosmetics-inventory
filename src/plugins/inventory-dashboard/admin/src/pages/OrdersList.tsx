@@ -1,5 +1,5 @@
 // src/plugins/inventory-dashboard/admin/src/pages/OrdersList.tsx
-import { useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   AlertDialog, AlertDialogBody, AlertDialogContent, AlertDialogFooter, AlertDialogHeader, AlertDialogOverlay,
@@ -7,9 +7,11 @@ import {
 } from '@chakra-ui/react';
 import { useIntl } from 'react-intl';
 import { useApi } from '../utils/api';
+import { useAsyncResource } from '../hooks/useAsyncResource';
 import { useLocale } from '../i18n/LocaleProvider';
 import { PageHeader } from '../components/ui/PageHeader';
 import { DataTable } from '../components/ui/DataTable';
+import { LoadingState } from '../components/ui/LoadingState';
 
 const STATUS_COLOR_SCHEME: Record<string, string> = {
   draft: 'gray',
@@ -32,42 +34,41 @@ export default function OrdersList() {
   const api = useApi();
   const intl = useIntl();
   const { locale } = useLocale();
-  const [rows, setRows] = useState<any[]>([]);
-  const [total, setTotal] = useState<number | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const { data, error: loadError, isInitialLoading, reload } = useAsyncResource<{ results: any[]; pagination: { total: number } }>(
+    () => api.get<{ results: any[]; pagination: { total: number } }>('/resources/orders', { pageSize: 100 }),
+    []
+  );
+  const rows = data?.results ?? [];
+  const total = data?.pagination.total ?? null;
+  const [actionError, setActionError] = useState<string | null>(null);
   const [toCancel, setToCancel] = useState<any | null>(null);
   const [isCancelling, setIsCancelling] = useState(false);
   const cancelRef = useRef<HTMLButtonElement>(null);
 
-  const load = () => {
-    api
-      .get<{ results: any[]; pagination: { total: number } }>('/resources/orders', { pageSize: 100 })
-      .then((d) => { setRows(d.results); setTotal(d.pagination.total); })
-      .catch((e) => setError(String(e)));
-  };
-
-  useEffect(() => { load(); }, []);
+  const displayError = actionError ?? (loadError ? String(loadError) : null);
 
   const confirmCancel = async () => {
     if (!toCancel) return;
     setIsCancelling(true);
     try {
       await api.post(`/orders/${toCancel.documentId}/cancel`);
-      setError(null);
-      load();
+      setActionError(null);
+      reload();
     } catch (e: any) {
-      setError(e?.response?.data?.error?.message ?? intl.formatMessage({ id: 'ordersList.cancelError', defaultMessage: 'Could not cancel order' }));
+      setActionError(e?.response?.data?.error?.message ?? intl.formatMessage({ id: 'ordersList.cancelError', defaultMessage: 'Could not cancel order' }));
     } finally {
       setIsCancelling(false);
       setToCancel(null);
     }
   };
 
+  if (isInitialLoading) return <LoadingState />;
+
   return (
     <Box p={{ base: 4, md: 8 }}>
       <PageHeader title={intl.formatMessage({ id: 'nav.orders', defaultMessage: 'Orders' })} />
 
-      {error && <Text color="red.600" pb={4}>{error}</Text>}
+      {displayError && <Text color="red.600" pb={4}>{displayError}</Text>}
       {total !== null && total > rows.length && (
         <Text color="text.secondary" fontSize="sm" pb={4}>
           {intl.formatMessage(
