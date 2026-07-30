@@ -1,38 +1,38 @@
 // src/plugins/inventory-dashboard/admin/src/pages/CatalogHub.tsx
-import { useEffect, useState } from 'react';
 import { Box, Card, CardBody, Heading, HStack, Icon, SimpleGrid, Text, VStack } from '@chakra-ui/react';
 import { useIntl } from 'react-intl';
 import { useNavigate } from 'react-router-dom';
 import { useApi } from '../utils/api';
+import { useAsyncResource } from '../hooks/useAsyncResource';
 import { PageHeader } from '../components/ui/PageHeader';
+import { LoadingState } from '../components/ui/LoadingState';
 import { CATALOG_GROUPS } from '../config/navConfig';
+
+type CatalogCounts = Record<string, number | null>;
 
 export default function CatalogHub() {
   const api = useApi();
   const navigate = useNavigate();
   const intl = useIntl();
-  const [counts, setCounts] = useState<Record<string, number>>({});
 
-  useEffect(() => {
-    let active = true;
-    const slugs = CATALOG_GROUPS.flatMap((g) => g.items.map((i) => i.slug));
+  const { data: counts, isInitialLoading } = useAsyncResource<CatalogCounts>(
+    () => {
+      const slugs = CATALOG_GROUPS.flatMap((g) => g.items.map((i) => i.slug));
+      return Promise.all(
+        slugs.map((slug) =>
+          api
+            .get<{ pagination: { total: number } }>(`/resources/${slug}`, { pageSize: 1 })
+            .then((d) => [slug, d.pagination.total] as const)
+            .catch(() => [slug, null] as const)
+        )
+      ).then((entries) => Object.fromEntries(entries) as CatalogCounts);
+    },
+    []
+  );
 
-    Promise.all(
-      slugs.map((slug) =>
-        api
-          .get<{ pagination: { total: number } }>(`/resources/${slug}`, { pageSize: 1 })
-          .then((d) => [slug, d.pagination.total] as const)
-          .catch(() => [slug, null] as const)
-      )
-    ).then((entries) => {
-      if (!active) return;
-      setCounts(Object.fromEntries(entries) as Record<string, number>);
-    });
-
-    return () => {
-      active = false;
-    };
-  }, []);
+  if (isInitialLoading || !counts) {
+    return <LoadingState />;
+  }
 
   return (
     <Box p={{ base: 4, md: 8 }}>
