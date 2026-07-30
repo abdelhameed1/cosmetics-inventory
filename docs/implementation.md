@@ -467,24 +467,44 @@ under `type: 'admin'`:
 
 ### 5.2 Admin UI (`admin/src`)
 
-- **`utils/api.ts` — `useApi()`** — typed wrapper over `useFetchClient`.
-- **Hooks** — `useResources` (nav), `useSchema` (per-resource metadata),
-  `useOverview`, `useSettings` (exchange rate), `useOrder` (documentId-driven
-  fetch/reload/confirm for the Order form).
+- **`utils/api.ts` — `useApi()`** — typed wrapper over `useFetchClient`; every
+  `get`/`post`/`put`/`del` call is transparently wrapped in the loading
+  service's request counter (see §5.2.2) with zero call-site changes.
+- **Hooks** — thin wrappers around the shared `hooks/useAsyncResource.ts` (see
+  §5.2.2): `useSchema` (per-resource metadata, returns `{ schema, error,
+  reload }`), `useOverview` (returns `{ data, error, isInitialLoading,
+  reload }`), `useSettings` (exchange rate, returns `{ exchangeRate,
+  exchangeRateUpdatedAt, error, save }`), `useOrder` (documentId-driven
+  fetch/reload/confirm/cancel for the Order form, returns `{ order, reload,
+  confirm, cancel }`), `useResources` (returns `{ resources, error }` — not
+  currently called anywhere in `admin/src`; the left nav is driven by the
+  static `config/navConfig.ts` instead, so this hook is dead code as of the
+  loading-service follow-up fixes, kept rather than deleted since removing an
+  unused hook was out of that work's scope).
 - **Router — `pages/App.tsx`** — routes: `/` (Overview), `stock-purchase`,
   `r/:resource` (list), `r/:resource/new` (create), `r/:resource/:id` (edit),
   `orders/new`, `orders/:id`.
 - **Generic list — `pages/ResourceListPage.tsx`** — searchable table built from
-  `SchemaMeta`; create/edit/delete with guarded delete confirmation.
+  `SchemaMeta`; create/edit/delete with guarded delete confirmation; loading
+  state via `useAsyncResource` (see §5.2.2).
 - **Generic form — `pages/ResourceFormPage.tsx` + `components/FieldRenderer.tsx`
   + `components/RelationSelect.tsx`** — picks the right input per field type.
+  `RelationSelect`'s option-list fetch uses `useAsyncResource` (see §5.2.2).
+- **Catalog hub — `pages/CatalogHub.tsx`** — a discoverable grid of the 8
+  master-data entity types with live per-entity record counts, fetched via
+  `useAsyncResource`; reached through `pages/CatalogStandalone.tsx` (see
+  §5.2.1's entry-point list).
 - **Overview — `pages/Overview.tsx`** — stat cards, exchange rate input,
   low-stock table (expired batches excluded from qty), expiry panels (90-day
-  window), stock value shown in both USD and EGP.
+  window), stock value shown in both USD and EGP; loading/reload behavior via
+  `useAsyncResource` (see §5.2.2).
 - **Bespoke flows — `pages/StockPurchase.tsx`** and
-  **`components/ProductVariantsForm.tsx`** — see §6.
+  **`components/ProductVariantsForm.tsx`** — see §6. Both still hand-roll their
+  own `useEffect`/`useState` option-list fetches rather than using
+  `useAsyncResource` — see §10's known limitation.
 - **Order flow — `pages/OrderForm.tsx`** — new-order entry + read-only
-  confirmed view with payment recording; see §6.
+  confirmed view with payment recording; see §6. Also still hand-rolls its own
+  option-list fetches (customers/products/variants) — see §10.
 
 #### 5.2.1 Chakra UI architecture (Phase 4)
 
@@ -502,7 +522,7 @@ shares the same DOM tree.
   also leak onto the shared shell). Wraps its children in a scoped
   `<Box bg="gray.50" color="gray.800" minH="100%">` — page background/text
   color live here, not in the theme, for the same leak-avoidance reason.
-- **Three independent top-level entry points**, each needing exactly one
+- **Four independent top-level entry points**, each needing exactly one
   `ChakraRoot` ancestor (never zero, never double-nested):
   1. `pages/App.tsx` — wraps its own `<Routes>` in `<ChakraRoot>` once, at
      the router root. Covers Overview, the generic list/form pages, and the
@@ -515,8 +535,12 @@ shares the same DOM tree.
      actually reached).
   3. `pages/OrderFormStandalone.tsx` — same pattern for the left-nav "New
      Order" link (`<ChakraRoot><OrderForm /></ChakraRoot>`).
+  4. `pages/CatalogStandalone.tsx` — same pattern for the left-nav "Catalog"
+     link, wrapping its own nested `<Routes>` (`CatalogHub` at its index
+     route, then the generic `ResourceListPage`/`ResourceFormPage` for each
+     of the 8 catalog entity types) in one `<ChakraRoot><AppShell>`.
 
-  Because of entry points 2 and 3, `StockPurchase.tsx` and `OrderForm.tsx`
+  Because of entry points 2-4, `StockPurchase.tsx` and `OrderForm.tsx`
   themselves must stay **bare** components with no self-wrapping
   `ChakraRoot` — self-wrapping either one would double-nest `ChakraProvider`
   when the same component is reached via `App.tsx`'s own `stock-purchase`/
@@ -529,6 +553,56 @@ shares the same DOM tree.
   after the migration; the only remaining `@strapi/*` UI import is
   `@strapi/icons` for nav icons (`index.ts`, `PluginIcon.tsx`), which is
   Strapi's own left-nav chrome, not plugin content, and was left as-is.
+
+#### 5.2.2 Loading service
+
+A unified loading system, added after Phase 4, gives the plugin one
+consistent way to show navigation/data-loading feedback instead of ad hoc
+per-page spinners (or, in several places before this, no loading feedback at
+all). Three pieces, all under `admin/src/loading/` and `admin/src/hooks/`:
+
+- **`loading/LoadingProvider.tsx`** — a React context holding an in-flight
+  request counter (`begin()`/`end()`), mounted once per `ChakraRoot` (so each
+  of the plugin's 4 entry points gets its own independent counter). Exposes
+  `useIsLoading()` (`count > 0`) and `useLoadingTracker()` (`{ begin, end }`).
+- **`utils/api.ts` — `useApi()`** wraps every `get`/`post`/`put`/`del` call
+  with `begin()`/`end()` in a `finally`, so all call sites across the plugin
+  automatically drive the counter — no per-call-site changes needed.
+- **`loading/TopProgressBar.tsx`** — a debounced (150ms show-delay, 200ms
+  min-visible, to avoid flicker on fast requests) slim animated bar, mounted
+  once in `AppShell` right before `{children}`. Rendered inside a Chakra
+  `<Portal>` (a direct child of `document.body`) at `position: fixed` with
+  `zIndex={1500}` — this is a **deliberate, narrow exception** to the
+  "never leak onto Strapi's shared shell" rule in §5.2.1: the bar is a 3px
+  strip at the very top edge of the full viewport (crossing over Strapi's own
+  left nav, not just the plugin's content column), chosen specifically so it
+  also renders above Chakra's own `Modal` overlay (`zIndex: 1400`) — the
+  `Portal` is required for that guarantee, since a plain `position: fixed`
+  element without one only escapes ancestors within its own DOM subtree, not
+  any stacking context Strapi's own admin shell might establish above it.
+- **`hooks/useAsyncResource.ts` — `useAsyncResource<T>(fetcher, deps)`** — the
+  shared data-fetch hook nearly every page/hook above is built on. Returns
+  `{ data, setData, error, status, isInitialLoading, reload }`.
+  `isInitialLoading` is `status === 'loading' && !hasSettled` — **`hasSettled`
+  is a dedicated flag, set `true` the first time the fetcher resolves *or*
+  rejects, and never reset by `reload()`.** This distinction matters: an
+  earlier version computed `isInitialLoading` from `data === null`, which
+  incorrectly re-armed after an error (a failed load followed by a retry
+  looked identical to "never loaded," re-showing a full-page placeholder and
+  dropping input focus, e.g. mid-search). Also guards against out-of-order
+  responses via an internal request-id ref, so a slow earlier request can
+  never clobber a faster later one's result.
+  **Convention for any new page or hook in this plugin:** build on `useApi()`
+  (already mandatory) + `useAsyncResource` + render
+  `components/ui/LoadingState.tsx` when `isInitialLoading` is true. Never
+  hand-roll `useState`/`useEffect` fetch bookkeeping, and never let a
+  background reload blank a page back to a placeholder — keep showing the
+  last-loaded data, with an inline error indicator if the reload failed (see
+  `pages/Overview.tsx`'s `error != null && (...)` banner, or
+  `pages/OrdersList.tsx`/`pages/ResourceListPage.tsx`'s `loadError != null`
+  pattern, for the established idiom — note `error` is typed `unknown`, so
+  `error && (...)` alone fails TypeScript's JSX-children check; always
+  `!= null` it first). See §10 for the pages that still don't follow this.
 
 ---
 
@@ -761,6 +835,20 @@ in `pages/App.tsx`, and a nav entry if needed.
   deleting one is blocked — see §4). If that need arises, it should restore
   `quantityRemaining` on the affected batches atomically, mirroring the
   `confirm()` transaction pattern.
+- **Three pages still hand-roll `useEffect`/`useState` option-list fetches
+  instead of using `useAsyncResource`** (see §5.2.2's convention):
+  `pages/OrderForm.tsx` (customers/products/variants), `pages/StockPurchase.tsx`
+  (products/suppliers/variants), and `components/ProductVariantsForm.tsx`
+  (brands/categories/variant-types/products). Unlike the two sites already
+  migrated (`CatalogHub.tsx`, `RelationSelect.tsx`), **none of these three has
+  a `.catch()` at all** — a failed request is an unhandled promise rejection
+  with a silently-empty dropdown, not just a missed convention. Discovered
+  during the loading-service follow-up fixes' final review; migrating them
+  was out of that work's scope and is a candidate for a future pass.
+- **`hooks/useResources.ts` has zero call sites in `admin/src`.** The left
+  nav is driven by the static `config/navConfig.ts` instead. Kept rather than
+  deleted (removing it was out of scope for the work that noticed it) — a
+  candidate for deletion in a future cleanup pass.
 - **Minor cosmetic items carried over from the Chakra UI reskin (Phase 4),
   not correctness bugs:**
   - `ConfirmedOrderView`'s lines table header reads "Variant" but the cell
@@ -770,9 +858,6 @@ in `pages/App.tsx`, and a nav entry if needed.
     `PageHeader` primitive (it needs a right-aligned status badge next to
     the title) — visually slightly different from every other screen's
     heading.
-  - `Overview.tsx`'s stat-card grid is a fixed 4-up (`SimpleGrid
-    columns={4}`), not responsive; cards will crowd on narrow viewports
-    (no functional breakage — confirmed no horizontal overflow at 900px).
   - There is no frontend automated test harness for the admin UI (no
     change from the Strapi-DS era) — admin screens are gated by
     `test:ts:front`/`build` plus manual browser click-through, not unit
