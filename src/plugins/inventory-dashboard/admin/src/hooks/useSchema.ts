@@ -1,23 +1,12 @@
-import { useCallback, useEffect, useState } from 'react';
 import { useApi, type SchemaMeta } from '../utils/api';
+import { useAsyncResource } from './useAsyncResource';
 
 export function useSchema(resource?: string) {
   const api = useApi();
-  const [schema, setSchema] = useState<SchemaMeta | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<unknown>(null);
+  const { data: schema, error, status, reload } = useAsyncResource<SchemaMeta | null>(
+    () => (resource ? api.get<SchemaMeta>(`/resources/${resource}/schema`) : Promise.resolve(null)),
+    [resource]
+  );
 
-  const reload = useCallback(() => {
-    if (!resource) return;
-    setLoading(true);
-    api
-      .get<SchemaMeta>(`/resources/${resource}/schema`)
-      .then(setSchema)
-      .catch(setError)
-      .finally(() => setLoading(false));
-  }, [resource]);
-
-  useEffect(() => { reload(); }, [reload]);
-
-  return { schema, loading, error, reload };
+  return { schema, loading: status === 'loading', error, reload };
 }
