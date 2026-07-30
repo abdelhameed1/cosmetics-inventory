@@ -30,7 +30,7 @@ export default function CatalogHub() {
     []
   );
 
-  if (isInitialLoading || !counts) {
+  if (isInitialLoading) {
     return <LoadingState />;
   }
 
@@ -63,7 +63,7 @@ export default function CatalogHub() {
                         {intl.formatMessage({ id: item.labelId })}
                       </Text>
                       <Text fontSize="2xl" fontWeight="bold" color="text.primary">
-                        {counts[item.slug] ?? '—'}
+                        {counts?.[item.slug] ?? '—'}
                       </Text>
                     </VStack>
                   </HStack>

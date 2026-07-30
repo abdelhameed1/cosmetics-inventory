@@ -50,11 +50,11 @@ export default function Overview() {
     <Box p={{ base: 4, md: 8 }}>
       <PageHeader title={intl.formatMessage({ id: 'nav.overview', defaultMessage: 'Overview' })} />
 
-      {error ? (
+      {error != null && (
         <Text color="red.600" pb={4}>
           {intl.formatMessage({ id: 'overview.reloadError', defaultMessage: 'Could not refresh overview data — showing last loaded data' })}
         </Text>
-      ) : null}
+      )}
 
       <Box pb={6}>
         <HStack spacing={2} align="flex-end">

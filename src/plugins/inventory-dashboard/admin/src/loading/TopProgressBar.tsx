@@ -1,5 +1,5 @@
 // src/plugins/inventory-dashboard/admin/src/loading/TopProgressBar.tsx
-import { Box } from '@chakra-ui/react';
+import { Box, Portal } from '@chakra-ui/react';
 import { useEffect, useRef, useState } from 'react';
 import { useIsLoading } from './LoadingProvider';
 
@@ -37,23 +37,30 @@ export function TopProgressBar() {
 
   if (!visible) return null;
 
+  // Rendered via Portal (direct child of document.body) so it escapes any
+  // stacking context an ancestor establishes (e.g. a transform/filter on a
+  // Strapi admin-shell wrapper) — the same reason Chakra's own Modal is
+  // portaled to body. zIndex must clear Chakra's default modal/overlay
+  // layer (1400).
   return (
-    <Box position="fixed" top={0} left={0} right={0} height="3px" overflow="hidden" zIndex={1500}>
-      <Box
-        position="absolute"
-        top={0}
-        bottom={0}
-        width="40%"
-        bg="accent.fg"
-        borderRadius="full"
-        sx={{
-          animation: 'inventory-dashboard-progress-slide 1.1s ease-in-out infinite',
-          '@keyframes inventory-dashboard-progress-slide': {
-            '0%': { insetInlineStart: '-40%' },
-            '100%': { insetInlineStart: '100%' },
-          },
-        }}
-      />
-    </Box>
+    <Portal>
+      <Box position="fixed" top={0} left={0} right={0} height="3px" overflow="hidden" zIndex={1500}>
+        <Box
+          position="absolute"
+          top={0}
+          bottom={0}
+          width="40%"
+          bg="accent.fg"
+          borderRadius="full"
+          sx={{
+            animation: 'inventory-dashboard-progress-slide 1.1s ease-in-out infinite',
+            '@keyframes inventory-dashboard-progress-slide': {
+              '0%': { insetInlineStart: '-40%' },
+              '100%': { insetInlineStart: '100%' },
+            },
+          }}
+        />
+      </Box>
+    </Portal>
   );
 }
