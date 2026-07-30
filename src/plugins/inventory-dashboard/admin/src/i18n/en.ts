@@ -136,6 +136,7 @@ export const en = {
   'overview.invalidRateError': 'Enter a valid exchange rate',
   'overview.saveRateError': 'Could not save rate',
   'overview.loadError': 'Could not load overview data',
+  'overview.reloadError': 'Could not refresh overview data — showing last loaded data',
   'overview.stat.totalStockUnits': 'Total stock units',
   'overview.stat.stockValueUsd': 'Stock value (USD)',
   'overview.stat.stockValueEgp': 'Stock value (EGP)',

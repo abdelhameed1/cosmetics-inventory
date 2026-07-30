@@ -138,6 +138,7 @@ export const ar: Record<keyof typeof en, string> = {
   'overview.invalidRateError': 'أدخل سعر صرف صالح',
   'overview.saveRateError': 'تعذّر حفظ السعر',
   'overview.loadError': 'تعذّر تحميل بيانات النظرة العامة',
+  'overview.reloadError': 'تعذّر تحديث بيانات النظرة العامة — يتم عرض آخر بيانات محمّلة',
   'overview.stat.totalStockUnits': 'إجمالي وحدات المخزون',
   'overview.stat.stockValueUsd': 'قيمة المخزون (دولار)',
   'overview.stat.stockValueEgp': 'قيمة المخزون (جنيه مصري)',

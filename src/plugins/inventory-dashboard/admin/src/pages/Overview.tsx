@@ -35,21 +35,26 @@ export default function Overview() {
     }
   };
 
-  if (error) {
-    return (
-      <Box p={{ base: 4, md: 8 }}>
-        <Text color="red.600">{intl.formatMessage({ id: 'overview.loadError', defaultMessage: 'Could not load overview data' })}</Text>
-      </Box>
-    );
-  }
-
   if (isInitialLoading || !data) {
+    if (error) {
+      return (
+        <Box p={{ base: 4, md: 8 }}>
+          <Text color="red.600">{intl.formatMessage({ id: 'overview.loadError', defaultMessage: 'Could not load overview data' })}</Text>
+        </Box>
+      );
+    }
     return <LoadingState />;
   }
 
   return (
     <Box p={{ base: 4, md: 8 }}>
       <PageHeader title={intl.formatMessage({ id: 'nav.overview', defaultMessage: 'Overview' })} />
+
+      {error ? (
+        <Text color="red.600" pb={4}>
+          {intl.formatMessage({ id: 'overview.reloadError', defaultMessage: 'Could not refresh overview data — showing last loaded data' })}
+        </Text>
+      ) : null}
 
       <Box pb={6}>
         <HStack spacing={2} align="flex-end">
