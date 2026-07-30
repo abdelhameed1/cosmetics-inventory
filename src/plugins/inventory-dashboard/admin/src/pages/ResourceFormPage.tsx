@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Box, Button, Card, CardBody, Grid, GridItem, HStack, Text } from '@chakra-ui/react';
 import { useIntl } from 'react-intl';
@@ -26,12 +26,14 @@ export default function ResourceFormPage() {
     [schema]
   );
 
-  const { isInitialLoading } = useAsyncResource<any>(
-    () => (isEdit && resource
-      ? api.get(`/resources/${resource}/${id}`).then((rec) => { setValues(normalize(rec)); return rec; })
-      : Promise.resolve(null)),
+  const { data, isInitialLoading } = useAsyncResource<any>(
+    () => (isEdit && resource ? api.get(`/resources/${resource}/${id}`) : Promise.resolve(null)),
     [isEdit, resource, id]
   );
+
+  useEffect(() => {
+    if (data) setValues(normalize(data));
+  }, [data]);
 
   const setField = (name: string, v: any) => setValues((prev) => ({ ...prev, [name]: v }));
 

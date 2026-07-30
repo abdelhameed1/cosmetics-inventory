@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   AlertDialog, AlertDialogBody, AlertDialogContent, AlertDialogFooter,
@@ -25,7 +25,7 @@ export default function ResourceListPage() {
   const { locale } = useLocale();
   const { schema } = useSchema(resource);
   const [search, setSearch] = useState('');
-  const { data, error: loadError, isInitialLoading, reload } = useAsyncResource<{ results: any[] }>(
+  const { data, error: loadError, isInitialLoading, status, reload } = useAsyncResource<{ results: any[] }>(
     () => (resource
       ? api.get<{ results: any[] }>(`/resources/${resource}`, { search, pageSize: 100 })
       : Promise.resolve({ results: [] })),
@@ -41,7 +41,11 @@ export default function ResourceListPage() {
     [schema]
   );
 
-  const displayError = actionError ?? (loadError ? String(loadError) : null);
+  const displayError = actionError ?? (loadError != null ? String(loadError) : null);
+
+  useEffect(() => {
+    if (status === 'loading') setActionError(null);
+  }, [status]);
 
   const confirmDelete = async () => {
     if (!toDelete) return;

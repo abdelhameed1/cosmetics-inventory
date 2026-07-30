@@ -1,5 +1,5 @@
 // src/plugins/inventory-dashboard/admin/src/pages/OrdersList.tsx
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   AlertDialog, AlertDialogBody, AlertDialogContent, AlertDialogFooter, AlertDialogHeader, AlertDialogOverlay,
@@ -34,7 +34,7 @@ export default function OrdersList() {
   const api = useApi();
   const intl = useIntl();
   const { locale } = useLocale();
-  const { data, error: loadError, isInitialLoading, reload } = useAsyncResource<{ results: any[]; pagination: { total: number } }>(
+  const { data, error: loadError, isInitialLoading, status, reload } = useAsyncResource<{ results: any[]; pagination: { total: number } }>(
     () => api.get<{ results: any[]; pagination: { total: number } }>('/resources/orders', { pageSize: 100 }),
     []
   );
@@ -45,7 +45,11 @@ export default function OrdersList() {
   const [isCancelling, setIsCancelling] = useState(false);
   const cancelRef = useRef<HTMLButtonElement>(null);
 
-  const displayError = actionError ?? (loadError ? String(loadError) : null);
+  const displayError = actionError ?? (loadError != null ? String(loadError) : null);
+
+  useEffect(() => {
+    if (status === 'loading') setActionError(null);
+  }, [status]);
 
   const confirmCancel = async () => {
     if (!toCancel) return;

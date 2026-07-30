@@ -1,3 +1,4 @@
+// src/plugins/inventory-dashboard/admin/src/hooks/useAsyncResource.ts
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 export type AsyncStatus = 'loading' | 'success' | 'error';
@@ -15,6 +16,7 @@ export function useAsyncResource<T>(fetcher: () => Promise<T>, deps: unknown[]):
   const [data, setData] = useState<T | null>(null);
   const [error, setError] = useState<unknown>(null);
   const [status, setStatus] = useState<AsyncStatus>('loading');
+  const [hasSettled, setHasSettled] = useState(false);
   const requestIdRef = useRef(0);
 
   const reload = useCallback(() => {
@@ -26,11 +28,13 @@ export function useAsyncResource<T>(fetcher: () => Promise<T>, deps: unknown[]):
         if (requestIdRef.current !== requestId) return;
         setData(d);
         setStatus('success');
+        setHasSettled(true);
       })
       .catch((e) => {
         if (requestIdRef.current !== requestId) return;
         setError(e);
         setStatus('error');
+        setHasSettled(true);
       });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, deps);
@@ -42,7 +46,7 @@ export function useAsyncResource<T>(fetcher: () => Promise<T>, deps: unknown[]):
     setData,
     error,
     status,
-    isInitialLoading: status === 'loading' && data === null,
+    isInitialLoading: status === 'loading' && !hasSettled,
     reload,
   };
 }

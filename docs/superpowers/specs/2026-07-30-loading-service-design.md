@@ -123,13 +123,14 @@ export function useAsyncResource<T>(fetcher: () => Promise<T>, deps: unknown[]) 
   const [data, setData] = useState<T | null>(null);
   const [error, setError] = useState<unknown>(null);
   const [status, setStatus] = useState<Status>('loading');
+  const [hasSettled, setHasSettled] = useState(false);
 
   const reload = useCallback(() => {
     setStatus('loading');
     setError(null);
     fetcher()
-      .then((d) => { setData(d); setStatus('success'); })
-      .catch((e) => { setError(e); setStatus('error'); });
+      .then((d) => { setData(d); setStatus('success'); setHasSettled(true); })
+      .catch((e) => { setError(e); setStatus('error'); setHasSettled(true); });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, deps);
 
@@ -140,13 +141,13 @@ export function useAsyncResource<T>(fetcher: () => Promise<T>, deps: unknown[]) 
     setData,
     error,
     status,
-    isInitialLoading: status === 'loading' && data === null,
+    isInitialLoading: status === 'loading' && !hasSettled,
     reload,
   };
 }
 ```
 
-`isInitialLoading` is the flag pages use: `true` only until the first successful (or failed) response ever arrives for this hook instance. A later `reload()` (e.g. after a mutation) flips `status` back to `'loading'` but `data` is still non-null, so `isInitialLoading` stays `false` — the page keeps rendering the stale data, and the top bar (driven independently by `useApi()`) is the only visible feedback. This directly implements "keep stale data on screen during refetches, top bar only."
+`isInitialLoading` is the flag pages use: `true` only until the first successful (or failed) response ever arrives for this hook instance. A later `reload()` (e.g. after a mutation) flips `status` back to `'loading'` but `hasSettled` is already `true`, so `isInitialLoading` stays `false` — the page keeps rendering the stale data, and the top bar (driven independently by `useApi()`) is the only visible feedback. This directly implements "keep stale data on screen during refetches, top bar only." `hasSettled` (not `data === null`) is the deciding signal because a failed-then-retried reload must not re-trigger the full-page placeholder: `data` legitimately stays `null` across a failed request, so a naive `data === null` check would flip `isInitialLoading` back to `true` on every retry after a failure, unmounting whatever the page was rendering (e.g. a focused search input) on each keystroke.
 
 `setData` is exposed directly (not just internally) because several existing mutations already update local state from their own response without a follow-up fetch — e.g. `useOrder`'s `confirm`/`cancel` and `useSettings`'s `save` today call `setOrder(updated)`/`setExchangeRate(d.exchangeRate)` straight from the POST/PUT response. Wrapping those hooks in `useAsyncResource` without exposing `setData` would force an unnecessary extra `reload()` round-trip after every mutation just to reflect data the response already contained.
 
