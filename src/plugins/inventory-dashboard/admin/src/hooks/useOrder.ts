@@ -4,7 +4,7 @@ import { useAsyncResource } from './useAsyncResource';
 
 export function useOrder(documentId?: string) {
   const api = useApi();
-  const { data: order, setData, status, reload } = useAsyncResource<any>(
+  const { data: order, setData, reload } = useAsyncResource<any>(
     () => (documentId ? api.get(`/orders/${documentId}`) : Promise.resolve(null)),
     [documentId]
   );
@@ -23,5 +23,5 @@ export function useOrder(documentId?: string) {
     return updated;
   }, [documentId]);
 
-  return { order, loading: status === 'loading' && Boolean(documentId), reload, confirm, cancel };
+  return { order, reload, confirm, cancel };
 }

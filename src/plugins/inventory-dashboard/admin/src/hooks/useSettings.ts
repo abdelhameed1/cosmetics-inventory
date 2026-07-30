@@ -9,7 +9,7 @@ interface SettingsData {
 
 export function useSettings() {
   const api = useApi();
-  const { data, setData, error, status } = useAsyncResource<SettingsData>(
+  const { data, setData, error } = useAsyncResource<SettingsData>(
     () => api.get<SettingsData>('/settings'),
     []
   );
@@ -25,7 +25,6 @@ export function useSettings() {
   return {
     exchangeRate: data?.exchangeRate ?? null,
     exchangeRateUpdatedAt: data?.exchangeRateUpdatedAt ?? null,
-    loading: status === 'loading',
     error,
     save,
   };
