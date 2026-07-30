@@ -1,5 +1,6 @@
 import { useFetchClient } from '@strapi/strapi/admin';
 import { pluginId } from '../pluginId';
+import { useLoadingTracker } from '../loading/LoadingProvider';
 
 export interface FieldMeta {
   name: string;
@@ -21,24 +22,27 @@ export interface SchemaMeta {
 
 export function useApi() {
   const { get, post, put, del } = useFetchClient();
+  const { begin, end } = useLoadingTracker();
   const base = `/${pluginId}`;
 
+  async function run<T>(fn: () => Promise<{ data: T }>): Promise<T> {
+    begin();
+    try {
+      const res = await fn();
+      return res.data;
+    } finally {
+      end();
+    }
+  }
+
   return {
-    async get<T = any>(path: string, params?: Record<string, unknown>): Promise<T> {
-      const res = await get(`${base}${path}`, { params });
-      return res.data as T;
-    },
-    async post<T = any>(path: string, data?: unknown): Promise<T> {
-      const res = await post(`${base}${path}`, data);
-      return res.data as T;
-    },
-    async put<T = any>(path: string, data?: unknown): Promise<T> {
-      const res = await put(`${base}${path}`, data);
-      return res.data as T;
-    },
-    async del<T = any>(path: string): Promise<T> {
-      const res = await del(`${base}${path}`);
-      return res.data as T;
-    },
+    get: <T = any>(path: string, params?: Record<string, unknown>) =>
+      run<T>(() => get(`${base}${path}`, { params })),
+    post: <T = any>(path: string, data?: unknown) =>
+      run<T>(() => post(`${base}${path}`, data)),
+    put: <T = any>(path: string, data?: unknown) =>
+      run<T>(() => put(`${base}${path}`, data)),
+    del: <T = any>(path: string) =>
+      run<T>(() => del(`${base}${path}`)),
   };
 }
