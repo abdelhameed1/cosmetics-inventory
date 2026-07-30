@@ -1,0 +1,38 @@
+import { useCallback, useEffect, useState } from 'react';
+
+export type AsyncStatus = 'loading' | 'success' | 'error';
+
+export interface AsyncResource<T> {
+  data: T | null;
+  setData: (data: T | null) => void;
+  error: unknown;
+  status: AsyncStatus;
+  isInitialLoading: boolean;
+  reload: () => void;
+}
+
+export function useAsyncResource<T>(fetcher: () => Promise<T>, deps: unknown[]): AsyncResource<T> {
+  const [data, setData] = useState<T | null>(null);
+  const [error, setError] = useState<unknown>(null);
+  const [status, setStatus] = useState<AsyncStatus>('loading');
+
+  const reload = useCallback(() => {
+    setStatus('loading');
+    setError(null);
+    fetcher()
+      .then((d) => { setData(d); setStatus('success'); })
+      .catch((e) => { setError(e); setStatus('error'); });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, deps);
+
+  useEffect(() => { reload(); }, [reload]);
+
+  return {
+    data,
+    setData,
+    error,
+    status,
+    isInitialLoading: status === 'loading' && data === null,
+    reload,
+  };
+}
