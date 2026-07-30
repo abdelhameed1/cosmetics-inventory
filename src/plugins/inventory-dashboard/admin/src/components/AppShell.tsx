@@ -8,6 +8,7 @@ import { useIntl } from 'react-intl';
 import { useLocation } from 'react-router-dom';
 import { useLocale } from '../i18n/LocaleProvider';
 import { AppSidebar } from './AppSidebar';
+import { TopProgressBar } from '../loading/TopProgressBar';
 
 function MobileTopBar({ onOpen }: { onOpen: () => void }) {
   const intl = useIntl();
@@ -60,7 +61,10 @@ export function AppShell({ children }: { children: ReactNode }) {
             </DrawerBody>
           </DrawerContent>
         </Drawer>
-        <Box flex={1} minW={0}>{children}</Box>
+        <Box flex={1} minW={0} position="relative">
+          <TopProgressBar />
+          {children}
+        </Box>
       </Flex>
     </Flex>
   );
