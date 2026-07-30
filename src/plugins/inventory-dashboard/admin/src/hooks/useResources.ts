@@ -1,21 +1,12 @@
-import { useEffect, useState } from 'react';
 import { useApi } from '../utils/api';
+import { useAsyncResource } from './useAsyncResource';
 
 export function useResources() {
   const api = useApi();
-  const [resources, setResources] = useState<string[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<unknown>(null);
+  const { data, error, status } = useAsyncResource<string[]>(
+    () => api.get<{ resources: string[] }>('/resources').then((d) => d.resources),
+    []
+  );
 
-  useEffect(() => {
-    let active = true;
-    api
-      .get<{ resources: string[] }>('/resources')
-      .then((d) => active && setResources(d.resources))
-      .catch((e) => active && setError(e))
-      .finally(() => active && setLoading(false));
-    return () => { active = false; };
-  }, []);
-
-  return { resources, loading, error };
+  return { resources: data ?? [], loading: status === 'loading', error };
 }
