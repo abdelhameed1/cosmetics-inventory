@@ -8,10 +8,11 @@ import { PageHeader } from '../components/ui/PageHeader';
 import { StatCard } from '../components/ui/StatCard';
 import { DataTable } from '../components/ui/DataTable';
 import { FormField } from '../components/ui/FormField';
+import { LoadingState } from '../components/ui/LoadingState';
 
 export default function Overview() {
   const intl = useIntl();
-  const { data, loading, error, reload } = useOverview();
+  const { data, error, isInitialLoading, reload } = useOverview();
   const { exchangeRate, exchangeRateUpdatedAt, save } = useSettings();
   const [rateInput, setRateInput] = useState<number | undefined>(undefined);
   const [saveError, setSaveError] = useState<string | null>(null);
@@ -42,8 +43,8 @@ export default function Overview() {
     );
   }
 
-  if (loading || !data) {
-    return <Box p={{ base: 4, md: 8 }}><Text>{intl.formatMessage({ id: 'common.loading', defaultMessage: 'Loading…' })}</Text></Box>;
+  if (isInitialLoading || !data) {
+    return <LoadingState />;
   }
 
   return (
