@@ -38,7 +38,7 @@ export function TopProgressBar() {
   if (!visible) return null;
 
   return (
-    <Box position="absolute" top={0} left={0} right={0} height="3px" overflow="hidden" zIndex={10}>
+    <Box position="fixed" top={0} left={0} right={0} height="3px" overflow="hidden" zIndex={1500}>
       <Box
         position="absolute"
         top={0}

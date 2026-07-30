@@ -61,7 +61,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             </DrawerBody>
           </DrawerContent>
         </Drawer>
-        <Box flex={1} minW={0} position="relative">
+        <Box flex={1} minW={0}>
           <TopProgressBar />
           {children}
         </Box>
