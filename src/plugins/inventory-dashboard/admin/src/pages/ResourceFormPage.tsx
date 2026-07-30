@@ -1,12 +1,14 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Box, Button, Card, CardBody, Grid, GridItem, HStack, Text } from '@chakra-ui/react';
 import { useIntl } from 'react-intl';
 import { useApi } from '../utils/api';
 import { useSchema } from '../hooks/useSchema';
+import { useAsyncResource } from '../hooks/useAsyncResource';
 import { FieldRenderer } from '../components/FieldRenderer';
 import ProductVariantsForm from '../components/ProductVariantsForm';
 import { PageHeader } from '../components/ui/PageHeader';
+import { LoadingState } from '../components/ui/LoadingState';
 import { getResourceLabel } from '../i18n/resourceLabels';
 
 export default function ResourceFormPage() {
@@ -24,12 +26,12 @@ export default function ResourceFormPage() {
     [schema]
   );
 
-  useEffect(() => {
-    if (isEdit && resource) {
-      api.get(`/resources/${resource}/${id}`).then((rec) => setValues(normalize(rec)));
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isEdit, resource, id]);
+  const { isInitialLoading } = useAsyncResource<any>(
+    () => (isEdit && resource
+      ? api.get(`/resources/${resource}/${id}`).then((rec) => { setValues(normalize(rec)); return rec; })
+      : Promise.resolve(null)),
+    [isEdit, resource, id]
+  );
 
   const setField = (name: string, v: any) => setValues((prev) => ({ ...prev, [name]: v }));
 
@@ -50,6 +52,10 @@ export default function ResourceFormPage() {
   // Bespoke product-with-variants flow on create
   if (resource === 'products' && !isEdit) {
     return <ProductVariantsForm onDone={() => navigate('..', { relative: 'path' })} />;
+  }
+
+  if (isEdit && isInitialLoading) {
+    return <LoadingState />;
   }
 
   const resourceLabel = getResourceLabel(intl, resource);
