@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 export type AsyncStatus = 'loading' | 'success' | 'error';
 
@@ -15,13 +15,23 @@ export function useAsyncResource<T>(fetcher: () => Promise<T>, deps: unknown[]):
   const [data, setData] = useState<T | null>(null);
   const [error, setError] = useState<unknown>(null);
   const [status, setStatus] = useState<AsyncStatus>('loading');
+  const requestIdRef = useRef(0);
 
   const reload = useCallback(() => {
+    const requestId = ++requestIdRef.current;
     setStatus('loading');
     setError(null);
     fetcher()
-      .then((d) => { setData(d); setStatus('success'); })
-      .catch((e) => { setError(e); setStatus('error'); });
+      .then((d) => {
+        if (requestIdRef.current !== requestId) return;
+        setData(d);
+        setStatus('success');
+      })
+      .catch((e) => {
+        if (requestIdRef.current !== requestId) return;
+        setError(e);
+        setStatus('error');
+      });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, deps);
 
