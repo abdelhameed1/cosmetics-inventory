@@ -1,12 +1,17 @@
-import { useState } from 'react';
+import { lazy, Suspense, useState } from 'react';
 import {
-  HStack, IconButton, Modal, ModalBody, ModalCloseButton, ModalContent, ModalHeader, ModalOverlay, Select,
+  Center, HStack, IconButton, Modal, ModalBody, ModalCloseButton, ModalContent, ModalHeader, ModalOverlay, Select,
+  Spinner,
 } from '@chakra-ui/react';
 import { FiPlus } from 'react-icons/fi';
 import { useIntl } from 'react-intl';
 import { FormField } from './ui/FormField';
-import { InlineResourceForm } from './InlineResourceForm';
 import { useLocale } from '../i18n/LocaleProvider';
+
+// Lazy-loaded: only rendered once the "create new" modal is opened, and this
+// keeps InlineResourceForm splittable into its own chunk instead of being
+// pulled into every chunk that statically imports QuickCreateSelect.
+const InlineResourceForm = lazy(() => import('./InlineResourceForm').then((m) => ({ default: m.InlineResourceForm })));
 
 interface QuickCreateSelectProps {
   resource: string;
@@ -74,11 +79,13 @@ export function QuickCreateSelect({
           </ModalHeader>
           <ModalCloseButton />
           <ModalBody pb={6}>
-            <InlineResourceForm
-              resource={resource}
-              onDone={handleCreated}
-              onCancel={() => setIsCreateOpen(false)}
-            />
+            <Suspense fallback={<Center py={10}><Spinner /></Center>}>
+              <InlineResourceForm
+                resource={resource}
+                onDone={handleCreated}
+                onCancel={() => setIsCreateOpen(false)}
+              />
+            </Suspense>
           </ModalBody>
         </ModalContent>
       </Modal>
