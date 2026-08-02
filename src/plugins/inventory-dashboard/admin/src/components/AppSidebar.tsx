@@ -49,7 +49,7 @@ export function AppSidebar() {
   return (
     <Box
       as="nav"
-      w="240px"
+      w="260px"
       flexShrink={0}
       bg="bg.surface"
       borderInlineEndWidth="1px"

@@ -55,7 +55,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         </Box>
         <Drawer isOpen={isOpen} placement="start" onClose={onClose}>
           <DrawerOverlay />
-          <DrawerContent maxW="240px" fontSize="md" dir={locale === 'ar' ? 'rtl' : 'ltr'}>
+          <DrawerContent maxW="260px" fontSize="md" dir={locale === 'ar' ? 'rtl' : 'ltr'}>
             <DrawerBody p={0}>
               <AppSidebar />
             </DrawerBody>
