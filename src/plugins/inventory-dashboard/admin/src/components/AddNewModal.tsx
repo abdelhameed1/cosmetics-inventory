@@ -85,7 +85,7 @@ export function AddNewModal({ isOpen, onClose }: { isOpen: boolean; onClose: () 
                         textAlign="start"
                         cursor="pointer"
                         transition="box-shadow 0.15s, border-color 0.15s"
-                        _hover={{ borderColor: 'brand.200', boxShadow: 'cardHover' }}
+                        _hover={{ borderColor: 'brand.200', boxShadow: 'shadow.raised' }}
                         onClick={() => setActive(item)}
                       >
                         <CardBody>

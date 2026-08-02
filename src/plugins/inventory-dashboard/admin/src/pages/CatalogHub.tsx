@@ -50,7 +50,7 @@ export default function CatalogHub() {
                 textAlign="start"
                 cursor="pointer"
                 transition="box-shadow 0.15s, border-color 0.15s"
-                _hover={{ borderColor: 'brand.200', boxShadow: 'cardHover' }}
+                _hover={{ borderColor: 'brand.200', boxShadow: 'shadow.raised' }}
                 onClick={() => navigate(item.slug)}
               >
                 <CardBody>

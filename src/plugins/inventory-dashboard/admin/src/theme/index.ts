@@ -65,10 +65,6 @@ const baseTheme = {
     heading: fontStack,
     body: fontStack,
   },
-  shadows: {
-    card: '0 1px 3px rgba(17, 24, 39, 0.06), 0 1px 2px rgba(17, 24, 39, 0.04)',
-    cardHover: '0 4px 12px rgba(17, 24, 39, 0.08), 0 2px 4px rgba(17, 24, 39, 0.06)',
-  },
   semanticTokens: {
     colors: {
       'bg.canvas': { default: 'gray.50', _dark: 'gray.900' },
@@ -94,6 +90,16 @@ const baseTheme = {
       'severity.neutral.bg': { default: 'gray.100', _dark: 'gray.700' },
       'severity.neutral.fg': { default: 'gray.600', _dark: 'gray.300' },
       'severity.neutral.border': { default: 'gray.200', _dark: 'gray.600' },
+    },
+    shadows: {
+      'shadow.resting': {
+        default: '0 1px 3px rgba(20,20,30,.07), 0 1px 2px rgba(20,20,30,.05)',
+        _dark: 'none',
+      },
+      'shadow.raised': {
+        default: '0 8px 24px rgba(20,20,30,.12), 0 2px 6px rgba(20,20,30,.06)',
+        _dark: '0 8px 24px rgba(0,0,0,.35), 0 0 0 1px rgba(77,139,255,0.4)',
+      },
     },
   },
   components: {
@@ -126,7 +132,7 @@ const baseTheme = {
           borderRadius: 'lg',
           borderWidth: '1px',
           borderColor: 'border.default',
-          boxShadow: 'card',
+          boxShadow: 'shadow.resting',
         },
       },
     },
