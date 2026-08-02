@@ -46,6 +46,8 @@ d:\7meed\cosmtic\                     ← Strapi application root
 ├─ src/
 │  ├─ index.ts                     app register/bootstrap (runs the seed)
 │  ├─ bootstrap/seed.ts            idempotent reference-data seed
+│  ├─ admin/app.tsx                admin panel customization — hides Strapi's
+│  │                               built-in nav for non-super-admins (see §5.3)
 │  ├─ utils/order-totals.ts        pure totals/status/below-cost math (app-level copy)
 │  ├─ api/                         the content types (schema + lifecycles)
 │  │  ├─ brand/  category/  variant-type/  supplier/  customer/
@@ -604,6 +606,56 @@ all). Three pieces, all under `admin/src/loading/` and `admin/src/hooks/`:
   `error && (...)` alone fails TypeScript's JSX-children check; always
   `!= null` it first). See §10 for the pages that still don't follow this.
 
+### 5.3 Admin panel access control (`src/admin/app.tsx`)
+
+Strapi's own built-in left nav (`MainNav`/`LeftMenu`, rendered by
+`@strapi/admin`'s `AuthenticatedLayout` around *every* `/admin/*` route,
+including this plugin's own pages) is hidden for any logged-in admin user
+who is **not** a Super Admin, so non-super-admin staff only see the plugin's
+own `AppSidebar` (§5.2) and never Strapi's Content Manager / Content-Type
+Builder / Marketplace / Settings chrome stacked next to it.
+
+There is no Strapi config for this — admin customization
+(`src/admin/app.tsx`) supports locales/theme/translations/menu links, not
+removing the built-in shell, and RBAC alone can't fully do it either: the
+Home and Settings nav icons are hardcoded to always render for every
+logged-in user regardless of permissions (only Marketplace and
+plugin/content links are permission-gated). So this is a client-side visual
+toggle, not an access-control mechanism:
+
+- On `bootstrap`, fetches `GET /admin/users/me` (using the JWT already in
+  `localStorage['jwtToken']`) and checks `roles` for `code ===
+  'strapi-super-admin'`, caching the result per-token to avoid refetching.
+- Strapi's nav has no stable selector to target (no `data-testid`, hashed
+  styled-components classnames). It relies on one structural fact instead:
+  Strapi's nav is always the **first** `<nav>` in the document (rendered by
+  `AuthenticatedLayout` before the routed page content), while this plugin's
+  own `AppSidebar` (also a semantic `<nav>`, see §5.2) is always nested
+  *inside* that routed content — so `document.querySelectorAll('nav')[0]`
+  reliably means Strapi's, never ours.
+- A `MutationObserver` on `document.body` (debounced via
+  `requestAnimationFrame`) re-runs the check, since Strapi's login/logout
+  swaps the whole layout client-side with no full page reload to hook into
+  otherwise. A `storage` event listener covers the cross-tab case.
+- The same `check()` also redirects non-super-admins away from Strapi's own
+  Home page (`/admin` or `/admin/` — where login lands you, and the only
+  other way to reach it now that the nav is hidden is a typed/stale URL) to
+  the plugin's own Overview at `/admin/plugins/inventory-dashboard` via
+  `window.location.replace`, so non-super-admins land on the plugin's
+  Overview instead of Strapi's default dashboard.
+- This only hides the nav / redirects the landing page visually — it is
+  **not** a security boundary. Actual page-level access is (and must
+  remain) enforced through Strapi's own Roles & Permissions:
+  non-super-admin roles should be scoped to only
+  `plugin::inventory-dashboard.access`, with no Content Manager /
+  Content-Type Builder / Media Library / Marketplace / Settings
+  permissions, configured in Settings → Administration Panel → Roles. That
+  RBAC scoping is what actually blocks direct-URL access; hiding the nav
+  just keeps the UI from advertising pages the role can't use anyway.
+
+See §10 for the fragility caveat (this depends on `@strapi/admin`'s current
+internal DOM structure, not a public API).
+
 ---
 
 ## 6. Key flows end-to-end
@@ -818,6 +870,17 @@ in `pages/App.tsx`, and a nav entry if needed.
   multi-line draft save). None of these affect a *confirmed* order's
   correctness (which is guarded server-side); they affect the drafting
   experience only.
+- **The built-in Strapi nav is hidden via an unofficial DOM heuristic**
+  (§5.3): "first `<nav>` in the document is Strapi's" holds today but isn't
+  a public contract. If a future `@strapi/admin` upgrade changes that
+  structure (e.g. Strapi stops using a semantic `<nav>` tag, or renders its
+  own nav after the routed content), the script will simply stop finding a
+  match and no-op — the built-in nav would just reappear, not break
+  anything else. Re-verify this heuristic after any `@strapi/admin` major
+  version bump. Also note there's an inherent brief flash of the built-in
+  nav on every full page load before the async role check resolves — this
+  is a client-side-only toggle, so it can't be avoided without
+  server-rendering the check.
 - **~140 lines of copy-pasted delete-guard logic** across 5 lifecycle files
   (brand/category/price-list/variant-type/stock-batch) — same shape, different
   field/message. A shared factory would remove the duplication; not done, no
