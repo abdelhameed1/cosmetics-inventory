@@ -55,6 +55,12 @@ const baseTheme = {
       900: '#0c1f4d',
     },
   },
+  radii: {
+    sm: '6px',
+    md: '10px',
+    lg: '14px',
+    xl: '20px',
+  },
   fonts: {
     heading: fontStack,
     body: fontStack,
@@ -92,11 +98,11 @@ const baseTheme = {
   },
   components: {
     Button: {
-      baseStyle: { borderRadius: 'lg', fontWeight: 'semibold' },
+      baseStyle: { borderRadius: 'md', fontWeight: 'semibold' },
       defaultProps: { colorScheme: 'brand' },
     },
     Badge: {
-      baseStyle: { borderRadius: 'md', px: 2, py: 0.5 },
+      baseStyle: { borderRadius: 'sm', px: 2, py: 0.5 },
     },
     Table: {
       variants: {
@@ -117,7 +123,7 @@ const baseTheme = {
       baseStyle: {
         container: {
           bg: 'bg.surface',
-          borderRadius: 'xl',
+          borderRadius: 'lg',
           borderWidth: '1px',
           borderColor: 'border.default',
           boxShadow: 'card',
@@ -126,19 +132,19 @@ const baseTheme = {
     },
     Input: {
       defaultProps: { focusBorderColor: 'brand.500' },
-      baseStyle: { field: { borderRadius: 'lg', bg: 'bg.surface' } },
+      baseStyle: { field: { borderRadius: 'md', bg: 'bg.surface' } },
     },
     NumberInput: {
       defaultProps: { focusBorderColor: 'brand.500' },
-      baseStyle: { field: { borderRadius: 'lg', bg: 'bg.surface' } },
+      baseStyle: { field: { borderRadius: 'md', bg: 'bg.surface' } },
     },
     Select: {
       defaultProps: { focusBorderColor: 'brand.500' },
-      baseStyle: { field: { borderRadius: 'lg', bg: 'bg.surface' } },
+      baseStyle: { field: { borderRadius: 'md', bg: 'bg.surface' } },
     },
     Textarea: {
       defaultProps: { focusBorderColor: 'brand.500' },
-      baseStyle: { borderRadius: 'lg', bg: 'bg.surface' },
+      baseStyle: { borderRadius: 'md', bg: 'bg.surface' },
     },
   },
 };
