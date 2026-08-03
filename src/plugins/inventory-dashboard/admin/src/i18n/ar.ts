@@ -155,6 +155,7 @@ export const ar: Record<keyof typeof en, string> = {
   'overview.alertsTitle': 'التنبيهات',
   'overview.outOfStockTitle': 'نفد من المخزون',
   'overview.signalList.outOfStockContext': '0 من {threshold}',
+  'overview.signalList.outOfStockContextNoThreshold': 'نفد من المخزون',
   'overview.signalList.outOfStockEmpty': 'لا يوجد نفاد في المخزون',
   'overview.signalList.lowStockContext': '{quantity} من {threshold}',
   'overview.signalList.lowStockEmpty': 'لا توجد أصناف أقل من الحد الأدنى',

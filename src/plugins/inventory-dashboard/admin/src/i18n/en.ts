@@ -153,6 +153,7 @@ export const en = {
   'overview.alertsTitle': 'Alerts',
   'overview.outOfStockTitle': 'Out of stock',
   'overview.signalList.outOfStockContext': '0 of {threshold} threshold',
+  'overview.signalList.outOfStockContextNoThreshold': 'Out of stock',
   'overview.signalList.outOfStockEmpty': 'Nothing out of stock',
   'overview.signalList.lowStockContext': '{quantity} of {threshold} threshold',
   'overview.signalList.lowStockEmpty': 'No items below threshold',
