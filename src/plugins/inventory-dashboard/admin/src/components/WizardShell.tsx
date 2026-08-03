@@ -64,22 +64,26 @@ export function WizardShell({ steps, onSubmit, submitLabel, isSubmitting, submit
         <Text color="severity.critical.fg" pt={4}>{submitError}</Text>
       )}
 
-      <HStack spacing={2} pt={6}>
-        {activeStep > 0 && (
-          <Button variant="ghost" onClick={goBack} isDisabled={isSubmitting}>
-            {intl.formatMessage({ id: 'common.back', defaultMessage: 'Back' })}
-          </Button>
-        )}
-        {!isLastStep && (
-          <Button onClick={goNext} isDisabled={!canAdvance}>
-            {intl.formatMessage({ id: 'common.next', defaultMessage: 'Next' })}
-          </Button>
-        )}
-        {isLastStep && (
-          <Button onClick={onSubmit} isDisabled={!canAdvance || isSubmitting} isLoading={isSubmitting}>
-            {submitLabel}
-          </Button>
-        )}
+      <HStack spacing={3} pt={6} justify="space-between">
+        <Box>
+          {activeStep > 0 && (
+            <Button variant="ghost" onClick={goBack} isDisabled={isSubmitting}>
+              {intl.formatMessage({ id: 'common.back', defaultMessage: 'Back' })}
+            </Button>
+          )}
+        </Box>
+        <Box>
+          {!isLastStep && (
+            <Button onClick={goNext} isDisabled={!canAdvance}>
+              {intl.formatMessage({ id: 'common.next', defaultMessage: 'Next' })}
+            </Button>
+          )}
+          {isLastStep && (
+            <Button onClick={onSubmit} isDisabled={!canAdvance || isSubmitting} isLoading={isSubmitting}>
+              {submitLabel}
+            </Button>
+          )}
+        </Box>
       </HStack>
     </Box>
   );
