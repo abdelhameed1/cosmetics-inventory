@@ -606,13 +606,13 @@ all). Three pieces, all under `admin/src/loading/` and `admin/src/hooks/`:
   `error && (...)` alone fails TypeScript's JSX-children check; always
   `!= null` it first). See §10 for the pages that still don't follow this.
 
-#### 5.2.3 Design system rollout (Frontend Design Convention, Phases 1-2 of 5)
+#### 5.2.3 Design system rollout (Frontend Design Convention, Phases 1-3 of 5)
 
 `docs/Frontend Design Convention.md` is a 5-phase design-system rollout for
 the plugin's Chakra theme, executed via `superpowers:subagent-driven-development`
 with plans under `docs/superpowers/plans/2026-08-03-design-convention-0{1..5}-*.md`.
-Phases 1 ("Foundations") and 2 ("Layout & Navigation Shell") have landed on
-`main`.
+Phases 1 ("Foundations"), 2 ("Layout & Navigation Shell"), and 3 ("Core
+Components") have landed on `main`.
 
 **Phase 1** touches only `theme/index.ts` (plus 2 call sites) and had no
 visible effect on its own until Phase 2/later phases wired up consumers.
@@ -696,11 +696,89 @@ visible effect on its own until Phase 2/later phases wired up consumers.
   own internal padding (e.g. toward the card-body 16→24px scale as a
   visual analogy), that's an explicit follow-up decision, not something
   this rollout silently owns.
-- **Deferred to Phase 3:** `ui/StatCard.tsx:9`, `pages/CatalogHub.tsx:58`,
-  `components/AddNewModal.tsx:94` still use `borderRadius="lg"` on icon
-  chips; doc §3.1 calls these "icon chips" and §3.4 assigns chips to
-  `radius.sm` (6px). Phase 3's `StatTile` consolidation should explicitly
-  rule which tier these belong to.
+- **Resolved by Phase 3:** the 3 icon-chip `borderRadius="lg"` sites this
+  section originally deferred are gone — `StatTile`'s consolidation (below)
+  replaced all 3 hand-rolled chips with one component, now at `radius.sm`
+  per doc §3.4.
+
+**Phase 3** touches `PageHeader.tsx`, `OrderForm.tsx`, `OrdersList.tsx`,
+5 more `red.600` sites, `StatCard.tsx`/`CatalogHub.tsx`/`AddNewModal.tsx`,
+`ResourceListPage.tsx`, `theme/index.ts`, and `i18n/{en,ar}.ts` — doc §5's
+component conventions plus the rest of §3.3's spacing table:
+
+- **`PageHeader` gains an optional `badge` slot** — retires
+  `ConfirmedOrderView`'s hand-rolled header, the one screen doc §5 names by
+  exception. Every screen now goes through the one shared header component.
+- **New `utils/severity.ts`/`utils/orderStatus.ts`** — `Severity = 'critical'
+  | 'warning' | 'success' | 'info' | 'neutral'` and
+  `orderStatusToSeverity(status): Severity` (draft→neutral,
+  confirmed/partially_paid→warning, paid→success, cancelled→critical,
+  unknown→neutral). This is the one pure function in the whole 5-phase
+  rollout with real Jest TDD
+  (`admin/tests/orderStatus.test.ts`) — everything else in this rollout is
+  `tsc`-verified config/markup with no natural red state.
+- **New `components/ui/SeverityBadge.tsx`** — a `Badge` whose `bg`/`color`/
+  `borderColor` are derived only from a `severity` prop
+  (`severity.{severity}.{bg,fg,border}`), with those 3 keys excluded from
+  the spread props' *type* so a caller can't override them with a raw
+  value. Replaces every raw `colorScheme` status badge in `OrderForm.tsx`
+  and `OrdersList.tsx` (the local `STATUS_COLOR_SCHEME` maps in both files
+  are gone). Two `colorScheme` uses are deliberately untouched — the
+  destructive-action Cancel/Confirm-order Buttons and Add New's "Guided"
+  brand-tag Badge — neither carries severity meaning.
+- **`color="red.600"` → `color="severity.critical.fg"`** at every site
+  across the plugin except `Overview.tsx`'s Expired/Expiring-soon rows
+  (2 sites, reserved for Phase 5's Signal List, which replaces that section
+  wholesale).
+- **New `components/ui/StatTile.tsx`** consolidates the icon-chip+label(+
+  value) markup previously duplicated 3× (`StatCard`, `CatalogHub` tile,
+  `AddNewModal` tile) into one content-only component (no `Card` wrapper —
+  each caller keeps its own chrome). `size="stat"` (Overview) is
+  pixel-identical to the old `StatCard`; `size="tile"` (Catalog Hub, Add
+  New) shrinks Catalog Hub's chip from 10/5 to the shared 9-unit/16px
+  tile sizing. Icon-chip radius is `radius.sm` (6px, doc §3.4) — fixed
+  during this phase's final review after being deferred once already (see
+  above). Both tile Cards gained an explicit `borderRadius="xl"` (Catalog
+  Hub / Add New are the doc's two named `radius.xl` exceptions to `Card`'s
+  normal `radius.lg` default).
+- **`DataTable` row padding** `py: 3` → `py: 4` (12px→16px, doc §3.3), plus
+  per-entity/per-context `emptyLabel` copy at 5 call sites
+  (`ResourceListPage.tsx` via the already-existing `getResourceLabel`
+  helper — new entities need zero new screen code; `OrdersList.tsx`; all 3
+  `DataTable`s in `OrderForm.tsx`). `Overview.tsx`'s Low Stock `DataTable`
+  is untouched — deleted wholesale by Phase 5.
+- **`ResourceListPage.tsx`'s empty-state copy is search-aware** — the
+  generic list has a live search box, and `rows.length === 0` is reached
+  both when an entity has no records and when a search matches nothing.
+  Caught in this phase's final review (a search-empty state was rendering
+  "No brands yet." even with 500 brands and a search typo): `emptyLabel`
+  is now conditional on the `search` state — `resourceList.noSearchResults`
+  ("No results found.") when searching, the per-entity copy otherwise.
+- **Page-container padding** `p={{ base: 4, md: 8 }}` → `p={{ base: 5, md:
+  10 }}` (doc §3.3) at 11 sites across 9 page-level files. Doc §3.3's
+  separate "Section vertical gap" row is deliberately **not** swept — usage
+  is scattered across dozens of `pt`/`mb` values mixed with spacing that
+  isn't a section gap at all, and a blind grep-and-replace risks visual
+  breakage no diff-only review can catch; it needs a follow-up pass done
+  with visual judgment per site.
+- **Known, ruled-on divergence, still theoretical:** `severity.info.*`
+  (Phase 1) has no producer yet — `orderStatusToSeverity` never returns
+  `'info'` — so the accent/info color divergence noted in Phase 1 doesn't
+  actually render anywhere until a future Signal List (Phase 5) uses
+  `severity="info"`.
+- **Deferred, not fixed in this phase (flagged by its final review, none
+  block correctness):** `SeverityBadge`'s `Omit` guard doesn't cover
+  Chakra's color-prop aliases (`bgColor`/`background`/`textColor`), so
+  those could theoretically still override severity colors — inherited
+  from the task brief's own reference code. The Arabic empty-state string
+  reads grammatically imperfectly when interpolating definite-article nav
+  labels (e.g. "لا توجد المنتجات" instead of the indefinite form) — needs
+  indefinite Arabic label variants to fix properly. `StatTile`'s `size="tile"`
+  icon renders at 16px vs. doc §3.5's "20px in icon chips" (an internal
+  doc tension between the consolidation's `stat`/`tile` split and the icon
+  sizing table). `OrderForm.tsx`'s "Confirm order" Button still uses a raw
+  `colorScheme="green"` outside the severity system — pre-existing, predates
+  this rollout, not in this phase's scope.
 
 ### 5.3 Admin panel access control (`src/admin/app.tsx`)
 
@@ -1032,11 +1110,32 @@ in `pages/App.tsx`, and a nav entry if needed.
     the radii remap, beyond the ones any phase plan tracks:
     `pages/CatalogHub.tsx:58`, `components/AddNewModal.tsx:94`,
     `components/ui/StatCard.tsx:9` (icon chips), `pages/OrderForm.tsx:234`
-    (an accent box). Not wrong per the doc (icon chips aren't in its radius
-    table) but unreviewed visual drift — worth a browser check.
+    (an accent box). **The 3 icon-chip sites were resolved by Phase 3's
+    `StatTile` consolidation** (now `radius.sm` in one place — see §5.2.3);
+    `OrderForm.tsx:234`'s accent box remains untouched/unreviewed.
   - Phase 1's plan named 2 of the 3 `AlertDialogContent borderRadius="xl"`
     sites (`ResourceListPage.tsx:130`, `OrdersList.tsx:114`); a third exists
     at `OrderForm.tsx:536`. Harmless (all three get the intended 20px), just
     an inventory gap for anyone auditing against the plan text.
+- **Minor items from the Frontend Design Convention rollout's Phase 3 final
+  review, deferred rather than fixed (see §5.2.3):**
+  - `SeverityBadge`'s `Omit<BadgeProps, 'bg'|'color'|'borderColor'>` guard
+    doesn't cover Chakra's color-prop aliases (`bgColor`/`background`/
+    `textColor`) — a caller could theoretically still override severity
+    colors via an alias. Inherited from the task brief's own reference
+    code; no current caller does this.
+  - The Arabic empty-state string (`dataTable.emptyLabelEntity`) reads
+    grammatically imperfectly when interpolating nav labels that carry a
+    definite article (e.g. "لا توجد المنتجات حتى الآن" instead of the
+    indefinite form Arabic negation wants), and one entity
+    (`nav.suppliers`) also mismatches grammatical gender. Needs indefinite
+    Arabic label variants to fix properly — not attempted here.
+  - `StatTile`'s `size="tile"` icon renders at 16px vs. doc §3.5's "20px in
+    icon chips" — an internal tension in the doc between the `stat`/`tile`
+    size split and its icon-sizing table, not resolved either way.
+  - `OrderForm.tsx`'s "Confirm order" Button still uses a raw
+    `colorScheme="green"` outside the severity-token system — pre-existing,
+    predates this rollout, not in Phase 3's scope; needs a ruling in a
+    future phase.
 
 ---
