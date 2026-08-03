@@ -1,12 +1,13 @@
 // src/plugins/inventory-dashboard/admin/src/components/ProductVariantsForm.tsx
 import { useEffect, useState } from 'react';
-import { Box, Button, Card, CardBody, Grid, GridItem, HStack, IconButton, Input, NumberInput, NumberInputField, Select, Text } from '@chakra-ui/react';
+import { Box, Button, Card, CardBody, Grid, GridItem, HStack, IconButton, Input, NumberInput, NumberInputField, Select, Td, Text, Tr } from '@chakra-ui/react';
 import { FiTrash2 } from 'react-icons/fi';
 import { useIntl } from 'react-intl';
 import { useApi } from '../utils/api';
 import { PageHeader } from './ui/PageHeader';
 import { FormField } from './ui/FormField';
 import { WizardShell, type WizardStep } from './WizardShell';
+import { DataTable } from './ui/DataTable';
 import { QuickCreateSelect } from './QuickCreateSelect';
 
 interface VariantRow { label: string; variantTypeId: string; lowStockThreshold?: number; }
@@ -244,27 +245,39 @@ export default function ProductVariantsForm({ onDone, onCancel, embedded = false
   );
 
   const reviewStep = (
-    <Card>
-      <CardBody>
-        <Text><b>{intl.formatMessage({ id: 'productWizard.review.nameLabel', defaultMessage: 'Name:' })}</b> {name || '—'}</Text>
-        <Text><b>{intl.formatMessage({ id: 'productWizard.review.brandLabel', defaultMessage: 'Brand:' })}</b> {brands.find((b) => b.documentId === brandId)?.name ?? '—'}</Text>
-        <Text><b>{intl.formatMessage({ id: 'productWizard.review.categoryLabel', defaultMessage: 'Category:' })}</b> {categories.find((c) => c.documentId === categoryId)?.name ?? '—'}</Text>
-        <Text pt={2}>
-          <b>{intl.formatMessage({ id: 'productWizard.review.variantsLabel', defaultMessage: 'Variants:' })}</b>{' '}
-          {explicitVariants.length === 0
-            ? intl.formatMessage({ id: 'productWizard.review.singleDefaultVariant', defaultMessage: 'Single default variant' })
-            : explicitVariants
-                .map((r) => r.label || intl.formatMessage({ id: 'productWizard.review.unnamed', defaultMessage: '(unnamed)' }))
-                .join(', ')}
+    <Box>
+      <Card>
+        <CardBody>
+          <Text><b>{intl.formatMessage({ id: 'productWizard.review.nameLabel', defaultMessage: 'Name:' })}</b> {name || '—'}</Text>
+          <Text><b>{intl.formatMessage({ id: 'productWizard.review.brandLabel', defaultMessage: 'Brand:' })}</b> {brands.find((b) => b.documentId === brandId)?.name ?? '—'}</Text>
+          <Text><b>{intl.formatMessage({ id: 'productWizard.review.categoryLabel', defaultMessage: 'Category:' })}</b> {categories.find((c) => c.documentId === categoryId)?.name ?? '—'}</Text>
+          <Text pt={2}>
+            <b>{intl.formatMessage({ id: 'productWizard.review.relatedProductsLabel', defaultMessage: 'Related products:' })}</b>{' '}
+            {relatedIds.length === 0
+              ? intl.formatMessage({ id: 'productWizard.review.none', defaultMessage: 'None' })
+              : relatedIds.map((id) => products.find((p) => p.documentId === id)?.name ?? id).join(', ')}
+          </Text>
+        </CardBody>
+      </Card>
+      <Box pt={4}>
+        <Text fontSize="sm" fontWeight="semibold" color="text.primary" pb={2}>
+          {intl.formatMessage({ id: 'productWizard.review.variantsLabel', defaultMessage: 'Variants:' })}
         </Text>
-        <Text pt={2}>
-          <b>{intl.formatMessage({ id: 'productWizard.review.relatedProductsLabel', defaultMessage: 'Related products:' })}</b>{' '}
-          {relatedIds.length === 0
-            ? intl.formatMessage({ id: 'productWizard.review.none', defaultMessage: 'None' })
-            : relatedIds.map((id) => products.find((p) => p.documentId === id)?.name ?? id).join(', ')}
-        </Text>
-      </CardBody>
-    </Card>
+        <DataTable
+          columns={[rowLabelLabel, variantTypeLabel, lowStockThresholdLabel]}
+          isEmpty={explicitVariants.length === 0}
+          emptyLabel={intl.formatMessage({ id: 'productWizard.review.singleDefaultVariant', defaultMessage: 'Single default variant' })}
+        >
+          {explicitVariants.map((r, i) => (
+            <Tr key={i}>
+              <Td>{r.label || intl.formatMessage({ id: 'productWizard.review.unnamed', defaultMessage: '(unnamed)' })}</Td>
+              <Td>{variantTypes.find((t) => t.documentId === r.variantTypeId)?.name ?? '—'}</Td>
+              <Td>{r.lowStockThreshold ?? '—'}</Td>
+            </Tr>
+          ))}
+        </DataTable>
+      </Box>
+    </Box>
   );
 
   const steps: WizardStep[] = [
