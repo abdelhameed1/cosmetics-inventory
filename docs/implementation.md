@@ -606,6 +606,102 @@ all). Three pieces, all under `admin/src/loading/` and `admin/src/hooks/`:
   `error && (...)` alone fails TypeScript's JSX-children check; always
   `!= null` it first). See §10 for the pages that still don't follow this.
 
+#### 5.2.3 Design system rollout (Frontend Design Convention, Phases 1-2 of 5)
+
+`docs/Frontend Design Convention.md` is a 5-phase design-system rollout for
+the plugin's Chakra theme, executed via `superpowers:subagent-driven-development`
+with plans under `docs/superpowers/plans/2026-08-03-design-convention-0{1..5}-*.md`.
+Phases 1 ("Foundations") and 2 ("Layout & Navigation Shell") have landed on
+`main`.
+
+**Phase 1** touches only `theme/index.ts` (plus 2 call sites) and had no
+visible effect on its own until Phase 2/later phases wired up consumers.
+
+- **Severity color tokens** — 15 new `semanticTokens.colors` entries:
+  `severity.{critical,warning,success,info,neutral}.{bg,fg,border}`, mode-aware
+  (`default`/`_dark`), OKLCH values copied verbatim from doc §3.1.
+  `severity.neutral.*` is not in the doc's table — added ahead of Phase 3's
+  Badge work, which needs a 5th "quiet" status value; it reuses plain `gray.*`
+  rather than inventing a new hue.
+- **`radii` scale** — `sm`/`md`/`lg`/`xl` = `6px`/`10px`/`14px`/`20px`,
+  overriding only those 4 of Chakra's 7 default steps (`base`/`2xl`/`3xl` are
+  untouched and off-scale — a later pass should either extend the override or
+  leave a code comment, per the Phase 1 final review). 7 component style
+  overrides remapped onto the new tiers: `Button`/`Input`/`NumberInput`/
+  `Select`/`Textarea` → `md`, `Badge` → `sm`, `Card` → `lg`.
+- **Dark-mode-aware shadows** — the old flat `shadows.card`/`shadows.cardHover`
+  keys were deleted and replaced with `semanticTokens.shadows['shadow.resting'
+  | 'shadow.raised']`. In dark mode, `shadow.resting` is `none` (the `Card`
+  override's existing 1px border already satisfies "border only, no shadow");
+  `shadow.raised` keeps a soft glow plus a 1px `brand.400`-tinted ring. Renamed
+  at all 3 usage sites (`theme/index.ts`'s own `Card` override,
+  `pages/CatalogHub.tsx`, `components/AddNewModal.tsx`) — Chakra's `boxShadow`
+  prop accepts any string, so a missed rename would NOT have been caught by
+  `tsc`; verified via full-tree grep instead.
+- **Known, deliberately ruled-on divergence:** the doc's severity table marks
+  Info as "= brand" (same hue as `accent.*`), but the *existing* `accent.bg`/
+  `accent.fg` tokens are hex-based (`brand.50`/`brand.600`) and were left
+  untouched — realigning them would be an unplanned, app-wide brand-color
+  change outside this phase's scope. `severity.info.*` (OKLCH, per-doc) and
+  `accent.*` (existing hex) will therefore render as two visibly different
+  blues once Phase 3 wires up an info-severity badge next to accent-colored
+  links/active-nav. Not a bug; a scope boundary. See Phase 3's plan
+  (`docs/superpowers/plans/2026-08-03-design-convention-03-core-components.md`,
+  Self-Review Notes).
+- **Plan correction found during Phase 1's final review:** the original
+  Phase 2 plan only fixed `AppSidebar.tsx`'s stale inline `borderRadius="lg"`
+  (now stale since `radii.lg` moved from Chakra's default ~8px to 14px).
+  `components/LanguageToggle.tsx` and `components/ColorModeToggle.tsx` — two
+  sidebar-footer rows structurally identical to `AppSidebar.tsx`'s
+  `NavButton` — share the exact same defect and were missing from that plan.
+  Phase 2's plan was amended to cover all 3 sites before execution.
+- **No component-render test runner exists for `admin/src`** — the only
+  automated gate for this and every later phase's UI work is
+  `npm --prefix src/plugins/inventory-dashboard run test:ts:front` (`tsc
+  --noEmit`). Pure token/config changes have no natural red→green cycle;
+  verification is type-check + (where a dev server was reachable) manual
+  visual check in both light/dark mode. No dev server was reachable in the
+  sandboxes used for Phases 1-2's subagents — every task's verification is
+  type-check plus diff-level/textual re-checks (grep for stale token
+  names, full-file re-reads); a real browser pass is still owed once one is
+  available, tracked as an open item, not a blocker.
+
+**Phase 2** touches `AppSidebar.tsx`, `AppShell.tsx`, `LanguageToggle.tsx`,
+`ColorModeToggle.tsx` — three literal-value changes, doc §4:
+
+- **Sidebar width 240px → 260px** — desktop `AppSidebar.tsx`'s nav `Box`
+  and the mobile `AppShell.tsx` `DrawerContent`'s `maxW` changed together in
+  one commit, so they can't drift out of sync (a drawer narrower than the
+  sidebar it mirrors would clip content).
+- **Nav-item radius `lg`→`md`** at 3 sites: `AppSidebar.tsx`'s `NavButton`,
+  `LanguageToggle.tsx`, `ColorModeToggle.tsx`. The 3-site scope was itself a
+  correction — the original Phase 2 plan only named `AppSidebar.tsx`; Phase
+  1's final review caught that the two sidebar-footer toggle rows are
+  structurally identical (same `as="button"`/`px={3} py={2}`/`_hover`
+  shape) and share the same stale-radius defect. Plan amended before
+  execution; `components/FontSizeToggle.tsx` (the 4th footer row) was
+  already `"md"` and needed no change — the whole footer stack is now a
+  uniform 10px.
+- **Catalog-group heading top margin** — `mt={4}` (16px) added to the one
+  `Heading` shared by both `CATALOG_GROUPS.map()` entries ("Catalog",
+  "Partners & Pricing"), so a single edit covers both group headers.
+- **Ruled-on scope boundary, not a gap:** doc §4 says the sidebar widens
+  "with the new padding scale," but §3.3's spacing table has no distinct
+  "Sidebar padding" row — only "Sidebar width" (240→260px), which this
+  phase implements in full. `AppSidebar.tsx`'s own `px={4} py={6}` was left
+  unchanged. Flagged by Phase 2's final review as worth an explicit ruling
+  rather than silent omission: read narrowly, "the new padding scale" most
+  plausibly refers to the tabled width change itself, not an untabled
+  internal-padding bump: If a future pass wants to also grow the sidebar's
+  own internal padding (e.g. toward the card-body 16→24px scale as a
+  visual analogy), that's an explicit follow-up decision, not something
+  this rollout silently owns.
+- **Deferred to Phase 3:** `ui/StatCard.tsx:9`, `pages/CatalogHub.tsx:58`,
+  `components/AddNewModal.tsx:94` still use `borderRadius="lg"` on icon
+  chips; doc §3.1 calls these "icon chips" and §3.4 assigns chips to
+  `radius.sm` (6px). Phase 3's `StatTile` consolidation should explicitly
+  rule which tier these belong to.
+
 ### 5.3 Admin panel access control (`src/admin/app.tsx`)
 
 Strapi's own built-in left nav (`MainNav`/`LeftMenu`, rendered by
@@ -925,5 +1021,22 @@ in `pages/App.tsx`, and a nav entry if needed.
     change from the Strapi-DS era) — admin screens are gated by
     `test:ts:front`/`build` plus manual browser click-through, not unit
     tests.
+- **Minor items from the Frontend Design Convention rollout's Phase 1 final
+  review, deferred rather than fixed (see §5.2.3):**
+  - `theme/index.ts`'s new `radii` scale only overrides `sm`/`md`/`lg`/`xl`;
+    Chakra's untouched `base` (4px) and `2xl` (16px) steps now sit *between*
+    overridden neighbors (`sm`=6px > `base`=4px; `xl`=20px > `2xl`=16px).
+    Nothing in the plugin currently uses `base`/`2xl`/`3xl` radii, so this is
+    latent, not active — worth a comment or a full override if ever used.
+  - 4 more inline `borderRadius="lg"` sites went 8px→14px as a side effect of
+    the radii remap, beyond the ones any phase plan tracks:
+    `pages/CatalogHub.tsx:58`, `components/AddNewModal.tsx:94`,
+    `components/ui/StatCard.tsx:9` (icon chips), `pages/OrderForm.tsx:234`
+    (an accent box). Not wrong per the doc (icon chips aren't in its radius
+    table) but unreviewed visual drift — worth a browser check.
+  - Phase 1's plan named 2 of the 3 `AlertDialogContent borderRadius="xl"`
+    sites (`ResourceListPage.tsx:130`, `OrdersList.tsx:114`); a third exists
+    at `OrderForm.tsx:536`. Harmless (all three get the intended 20px), just
+    an inventory gap for anyone auditing against the plan text.
 
 ---
