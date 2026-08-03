@@ -100,6 +100,10 @@ export default function ResourceListPage() {
           intl.formatMessage({ id: 'resourceList.actionsColumn', defaultMessage: 'Actions' }),
         ]}
         isEmpty={rows.length === 0}
+        emptyLabel={intl.formatMessage(
+          { id: 'dataTable.emptyLabelEntity', defaultMessage: 'No {entity} yet.' },
+          { entity: getResourceLabel(intl, resource).toLowerCase() }
+        )}
       >
         {rows.map((row) => (
           <Tr

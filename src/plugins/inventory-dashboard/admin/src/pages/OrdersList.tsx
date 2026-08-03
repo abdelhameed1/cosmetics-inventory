@@ -85,6 +85,7 @@ export default function OrdersList() {
           intl.formatMessage({ id: 'resourceList.actionsColumn', defaultMessage: 'Actions' }),
         ]}
         isEmpty={rows.length === 0}
+        emptyLabel={intl.formatMessage({ id: 'ordersList.emptyLabel', defaultMessage: 'No orders yet.' })}
       >
         {rows.map((row) => (
           <Tr key={row.documentId} cursor="pointer" _hover={{ bg: 'bg.subtle' }} onClick={() => navigate(row.documentId)}>

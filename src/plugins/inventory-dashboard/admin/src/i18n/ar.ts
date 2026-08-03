@@ -132,6 +132,9 @@ export const ar: Record<keyof typeof en, string> = {
   'relationSelect.placeholder': 'اختر {field}',
 
   'dataTable.emptyLabel': 'لا توجد سجلات',
+  'dataTable.emptyLabelEntity': 'لا توجد {entity} حتى الآن.',
+  'ordersList.emptyLabel': 'لا توجد طلبات حتى الآن.',
+  'orderForm.lineItemsEmptyLabel': 'لا توجد بنود حتى الآن.',
   'overview.exchangeRateLabel': 'سعر الصرف (جنيه مصري لكل دولار)',
   'overview.saveRateButton': 'حفظ السعر',
   'overview.updatedLabel': 'آخر تحديث: {date}',

@@ -130,6 +130,9 @@ export const en = {
   'relationSelect.placeholder': 'Select {field}',
 
   'dataTable.emptyLabel': 'No records found',
+  'dataTable.emptyLabelEntity': 'No {entity} yet.',
+  'ordersList.emptyLabel': 'No orders yet.',
+  'orderForm.lineItemsEmptyLabel': 'No line items yet.',
   'overview.exchangeRateLabel': 'Exchange rate (EGP per USD)',
   'overview.saveRateButton': 'Save rate',
   'overview.updatedLabel': 'Updated: {date}',

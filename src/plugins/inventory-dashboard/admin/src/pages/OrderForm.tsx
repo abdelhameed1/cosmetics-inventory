@@ -262,6 +262,7 @@ export default function OrderForm({ onDone, onCancel, embedded = false }: OrderF
             intl.formatMessage({ id: 'orderForm.col.flag', defaultMessage: 'Flag' }),
           ]}
           isEmpty={draftLines.length === 0}
+          emptyLabel={intl.formatMessage({ id: 'orderForm.lineItemsEmptyLabel', defaultMessage: 'No line items yet.' })}
         >
           {draftLines.map((l, i) => {
             const costEgp = l.costPriceUsd * exchangeRate;
@@ -326,6 +327,7 @@ export default function OrderForm({ onDone, onCancel, embedded = false }: OrderF
               intl.formatMessage({ id: 'orderForm.col.sellEgp', defaultMessage: 'Sell (EGP)' }),
             ]}
             isEmpty={draftLines.length === 0}
+            emptyLabel={intl.formatMessage({ id: 'orderForm.lineItemsEmptyLabel', defaultMessage: 'No line items yet.' })}
           >
             {draftLines.map((l, i) => (
               <Tr key={i}>
@@ -460,6 +462,7 @@ function ConfirmedOrderView({
           intl.formatMessage({ id: 'orderForm.col.flag', defaultMessage: 'Flag' }),
         ]}
         isEmpty={order.lines.length === 0}
+        emptyLabel={intl.formatMessage({ id: 'orderForm.lineItemsEmptyLabel', defaultMessage: 'No line items yet.' })}
       >
         {order.lines.map((l: any) => (
           <Tr key={l.documentId}>
