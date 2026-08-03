@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   AlertDialog, AlertDialogBody, AlertDialogContent, AlertDialogFooter, AlertDialogHeader, AlertDialogOverlay,
-  Badge, Box, Button, Td, Text, Tr,
+  Box, Button, Td, Text, Tr,
 } from '@chakra-ui/react';
 import { useIntl } from 'react-intl';
 import { useApi } from '../utils/api';
@@ -12,14 +12,8 @@ import { useLocale } from '../i18n/LocaleProvider';
 import { PageHeader } from '../components/ui/PageHeader';
 import { DataTable } from '../components/ui/DataTable';
 import { LoadingState } from '../components/ui/LoadingState';
-
-const STATUS_COLOR_SCHEME: Record<string, string> = {
-  draft: 'gray',
-  confirmed: 'yellow',
-  partially_paid: 'orange',
-  paid: 'green',
-  cancelled: 'red',
-};
+import { SeverityBadge } from '../components/ui/SeverityBadge';
+import { orderStatusToSeverity } from '../utils/orderStatus';
 
 function orderFinalTotal(order: any): number {
   const subtotal = (order.lines ?? []).reduce(
@@ -72,7 +66,7 @@ export default function OrdersList() {
     <Box p={{ base: 4, md: 8 }}>
       <PageHeader title={intl.formatMessage({ id: 'nav.orders', defaultMessage: 'Orders' })} />
 
-      {displayError && <Text color="red.600" pb={4}>{displayError}</Text>}
+      {displayError && <Text color="severity.critical.fg" pb={4}>{displayError}</Text>}
       {total !== null && total > rows.length && (
         <Text color="text.secondary" fontSize="sm" pb={4}>
           {intl.formatMessage(
@@ -96,7 +90,7 @@ export default function OrdersList() {
           <Tr key={row.documentId} cursor="pointer" _hover={{ bg: 'bg.subtle' }} onClick={() => navigate(row.documentId)}>
             <Td>{row.orderDate}</Td>
             <Td>{row.customer?.name ?? '—'}</Td>
-            <Td><Badge colorScheme={STATUS_COLOR_SCHEME[row.status] ?? 'gray'}>{row.status}</Badge></Td>
+            <Td><SeverityBadge severity={orderStatusToSeverity(row.status)}>{row.status}</SeverityBadge></Td>
             <Td>{orderFinalTotal(row).toFixed(2)}</Td>
             <Td onClick={(e) => e.stopPropagation()}>
               {row.status === 'draft' && (
