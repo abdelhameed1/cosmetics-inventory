@@ -83,7 +83,7 @@ export function AppSidebar() {
 
       {CATALOG_GROUPS.map((group) => (
         <Box key={group.labelId} mb={6}>
-          <Heading size="xs" textTransform="uppercase" color="text.secondary" mb={2} px={3}>
+          <Heading size="xs" textTransform="uppercase" color="text.secondary" mt={4} mb={2} px={3}>
             {intl.formatMessage({ id: group.labelId })}
           </Heading>
           <VStack align="stretch" spacing={1}>
