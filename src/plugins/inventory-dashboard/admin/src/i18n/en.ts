@@ -131,6 +131,7 @@ export const en = {
 
   'dataTable.emptyLabel': 'No records found',
   'dataTable.emptyLabelEntity': 'No {entity} yet.',
+  'resourceList.noSearchResults': 'No results found.',
   'ordersList.emptyLabel': 'No orders yet.',
   'orderForm.lineItemsEmptyLabel': 'No line items yet.',
   'overview.exchangeRateLabel': 'Exchange rate (EGP per USD)',

@@ -133,6 +133,7 @@ export const ar: Record<keyof typeof en, string> = {
 
   'dataTable.emptyLabel': 'لا توجد سجلات',
   'dataTable.emptyLabelEntity': 'لا توجد {entity} حتى الآن.',
+  'resourceList.noSearchResults': 'لا توجد نتائج.',
   'ordersList.emptyLabel': 'لا توجد طلبات حتى الآن.',
   'orderForm.lineItemsEmptyLabel': 'لا توجد بنود حتى الآن.',
   'overview.exchangeRateLabel': 'سعر الصرف (جنيه مصري لكل دولار)',

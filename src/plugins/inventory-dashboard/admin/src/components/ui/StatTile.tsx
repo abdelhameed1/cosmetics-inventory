@@ -9,7 +9,7 @@ export function StatTile({
 
   return (
     <HStack spacing={size === 'stat' ? 4 : 3} align={value ? 'flex-start' : 'center'}>
-      <VStack align="center" justify="center" bg="accent.bg" borderRadius="lg" boxSize={chipSize} flexShrink={0}>
+      <VStack align="center" justify="center" bg="accent.bg" borderRadius="sm" boxSize={chipSize} flexShrink={0}>
         <Icon as={icon} boxSize={iconSize} color="accent.fg" />
       </VStack>
       <VStack align="flex-start" spacing={0}>
