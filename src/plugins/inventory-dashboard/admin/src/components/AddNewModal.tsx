@@ -1,14 +1,15 @@
 // src/plugins/inventory-dashboard/admin/src/components/AddNewModal.tsx
 import { lazy, Suspense, useState } from 'react';
 import {
-  Badge, Box, Card, CardBody, Center, Heading, HStack, Icon, IconButton, Modal, ModalBody, ModalCloseButton,
-  ModalContent, ModalHeader, ModalOverlay, SimpleGrid, Spinner, Text, VStack,
+  Badge, Box, Card, CardBody, Center, Heading, HStack, IconButton, Modal, ModalBody, ModalCloseButton,
+  ModalContent, ModalHeader, ModalOverlay, SimpleGrid, Spinner, Text,
 } from '@chakra-ui/react';
 import { FiArrowLeft, FiArrowRight } from 'react-icons/fi';
 import { useIntl } from 'react-intl';
 import { useNavigate } from 'react-router-dom';
 import { ADD_NEW_GROUPS, type AddNewItem } from '../config/addNewConfig';
 import { useLocale } from '../i18n/LocaleProvider';
+import { StatTile } from './ui/StatTile';
 
 // Lazy-loaded: AddNewModal is rendered unconditionally on every page via
 // AppShell/AppSidebar, so a static import here would bundle every wizard's
@@ -84,20 +85,14 @@ export function AddNewModal({ isOpen, onClose }: { isOpen: boolean; onClose: () 
                         as="button"
                         textAlign="start"
                         cursor="pointer"
+                        borderRadius="xl"
                         transition="box-shadow 0.15s, border-color 0.15s"
                         _hover={{ borderColor: 'brand.200', boxShadow: 'shadow.raised' }}
                         onClick={() => setActive(item)}
                       >
                         <CardBody>
                           <HStack justify="space-between">
-                            <HStack spacing={3}>
-                              <VStack align="center" justify="center" bg="accent.bg" borderRadius="lg" boxSize={9} flexShrink={0}>
-                                <Icon as={item.icon} boxSize={4} color="accent.fg" />
-                              </VStack>
-                              <Text fontSize="sm" fontWeight="semibold" color="text.primary">
-                                {intl.formatMessage({ id: item.labelId })}
-                              </Text>
-                            </HStack>
+                            <StatTile label={intl.formatMessage({ id: item.labelId })} icon={item.icon} size="tile" />
                             {item.kind === 'wizard' && (
                               <Badge colorScheme="brand">
                                 {intl.formatMessage({ id: 'addNew.guidedBadge', defaultMessage: 'Guided' })}

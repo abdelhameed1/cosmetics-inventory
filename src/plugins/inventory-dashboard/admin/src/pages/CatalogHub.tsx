@@ -1,11 +1,12 @@
 // src/plugins/inventory-dashboard/admin/src/pages/CatalogHub.tsx
-import { Box, Card, CardBody, Heading, HStack, Icon, SimpleGrid, Text, VStack } from '@chakra-ui/react';
+import { Box, Card, CardBody, Heading, SimpleGrid } from '@chakra-ui/react';
 import { useIntl } from 'react-intl';
 import { useNavigate } from 'react-router-dom';
 import { useApi } from '../utils/api';
 import { useAsyncResource } from '../hooks/useAsyncResource';
 import { PageHeader } from '../components/ui/PageHeader';
 import { LoadingState } from '../components/ui/LoadingState';
+import { StatTile } from '../components/ui/StatTile';
 import { CATALOG_GROUPS } from '../config/navConfig';
 
 type CatalogCounts = Record<string, number | null>;
@@ -49,24 +50,18 @@ export default function CatalogHub() {
                 as="button"
                 textAlign="start"
                 cursor="pointer"
+                borderRadius="xl"
                 transition="box-shadow 0.15s, border-color 0.15s"
                 _hover={{ borderColor: 'brand.200', boxShadow: 'shadow.raised' }}
                 onClick={() => navigate(item.slug)}
               >
                 <CardBody>
-                  <HStack spacing={4} align="flex-start">
-                    <VStack align="center" justify="center" bg="accent.bg" borderRadius="lg" boxSize={10} flexShrink={0}>
-                      <Icon as={item.icon} boxSize={5} color="accent.fg" />
-                    </VStack>
-                    <VStack align="flex-start" spacing={0}>
-                      <Text fontSize="sm" color="text.secondary" fontWeight="medium">
-                        {intl.formatMessage({ id: item.labelId })}
-                      </Text>
-                      <Text fontSize="2xl" fontWeight="bold" color="text.primary">
-                        {counts?.[item.slug] ?? '—'}
-                      </Text>
-                    </VStack>
-                  </HStack>
+                  <StatTile
+                    label={intl.formatMessage({ id: item.labelId })}
+                    value={String(counts?.[item.slug] ?? '—')}
+                    icon={item.icon}
+                    size="tile"
+                  />
                 </CardBody>
               </Card>
             ))}
