@@ -34,7 +34,7 @@ export function WizardShell({ steps, onSubmit, submitLabel, isSubmitting, submit
 
   return (
     <Box>
-      <Stepper index={activeStep} colorScheme="brand" size="sm" mb={8}>
+      <Stepper index={activeStep} size="sm" mb={8}>
         {steps.map((step, i) => (
           <Step key={step.label} onClick={() => jumpTo(i)} cursor={i < activeStep ? 'pointer' : 'default'}>
             <StepIndicator>

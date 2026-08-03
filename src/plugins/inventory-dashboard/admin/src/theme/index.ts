@@ -152,6 +152,26 @@ const baseTheme = {
       defaultProps: { focusBorderColor: 'brand.500' },
       baseStyle: { borderRadius: 'md', bg: 'bg.surface' },
     },
+    Stepper: {
+      baseStyle: {
+        indicator: {
+          '&[data-status=active], &[data-status=complete]': {
+            bg: 'accent.fg',
+            borderColor: 'accent.fg',
+            color: 'white',
+          },
+          '&[data-status=incomplete]': {
+            borderColor: 'border.default',
+          },
+        },
+        separator: {
+          bg: 'border.default',
+          '&[data-status=complete]': {
+            bg: 'accent.fg',
+          },
+        },
+      },
+    },
   },
 };
 
