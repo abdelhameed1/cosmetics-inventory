@@ -25,7 +25,7 @@ function NavButton({
       textAlign="start"
       px={3}
       py={2}
-      borderRadius="lg"
+      borderRadius="md"
       bg={isActive ? 'accent.bg' : 'transparent'}
       _hover={{ bg: isActive ? 'accent.bg' : 'bg.subtle' }}
       onClick={onClick}

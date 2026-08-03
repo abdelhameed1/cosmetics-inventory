@@ -14,7 +14,7 @@ export function LanguageToggle() {
       textAlign="start"
       px={3}
       py={2}
-      borderRadius="lg"
+      borderRadius="md"
       _hover={{ bg: 'bg.subtle' }}
       onClick={() => setLocale(isArabic ? 'en' : 'ar')}
     >
