@@ -18,7 +18,7 @@ export function SignalList({
   return (
     <Card>
       <CardBody>
-        <HStack justify="space-between" mb={rows.length ? 4 : 0}>
+        <HStack justify="space-between" mb={4}>
           <HStack spacing={2}>
             <Icon as={HeaderIcon} boxSize={5} color={`severity.${severity}.fg`} />
             <Heading size="sm" color="text.primary">{title}</Heading>
