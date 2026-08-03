@@ -158,7 +158,7 @@ const baseTheme = {
           '&[data-status=active], &[data-status=complete]': {
             bg: 'accent.fg',
             borderColor: 'accent.fg',
-            color: 'white',
+            color: 'chakra-inverse-text',
           },
           '&[data-status=incomplete]': {
             borderColor: 'border.default',
