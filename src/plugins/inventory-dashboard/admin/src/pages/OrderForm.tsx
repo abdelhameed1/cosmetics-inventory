@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   AlertDialog, AlertDialogBody, AlertDialogContent, AlertDialogFooter, AlertDialogHeader, AlertDialogOverlay,
-  Badge, Box, Button, Card, CardBody, Grid, GridItem, HStack, Input, NumberInput, NumberInputField,
+  Box, Button, Card, CardBody, Grid, GridItem, HStack, Input, NumberInput, NumberInputField,
   Select, Td, Text, Tr,
 } from '@chakra-ui/react';
 import { useIntl } from 'react-intl';
@@ -15,6 +15,8 @@ import { FormField } from '../components/ui/FormField';
 import { DataTable } from '../components/ui/DataTable';
 import { WizardShell, type WizardStep } from '../components/WizardShell';
 import { QuickCreateSelect } from '../components/QuickCreateSelect';
+import { SeverityBadge } from '../components/ui/SeverityBadge';
+import { orderStatusToSeverity } from '../utils/orderStatus';
 
 interface DraftLine {
   variantDocumentId: string;
@@ -282,7 +284,7 @@ export default function OrderForm({ onDone, onCancel, embedded = false }: OrderF
                 <Td>{costEgp.toFixed(2)}</Td>
                 <Td>
                   {below ? (
-                    <Badge colorScheme="red">{intl.formatMessage({ id: 'orderForm.belowCostBadge', defaultMessage: 'Below cost' })}</Badge>
+                    <SeverityBadge severity="critical">{intl.formatMessage({ id: 'orderForm.belowCostBadge', defaultMessage: 'Below cost' })}</SeverityBadge>
                   ) : null}
                 </Td>
               </Tr>
@@ -365,7 +367,7 @@ export default function OrderForm({ onDone, onCancel, embedded = false }: OrderF
   return (
     <Box p={embedded ? 0 : { base: 4, md: 8 }}>
       {!embedded && <PageHeader title={intl.formatMessage({ id: 'orderForm.pageTitle', defaultMessage: 'New order' })} />}
-      {error && !isSubmitting && draftLines.length === 0 && <Text color="red.600" pb={2}>{error}</Text>}
+      {error && !isSubmitting && draftLines.length === 0 && <Text color="severity.critical.fg" pb={2}>{error}</Text>}
       <WizardShell
         steps={steps}
         onSubmit={saveDraft}
@@ -400,13 +402,6 @@ async function getSuggestedPrice(api: any, priceListDocumentId: string, costPric
   }
 }
 
-const STATUS_COLOR_SCHEME: Record<string, string> = {
-  draft: 'gray',
-  confirmed: 'yellow',
-  partially_paid: 'orange',
-  paid: 'green',
-  cancelled: 'red',
-};
 
 function ConfirmedOrderView({
   order, reload, api, cancel,
@@ -445,20 +440,16 @@ function ConfirmedOrderView({
 
   return (
     <Box p={{ base: 4, md: 8 }}>
-      <HStack justify="space-between" mb={6}>
-        <Text fontSize="lg" fontWeight="bold" color="text.primary">
-          {intl.formatMessage({ id: 'orderForm.confirmed.orderTitle', defaultMessage: 'Order {id}' }, { id: order.documentId.slice(0, 8) })}
-        </Text>
-        <HStack spacing={2}>
-          <Badge fontSize="sm" colorScheme={STATUS_COLOR_SCHEME[order.status] ?? 'gray'}>{order.status}</Badge>
-          {canCancel && (
-            <Button colorScheme="red" variant="outline" size="sm" onClick={() => setIsCancelOpen(true)} isDisabled={isCancelling}>
-              {intl.formatMessage({ id: 'orderForm.confirmed.cancelOrderButton', defaultMessage: 'Cancel order' })}
-            </Button>
-          )}
-        </HStack>
-      </HStack>
-      {cancelError && <Text color="red.600" pb={4}>{cancelError}</Text>}
+      <PageHeader
+        title={intl.formatMessage({ id: 'orderForm.confirmed.orderTitle', defaultMessage: 'Order {id}' }, { id: order.documentId.slice(0, 8) })}
+        badge={<SeverityBadge severity={orderStatusToSeverity(order.status)} fontSize="sm">{order.status}</SeverityBadge>}
+        actions={canCancel && (
+          <Button colorScheme="red" variant="outline" size="sm" onClick={() => setIsCancelOpen(true)} isDisabled={isCancelling}>
+            {intl.formatMessage({ id: 'orderForm.confirmed.cancelOrderButton', defaultMessage: 'Cancel order' })}
+          </Button>
+        )}
+      />
+      {cancelError && <Text color="severity.critical.fg" pb={4}>{cancelError}</Text>}
 
       <DataTable
         columns={[
@@ -478,7 +469,7 @@ function ConfirmedOrderView({
             <Td>{l.costPriceUsdSnapshot}</Td>
             <Td>
               {l.belowCost ? (
-                <Badge colorScheme="red">{intl.formatMessage({ id: 'orderForm.belowCostBadge', defaultMessage: 'Below cost' })}</Badge>
+                <SeverityBadge severity="critical">{intl.formatMessage({ id: 'orderForm.belowCostBadge', defaultMessage: 'Below cost' })}</SeverityBadge>
               ) : null}
             </Td>
           </Tr>
