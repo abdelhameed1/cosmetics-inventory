@@ -112,4 +112,54 @@ describe('overview service', () => {
     expect(ov.lowStock.find((r: any) => r.variantId === lowVariant.documentId)).toBeTruthy();
     expect(ov.outOfStock.find((r: any) => r.variantId === lowVariant.documentId)).toBeFalsy();
   });
+
+  it('includes threshold-unset variants at qty=0 in outOfStock, and includes qty===threshold in lowStock', async () => {
+    const brand = await docs('api::brand.brand').create({ data: { name: `OV3-${Date.now()}` } });
+    const category = await docs('api::category.category').create({ data: { name: `OV3C-${Date.now()}` } });
+    const supplier = await docs('api::supplier.supplier').create({ data: { name: `OV3S-${Date.now()}` } });
+
+    // qty=0, no threshold configured — should still land in outOfStock, with threshold: null
+    const productNoThreshold = await docs('api::product.product').create({
+      data: { name: `OV3 NoThreshold ${Date.now()}`, brand: brand.documentId, category: category.documentId },
+    });
+    const noThresholdVariants = await docs('api::variant.variant').findMany({
+      filters: { product: { documentId: productNoThreshold.documentId } },
+    });
+    const noThresholdVariant = noThresholdVariants[0];
+    await docs('api::stock-batch.stock-batch').create({
+      data: {
+        quantityPurchased: 3, quantityRemaining: 0, costPriceUsd: 2,
+        purchaseDate: '2026-01-01', variant: noThresholdVariant.documentId, supplier: supplier.documentId,
+      },
+    });
+
+    // qty === threshold — should land in lowStock, not be skipped
+    const productAtThreshold = await docs('api::product.product').create({
+      data: { name: `OV3 AtThreshold ${Date.now()}`, brand: brand.documentId, category: category.documentId },
+    });
+    const atThresholdVariants = await docs('api::variant.variant').findMany({
+      filters: { product: { documentId: productAtThreshold.documentId } },
+    });
+    const atThresholdVariant = await docs('api::variant.variant').update({
+      documentId: atThresholdVariants[0].documentId,
+      data: { lowStockThreshold: 5 },
+    } as any);
+    await docs('api::stock-batch.stock-batch').create({
+      data: {
+        quantityPurchased: 5, quantityRemaining: 5, costPriceUsd: 2,
+        purchaseDate: '2026-01-01', variant: atThresholdVariant.documentId, supplier: supplier.documentId,
+      },
+    });
+
+    const ov = await svc().getOverview();
+
+    const noThresholdEntry = ov.outOfStock.find((r: any) => r.variantId === noThresholdVariant.documentId);
+    expect(noThresholdEntry).toBeTruthy();
+    expect(noThresholdEntry.threshold).toBeNull();
+
+    const atThresholdEntry = ov.lowStock.find((r: any) => r.variantId === atThresholdVariant.documentId);
+    expect(atThresholdEntry).toBeTruthy();
+    expect(atThresholdEntry.quantity).toBe(5);
+    expect(ov.outOfStock.find((r: any) => r.variantId === atThresholdVariant.documentId)).toBeFalsy();
+  });
 });

@@ -70,15 +70,22 @@ const overview = ({ strapi }: { strapi: Core.Strapi }) => ({
     const lowStock: any[] = [];
     for (const v of variants) {
       const threshold = Number(v.lowStockThreshold);
-      if (!Number.isFinite(threshold) || threshold <= 0) continue;
+      const hasThreshold = Number.isFinite(threshold) && threshold > 0;
       const qty = perVariantQty[v.documentId] ?? 0;
-      if (qty >= threshold) continue;
-      const entry = { variantId: v.documentId, label: v.label ?? 'Variant', quantity: qty, threshold };
+      const label = v.label ?? 'Variant';
+
       if (qty === 0) {
-        outOfStock.push(entry);
-      } else {
-        lowStock.push(entry);
+        outOfStock.push({
+          variantId: v.documentId,
+          label,
+          quantity: qty,
+          threshold: hasThreshold ? threshold : null,
+        });
+        continue;
       }
+
+      if (!hasThreshold || qty > threshold) continue;
+      lowStock.push({ variantId: v.documentId, label, quantity: qty, threshold });
     }
 
     return {

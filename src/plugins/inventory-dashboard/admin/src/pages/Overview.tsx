@@ -51,11 +51,13 @@ export default function Overview() {
   const outOfStockRows = (data.outOfStock ?? []).map((r: any) => ({
     id: r.variantId,
     label: r.label,
-    context: intl.formatMessage(
-      { id: 'overview.signalList.outOfStockContext', defaultMessage: '0 of {threshold} threshold' },
-      { threshold: r.threshold }
-    ),
-    onClick: () => navigate(`/plugins/inventory-catalog/variants/${r.variantId}`),
+    context: r.threshold != null
+      ? intl.formatMessage(
+          { id: 'overview.signalList.outOfStockContext', defaultMessage: '0 of {threshold} threshold' },
+          { threshold: r.threshold }
+        )
+      : intl.formatMessage({ id: 'overview.signalList.outOfStockContextNoThreshold', defaultMessage: 'Out of stock' }),
+    onClick: () => navigate(`r/variants/${r.variantId}`),
   }));
 
   const lowStockRows = (data.lowStock ?? []).map((r: any) => ({
@@ -65,21 +67,21 @@ export default function Overview() {
       { id: 'overview.signalList.lowStockContext', defaultMessage: '{quantity} of {threshold} threshold' },
       { quantity: r.quantity, threshold: r.threshold }
     ),
-    onClick: () => navigate(`/plugins/inventory-catalog/variants/${r.variantId}`),
+    onClick: () => navigate(`r/variants/${r.variantId}`),
   }));
 
   const expiredRows = (data.expired ?? []).map((b: any) => ({
     id: b.batchId,
     label: b.variantLabel,
     context: intl.formatMessage({ id: 'overview.signalList.expiredContext', defaultMessage: 'expired {date}' }, { date: b.expiryDate }),
-    onClick: () => navigate(`/plugins/inventory-catalog/stock-batches/${b.batchId}`),
+    onClick: () => navigate(`r/stock-batches/${b.batchId}`),
   }));
 
   const expiringSoonRows = (data.expiringSoon ?? []).map((b: any) => ({
     id: b.batchId,
     label: b.variantLabel,
     context: intl.formatMessage({ id: 'overview.signalList.expiringSoonContext', defaultMessage: 'expires {date}' }, { date: b.expiryDate }),
-    onClick: () => navigate(`/plugins/inventory-catalog/stock-batches/${b.batchId}`),
+    onClick: () => navigate(`r/stock-batches/${b.batchId}`),
   }));
 
   return (
