@@ -66,4 +66,50 @@ describe('overview service', () => {
     expect(ov.expired.length).toBeGreaterThanOrEqual(1);
     expect(ov.expiringSoon.length).toBeGreaterThanOrEqual(1);
   });
+
+  it('splits out-of-stock (qty=0) from low-stock (0<qty<threshold)', async () => {
+    const brand = await docs('api::brand.brand').create({ data: { name: `OV2-${Date.now()}` } });
+    const category = await docs('api::category.category').create({ data: { name: `OV2C-${Date.now()}` } });
+    const supplier = await docs('api::supplier.supplier').create({ data: { name: `OV2S-${Date.now()}` } });
+
+    const productOut = await docs('api::product.product').create({
+      data: { name: `OV2 Out ${Date.now()}`, brand: brand.documentId, category: category.documentId },
+    });
+    const outVariants = await docs('api::variant.variant').findMany({
+      filters: { product: { documentId: productOut.documentId } },
+    });
+    const outVariant = await docs('api::variant.variant').update({
+      documentId: outVariants[0].documentId,
+      data: { lowStockThreshold: 5 },
+    } as any);
+    await docs('api::stock-batch.stock-batch').create({
+      data: {
+        quantityPurchased: 4, quantityRemaining: 0, costPriceUsd: 2,
+        purchaseDate: '2026-01-01', variant: outVariant.documentId, supplier: supplier.documentId,
+      },
+    });
+
+    const productLow = await docs('api::product.product').create({
+      data: { name: `OV2 Low ${Date.now()}`, brand: brand.documentId, category: category.documentId },
+    });
+    const lowVariants = await docs('api::variant.variant').findMany({
+      filters: { product: { documentId: productLow.documentId } },
+    });
+    const lowVariant = await docs('api::variant.variant').update({
+      documentId: lowVariants[0].documentId,
+      data: { lowStockThreshold: 5 },
+    } as any);
+    await docs('api::stock-batch.stock-batch').create({
+      data: {
+        quantityPurchased: 2, quantityRemaining: 2, costPriceUsd: 2,
+        purchaseDate: '2026-01-01', variant: lowVariant.documentId, supplier: supplier.documentId,
+      },
+    });
+
+    const ov = await svc().getOverview();
+    expect(ov.outOfStock.find((r: any) => r.variantId === outVariant.documentId)).toBeTruthy();
+    expect(ov.lowStock.find((r: any) => r.variantId === outVariant.documentId)).toBeFalsy();
+    expect(ov.lowStock.find((r: any) => r.variantId === lowVariant.documentId)).toBeTruthy();
+    expect(ov.outOfStock.find((r: any) => r.variantId === lowVariant.documentId)).toBeFalsy();
+  });
 });

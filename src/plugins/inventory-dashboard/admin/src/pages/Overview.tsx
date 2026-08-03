@@ -1,17 +1,19 @@
 import { useState, useEffect } from 'react';
-import { Box, Button, Grid, GridItem, HStack, NumberInput, NumberInputField, SimpleGrid, Td, Text, Tr } from '@chakra-ui/react';
+import { Box, Button, Heading, HStack, NumberInput, NumberInputField, SimpleGrid, Text } from '@chakra-ui/react';
 import { FiArchive, FiTrendingUp, FiPieChart, FiRepeat } from 'react-icons/fi';
 import { useIntl } from 'react-intl';
+import { useNavigate } from 'react-router-dom';
 import { useOverview } from '../hooks/useOverview';
 import { useSettings } from '../hooks/useSettings';
 import { PageHeader } from '../components/ui/PageHeader';
 import { StatCard } from '../components/ui/StatCard';
-import { DataTable } from '../components/ui/DataTable';
+import { SignalList } from '../components/ui/SignalList';
 import { FormField } from '../components/ui/FormField';
 import { LoadingState } from '../components/ui/LoadingState';
 
 export default function Overview() {
   const intl = useIntl();
+  const navigate = useNavigate();
   const { data, error, isInitialLoading, reload } = useOverview();
   const { exchangeRate, exchangeRateUpdatedAt, save } = useSettings();
   const [rateInput, setRateInput] = useState<number | undefined>(undefined);
@@ -45,6 +47,40 @@ export default function Overview() {
     }
     return <LoadingState />;
   }
+
+  const outOfStockRows = (data.outOfStock ?? []).map((r: any) => ({
+    id: r.variantId,
+    label: r.label,
+    context: intl.formatMessage(
+      { id: 'overview.signalList.outOfStockContext', defaultMessage: '0 of {threshold} threshold' },
+      { threshold: r.threshold }
+    ),
+    onClick: () => navigate(`/plugins/inventory-catalog/variants/${r.variantId}`),
+  }));
+
+  const lowStockRows = (data.lowStock ?? []).map((r: any) => ({
+    id: r.variantId,
+    label: r.label,
+    context: intl.formatMessage(
+      { id: 'overview.signalList.lowStockContext', defaultMessage: '{quantity} of {threshold} threshold' },
+      { quantity: r.quantity, threshold: r.threshold }
+    ),
+    onClick: () => navigate(`/plugins/inventory-catalog/variants/${r.variantId}`),
+  }));
+
+  const expiredRows = (data.expired ?? []).map((b: any) => ({
+    id: b.batchId,
+    label: b.variantLabel,
+    context: intl.formatMessage({ id: 'overview.signalList.expiredContext', defaultMessage: 'expired {date}' }, { date: b.expiryDate }),
+    onClick: () => navigate(`/plugins/inventory-catalog/stock-batches/${b.batchId}`),
+  }));
+
+  const expiringSoonRows = (data.expiringSoon ?? []).map((b: any) => ({
+    id: b.batchId,
+    label: b.variantLabel,
+    context: intl.formatMessage({ id: 'overview.signalList.expiringSoonContext', defaultMessage: 'expires {date}' }, { date: b.expiryDate }),
+    onClick: () => navigate(`/plugins/inventory-catalog/stock-batches/${b.batchId}`),
+  }));
 
   return (
     <Box p={{ base: 5, md: 10 }}>
@@ -81,41 +117,36 @@ export default function Overview() {
       </SimpleGrid>
 
       <Box pt={8}>
-        <Text fontSize="lg" fontWeight="semibold" pb={3} color="text.primary">
-          {intl.formatMessage({ id: 'overview.lowStockTitle', defaultMessage: 'Low stock' })}
-        </Text>
-        <DataTable
-          columns={[
-            intl.formatMessage({ id: 'overview.col.variant', defaultMessage: 'Variant' }),
-            intl.formatMessage({ id: 'overview.col.qty', defaultMessage: 'Qty' }),
-            intl.formatMessage({ id: 'overview.col.threshold', defaultMessage: 'Threshold' }),
-          ]}
-          isEmpty={data.lowStock.length === 0}
-        >
-          {data.lowStock.map((r: any) => (
-            <Tr key={r.variantId}><Td>{r.label}</Td><Td>{r.quantity}</Td><Td>{r.threshold}</Td></Tr>
-          ))}
-        </DataTable>
+        <Heading size="md" color="text.primary" pb={4}>
+          {intl.formatMessage({ id: 'overview.alertsTitle', defaultMessage: 'Alerts' })}
+        </Heading>
+        <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
+          <SignalList
+            severity="critical"
+            title={intl.formatMessage({ id: 'overview.outOfStockTitle', defaultMessage: 'Out of stock' })}
+            rows={outOfStockRows}
+            emptyLabel={intl.formatMessage({ id: 'overview.signalList.outOfStockEmpty', defaultMessage: 'Nothing out of stock' })}
+          />
+          <SignalList
+            severity="warning"
+            title={intl.formatMessage({ id: 'overview.lowStockTitle', defaultMessage: 'Low stock' })}
+            rows={lowStockRows}
+            emptyLabel={intl.formatMessage({ id: 'overview.signalList.lowStockEmpty', defaultMessage: 'No items below threshold' })}
+          />
+          <SignalList
+            severity="critical"
+            title={intl.formatMessage({ id: 'overview.expiredTitle', defaultMessage: 'Expired' })}
+            rows={expiredRows}
+            emptyLabel={intl.formatMessage({ id: 'overview.signalList.expiredEmpty', defaultMessage: 'Nothing expired' })}
+          />
+          <SignalList
+            severity="warning"
+            title={intl.formatMessage({ id: 'overview.expiringSoonTitle', defaultMessage: 'Expiring soon (90 days)' })}
+            rows={expiringSoonRows}
+            emptyLabel={intl.formatMessage({ id: 'overview.signalList.expiringSoonEmpty', defaultMessage: 'Nothing expiring soon' })}
+          />
+        </SimpleGrid>
       </Box>
-
-      <Grid templateColumns="repeat(12, 1fr)" gap={4} pt={8}>
-        <GridItem colSpan={{ base: 12, md: 6 }}>
-          <Text fontSize="lg" fontWeight="semibold" pb={3} color="text.primary">
-            {intl.formatMessage({ id: 'overview.expiredTitle', defaultMessage: 'Expired' })}
-          </Text>
-          {data.expired.map((b: any) => (
-            <Text key={b.batchId} color="red.600">{b.variantLabel} — {b.expiryDate}</Text>
-          ))}
-        </GridItem>
-        <GridItem colSpan={{ base: 12, md: 6 }}>
-          <Text fontSize="lg" fontWeight="semibold" pb={3} color="text.primary">
-            {intl.formatMessage({ id: 'overview.expiringSoonTitle', defaultMessage: 'Expiring soon (90 days)' })}
-          </Text>
-          {data.expiringSoon.map((b: any) => (
-            <Text key={b.batchId} color="orange.600">{b.variantLabel} — {b.expiryDate}</Text>
-          ))}
-        </GridItem>
-      </Grid>
     </Box>
   );
 }

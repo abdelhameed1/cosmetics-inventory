@@ -606,13 +606,13 @@ all). Three pieces, all under `admin/src/loading/` and `admin/src/hooks/`:
   `error && (...)` alone fails TypeScript's JSX-children check; always
   `!= null` it first). See §10 for the pages that still don't follow this.
 
-#### 5.2.3 Design system rollout (Frontend Design Convention, Phases 1-4 of 5)
+#### 5.2.3 Design system rollout (Frontend Design Convention, Phases 1-5 of 5 — complete)
 
 `docs/Frontend Design Convention.md` is a 5-phase design-system rollout for
 the plugin's Chakra theme, executed via `superpowers:subagent-driven-development`
 with plans under `docs/superpowers/plans/2026-08-03-design-convention-0{1..5}-*.md`.
-Phases 1 ("Foundations"), 2 ("Layout & Navigation Shell"), 3 ("Core
-Components"), and 4 ("Wizard") have landed on `main`.
+All 5 phases — Foundations, Layout & Navigation Shell, Core Components,
+Wizard, and Alerts/Signal Lists — have landed on `main`.
 
 **Phase 1** touches only `theme/index.ts` (plus 2 call sites) and had no
 visible effect on its own until Phase 2/later phases wired up consumers.
@@ -729,7 +729,10 @@ component conventions plus the rest of §3.3's spacing table:
 - **`color="red.600"` → `color="severity.critical.fg"`** at every site
   across the plugin except `Overview.tsx`'s Expired/Expiring-soon rows
   (2 sites, reserved for Phase 5's Signal List, which replaces that section
-  wholesale).
+  wholesale). **Resolved by Phase 5**, but not by recoloring — the whole
+  Expired/Expiring-soon text-stack markup those 2 sites lived in was deleted
+  and replaced by `SignalList`, which sources its severity color from
+  `severity.{critical,warning,success}.fg` the same way `SeverityBadge` does.
 - **New `components/ui/StatTile.tsx`** consolidates the icon-chip+label(+
   value) markup previously duplicated 3× (`StatCard`, `CatalogHub` tile,
   `AddNewModal` tile) into one content-only component (no `Card` wrapper —
@@ -839,7 +842,9 @@ sweep:
   twelve-column-grid sites across 5 files (the 3 wizards' own field steps
   plus `InlineResourceForm.tsx`/`ResourceFormPage.tsx`, which share the
   identical grid pattern). `Overview.tsx:101`'s matching grid is
-  untouched — reserved for Phase 5.
+  untouched — reserved for Phase 5. **Resolved by Phase 5**: that grid
+  (the old Low Stock `DataTable` wrapper) was deleted wholesale, not
+  regapped.
 - **Deferred, not fixed in this phase (flagged by its final review, none
   block correctness):** the incomplete-step ring color (`border.default`)
   may read as very low-contrast in light mode — spec-faithful to doc
@@ -853,6 +858,55 @@ sweep:
   variants) is still owed** — every task in this rollout has been
   verified by type-check + diff-level/textual re-checks only, no dev
   server has been reachable in any implementer/reviewer sandbox so far.
+
+**Phase 5** touches `overview.ts`, a new `components/ui/SignalList.tsx`,
+`Overview.tsx`, and `i18n/{en,ar}.ts` — doc §7's Alerts/Signal List
+convention, and the last phase of this rollout:
+
+- **Backend split: `outOfStock` separated from `lowStock`.**
+  `getOverview()`'s low-stock loop (`server/src/services/overview.ts`) used
+  to push every variant with `0 ≤ quantity < threshold` into one `lowStock`
+  array. It now still skips `qty >= threshold` first, then routes `qty ===
+  0` into a new `outOfStock` array and everything else (`0 < qty <
+  threshold`) into `lowStock` — same shape (`{variantId, label, quantity,
+  threshold}`) on both arrays. This is the one piece of this whole 5-phase
+  rollout with real Jest TDD against a live Strapi+MySQL instance (the
+  existing `server/tests/overview.test.ts` pattern), not just `tsc`.
+  Behavior-preserving for every non-zero-qty row; a variant that used to
+  appear in `lowStock` at qty=0 now appears in `outOfStock` instead.
+- **New `components/ui/SignalList.tsx`** — a reusable `{severity: 'critical'
+  | 'warning', title, rows: SignalListRow[], emptyLabel}` card. Each row is
+  `{id, label, context, metric?, onClick?}`: label + context text, a 4px
+  inline severity-color bar (not a filled-row tint), and an optional
+  right-aligned `metric`. Empty state renders a success-colored checkmark +
+  positive copy rather than blank space (doc §7.2). Sources its color
+  straight from the same `severity.{critical,warning,success}.fg` tokens
+  Phase 1 defined and `SeverityBadge` (Phase 3) already uses — no new ad-hoc
+  colors introduced. RTL-correct by construction (no physical `left`/`right`
+  props anywhere in the component; the severity bar is a plain flex-row
+  child, not absolutely positioned, so it flips to the trailing edge under
+  `dir="rtl"` automatically).
+- **`Overview.tsx` rewritten**: the old single Low Stock `DataTable` plus a
+  separate Expired/Expiring-soon text-stack grid are both gone, replaced by
+  one "Alerts" section rendering 4 `SignalList` cards (Out of stock, Low
+  stock, Expired, Expiring soon; critical/warning/critical/warning
+  respectively) in a `SimpleGrid columns={{base: 1, md: 2}}`. Out-of-stock
+  and low-stock rows click through to `/plugins/inventory-catalog/variants/
+  :id`; expired and expiring-soon rows click through to
+  `/plugins/inventory-catalog/stock-batches/:id`.
+- **Fix-wave cleanup (post-final-review):** 3 orphaned i18n keys
+  (`overview.col.variant`/`col.qty`/`col.threshold`, left over from the
+  deleted Low Stock `DataTable`) were removed from both `en.ts`/`ar.ts`;
+  `SignalList`'s header margin (`mb={rows.length ? 4 : 0}`) was changed to a
+  flat `mb={4}` so the empty-state message no longer sits flush against the
+  header with zero breathing room.
+- **Deferred, not fixed in this phase (flagged by its final review, none
+  block correctness — see the dedicated §10 bullet list below for the full
+  set).**
+
+With Phase 5 merged, the entire `docs/Frontend Design Convention.md`
+rollout is complete. No further phases are planned; remaining deferred
+items across all 5 phases are tracked in §10, not assigned to any task.
 
 ### 5.3 Admin panel access control (`src/admin/app.tsx`)
 
@@ -979,13 +1033,20 @@ No stored costs are mutated.
 >   failure leaves a persisted partial draft, and retrying creates a
 >   duplicate order rather than resuming the partial one.
 
-### Expiry / low-stock computation
+### Expiry / low-stock / out-of-stock computation
 `overview.ts` walks every stock batch once:
 - Sums `quantityRemaining × costPriceUsd × exchangeRate` for total stock value
-- For low-stock: sums `quantityRemaining` per variant **excluding expired
-  batches**, compares against `lowStockThreshold`
+- For stock alerts: sums `quantityRemaining` per variant **excluding expired
+  batches**, compares against `lowStockThreshold`. A variant with
+  `quantity === 0` goes into `outOfStock`; a variant with `0 < quantity <
+  threshold` goes into `lowStock`. A variant with no threshold configured
+  (`lowStockThreshold` unset or `<= 0`) is skipped from both, even at
+  qty=0 — the threshold gate runs first.
 - Buckets batches into **expired** (expiryDate before today) or **expiring
   soon** (expiryDate within **90 days** of today), parsed at local midnight
+- The Overview screen renders all four (`outOfStock`, `lowStock`, `expired`,
+  `expiringSoon`) as `SignalList` cards under an "Alerts" heading (§5.2.3,
+  Phase 5)
 
 ---
 
@@ -1211,5 +1272,73 @@ in `pages/App.tsx`, and a nav entry if needed.
     `colorScheme="green"` outside the severity-token system — pre-existing,
     predates this rollout, not in Phase 3's scope; needs a ruling in a
     future phase.
+- **Minor/Important items from the Frontend Design Convention rollout's
+  Phase 5 final review, deferred rather than fixed (see §5.2.3) — this was
+  the rollout's last phase, so nothing downstream absorbs these:**
+  - **`SignalList` rows are mouse-only** — the clickable row is a bare
+    `HStack` with `onClick`, no `as="button"`/`role`/`tabIndex`/key
+    handler, so it's not keyboard-reachable. This is a repo-wide pattern,
+    not unique to this component — `OrdersList.tsx`'s and
+    `ResourceListPage.tsx`'s clickable table rows have the same gap, while
+    clickable *cards* elsewhere (`CatalogHub.tsx`, `AddNewModal.tsx`,
+    `AppSidebar.tsx`) correctly use `as="button"`. Worth a repo-wide
+    follow-up, not a Phase-5-only fix.
+  - **The light-mode row-hover tint is nearly imperceptible** (`bg.subtle`
+    on `bg.surface` measures ~1.05:1 in light mode, ~1.36:1 in dark) — the
+    only affordance signalling a `SignalList` row is clickable. Root cause
+    is a Phase 1 token choice (Chakra's `gray.50` substituted for the
+    doc's darker OKLCH neutral for `bg.subtle` light), which every earlier
+    phase's hover states also inherited; Phase 5 is just the first caller
+    to lean on it for primary interaction feedback.
+  - **Row context text (`text.secondary`, `fontSize="xs"`) is below WCAG AA**
+    in light mode (~4.02:1 on white, ~3.83:1 on the hover background;
+    normal-size text needs 4.5:1) — another inherited Phase 1 token value,
+    not introduced by this phase, but this is the first component to make
+    that text the most information-dense element in the row.
+  - **Header icon renders at 20px** (`boxSize={5}`); doc §3.5 specifies 24px
+    for severity-group headers — an internal doc tension between §3.5's
+    icon-sizing table and the `SignalList` brief's own reference code,
+    not resolved either way.
+  - **`outOfStock` silently omits variants with no `lowStockThreshold`
+    configured** — the threshold-validity guard runs before the qty=0
+    check, so a variant with zero stock and an unset/zero threshold never
+    appears in the critical Out-of-stock list. Behavior carried over
+    unchanged from the pre-Phase-5 `lowStock` computation; worth a
+    conscious decision (should "out of stock" require a configured
+    threshold at all?) rather than leaving it as inherited behavior.
+  - **Low-stock boundary is strict `<`, not `≤`** — a variant at exactly
+    `quantity === threshold` appears in neither `outOfStock` nor
+    `lowStock`. The doc's prose describes low-stock as "qty > 0 but ≤
+    threshold"; the implementation (unchanged from before this phase)
+    uses `<`. Pre-existing, reproduced deliberately rather than
+    reconciled with the doc wording.
+  - **No tooltip/title on truncated row labels** — `SignalList` rows use
+    `noOfLines={1}` on both label and context with no recovery mechanism;
+    the old `DataTable` cells wrapped instead of truncating. A long
+    variant label or batch context is unrecoverable without opening the
+    row.
+  - **No cap or scroll on list length** — all 4 `SignalList`s render every
+    matching row with no `maxH`/overflow. On a large catalog, one long
+    list (most likely Out of stock, now that it's split out) could push
+    the other 3 cards far down the page. Not a regression — the old Low
+    Stock table was equally unbounded — but worth revisiting once real
+    data volume is known.
+  - **Click-through leaves the Inventory Dashboard's own section** — Out of
+    stock/Low stock/Expired/Expiring-soon rows navigate to
+    `/plugins/inventory-catalog/...`, which switches Strapi's active menu
+    section, rather than staying inside the plugin's own resource-detail
+    route (`App.tsx` already mounts an in-app `r/:resource/:id` route that
+    would have kept the user in Inventory). Consistent with how
+    `AppSidebar` already links to catalog entities, so likely a deliberate
+    choice, but worth confirming rather than assuming.
+  - **Backend change is invisible if a deploy skips rebuilding the plugin**
+    — the plugin's server code loads from a gitignored prebuilt bundle
+    (`dist/server/index.js`, produced by `npm run build --prefix
+    src/plugins/inventory-dashboard`). If a deploy updates `server/src/**`
+    without rebuilding, `data.outOfStock` stays `undefined`,
+    `Overview.tsx`'s `?? []` fallback swallows it silently, and the
+    critical Out-of-stock card renders a false all-clear ("Nothing out of
+    stock") instead of surfacing an error. Worth a build-step check in
+    whatever deploy process this project eventually adopts (§8).
 
 ---

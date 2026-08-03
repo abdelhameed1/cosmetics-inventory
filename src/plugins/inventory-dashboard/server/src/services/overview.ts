@@ -66,18 +66,18 @@ const overview = ({ strapi }: { strapi: Core.Strapi }) => ({
       pageSize: 100000,
     } as any);
 
+    const outOfStock: any[] = [];
     const lowStock: any[] = [];
     for (const v of variants) {
       const threshold = Number(v.lowStockThreshold);
       if (!Number.isFinite(threshold) || threshold <= 0) continue;
       const qty = perVariantQty[v.documentId] ?? 0;
-      if (qty < threshold) {
-        lowStock.push({
-          variantId: v.documentId,
-          label: v.label ?? 'Variant',
-          quantity: qty,
-          threshold,
-        });
+      if (qty >= threshold) continue;
+      const entry = { variantId: v.documentId, label: v.label ?? 'Variant', quantity: qty, threshold };
+      if (qty === 0) {
+        outOfStock.push(entry);
+      } else {
+        lowStock.push(entry);
       }
     }
 
@@ -87,6 +87,7 @@ const overview = ({ strapi }: { strapi: Core.Strapi }) => ({
       totalStockUnits,
       stockValueUsd,
       stockValueEgp: stockValueUsd * exchangeRate,
+      outOfStock,
       lowStock,
       expired,
       expiringSoon,
