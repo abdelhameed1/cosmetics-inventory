@@ -890,23 +890,81 @@ convention, and the last phase of this rollout:
   separate Expired/Expiring-soon text-stack grid are both gone, replaced by
   one "Alerts" section rendering 4 `SignalList` cards (Out of stock, Low
   stock, Expired, Expiring soon; critical/warning/critical/warning
-  respectively) in a `SimpleGrid columns={{base: 1, md: 2}}`. Out-of-stock
-  and low-stock rows click through to `/plugins/inventory-catalog/variants/
-  :id`; expired and expiring-soon rows click through to
-  `/plugins/inventory-catalog/stock-batches/:id`.
-- **Fix-wave cleanup (post-final-review):** 3 orphaned i18n keys
-  (`overview.col.variant`/`col.qty`/`col.threshold`, left over from the
+  respectively) in a `SimpleGrid columns={{base: 1, md: 2}}`. All 4 rows'
+  click-through now navigates to the plugin's own in-app `r/:resource/:id`
+  route (e.g. `r/variants/:id`, `r/stock-batches/:id`) rather than the
+  originally-shipped `/plugins/inventory-catalog/...` absolute path — see
+  the follow-up fix-wave bullet below.
+- **Fix-wave cleanup (post-final-review, before merge):** 3 orphaned i18n
+  keys (`overview.col.variant`/`col.qty`/`col.threshold`, left over from the
   deleted Low Stock `DataTable`) were removed from both `en.ts`/`ar.ts`;
   `SignalList`'s header margin (`mb={rows.length ? 4 : 0}`) was changed to a
   flat `mb={4}` so the empty-state message no longer sits flush against the
   header with zero breathing room.
-- **Deferred, not fixed in this phase (flagged by its final review, none
-  block correctness — see the dedicated §10 bullet list below for the full
-  set).**
+- **Post-merge follow-up fix-wave (branch
+  `design-convention-phase-5-followups`, 3 commits): 8 of the 9 non-doc
+  findings from Phase 5's final review were addressed after the fact, at
+  the user's request.** Same SDD pattern (explicit subagent briefs, opus
+  final review) applied retroactively to already-merged work:
+  - `8f51d3f` (backend): `outOfStock` now includes qty=0 variants even with
+    no `lowStockThreshold` configured (`threshold: null` on those rows);
+    `lowStock` now includes the exact `quantity === threshold` boundary
+    case (was previously in neither list). New TDD test added to
+    `overview.test.ts`; both pre-existing tests still pass unchanged.
+  - `a2ab84b` (frontend): `SignalList` rows are now real `<button>`
+    elements when clickable (`as="button"`, keyboard focus + Enter/Space
+    work); the row hover tint and context-line text color now use
+    component-local `useColorModeValue` overrides (`gray.100`/`gray.700`
+    hover, `gray.600`/`gray.400` text) instead of the low-contrast shared
+    `bg.subtle`/`text.secondary` tokens; header icon grew from 20px to the
+    doc-specified 24px; label/context get a `Tooltip` on hover for
+    truncated text; the row list is capped at `maxH="360px"
+    overflowY="auto"`; all 4 click-through routes switched from the
+    section-switching absolute path to the in-app relative `r/:resource/:id`
+    route (confirmed to resolve correctly since `Overview` is only ever
+    mounted at the router's index route in `App.tsx`).
+  - `e98839b` (frontend, caught by this fix-wave's own final review): the
+    row's optional `metric` text was still on `text.secondary` after the
+    context-line contrast fix three lines above it — moved to the same
+    local override for consistency. Unused today (no row builder populates
+    `metric`), so purely a latent-contrast fix.
+  - **Deliberately left for a future decision, not fixed in this wave:**
+    the `text.secondary` theme token itself still resolves to `gray.500`
+    (~4.0:1) rather than the doc's specified `oklch(52% .016 258)`
+    (~5.5:1) — `SignalList`'s override fixes the symptom locally but 13+
+    other consumers of `text.secondary` app-wide are still below AA, and
+    the override now creates a visible inconsistency on the Overview page
+    itself (the exchange-rate "Updated: {date}" caption stays `gray.500`
+    next to a `gray.600` signal-list context line). Raising the shared
+    token is an app-wide visual change out of scope for a component-level
+    fix-wave. `Tooltip`'s content portals to `document.body`, outside
+    `ChakraRoot`'s `dir="rtl"` root — the same class of gotcha already
+    logged for Modal/Drawer/Popover — so Arabic tooltip text can render
+    with reordered numerals; Chakra v2's `Tooltip` has no simple `dir`
+    passthrough for this the way Popover/Menu do via `portalProps`, so it
+    wasn't attempted without a tested fix in hand. The tooltip is also
+    effectively mouse-only (bound to the non-focusable inner `Text`, not
+    the outer button, so a keyboard-focused row doesn't reveal it) and
+    fires unconditionally rather than only when text actually clamps. The
+    UA focus ring on button rows could theoretically clip under the new
+    `overflowY="auto"`, but no themed `_focusVisible` convention exists
+    anywhere in this codebase yet to swap in instead. `outOfStock` is now
+    larger in practice (every qty=0 variant qualifies, not just
+    threshold-configured ones) — consistent with the pre-existing
+    unbounded `expired`/`expiringSoon` design, not a regression, but worth
+    a server-side cap if a real catalog turns out to have many zero-stock
+    variants. The repo-wide keyboard-accessibility gap on other clickable
+    table rows (`OrdersList.tsx`, `ResourceListPage.tsx`) is still open —
+    only `SignalList` was fixed.
+  - Finding #12 (backend change invisible if a deploy skips the plugin
+    rebuild) was **not** addressed — it's a deploy-process risk inherent to
+    the gitignored `dist/` bundle, not fixable by changing this branch's
+    code; still tracked below.
 
-With Phase 5 merged, the entire `docs/Frontend Design Convention.md`
-rollout is complete. No further phases are planned; remaining deferred
-items across all 5 phases are tracked in §10, not assigned to any task.
+With Phase 5 (and its follow-up fix-wave) merged, the entire
+`docs/Frontend Design Convention.md` rollout is complete. No further phases
+are planned; remaining deferred items across all 5 phases are tracked in
+§10, not assigned to any task.
 
 ### 5.3 Admin panel access control (`src/admin/app.tsx`)
 
@@ -1038,10 +1096,15 @@ No stored costs are mutated.
 - Sums `quantityRemaining × costPriceUsd × exchangeRate` for total stock value
 - For stock alerts: sums `quantityRemaining` per variant **excluding expired
   batches**, compares against `lowStockThreshold`. A variant with
-  `quantity === 0` goes into `outOfStock`; a variant with `0 < quantity <
-  threshold` goes into `lowStock`. A variant with no threshold configured
-  (`lowStockThreshold` unset or `<= 0`) is skipped from both, even at
-  qty=0 — the threshold gate runs first.
+  `quantity === 0` goes into `outOfStock` regardless of whether a threshold
+  is configured (`threshold: null` on the row when it isn't); a variant with
+  `0 < quantity <= threshold` goes into `lowStock` (inclusive of the exact
+  boundary). A variant with no threshold configured is only excluded from
+  `lowStock` — it can't be "low relative to a threshold" that doesn't exist
+  — never from `outOfStock`. (Fixed in a post-merge follow-up fix-wave,
+  commit `8f51d3f`; the qty=0-without-threshold omission and the strict-`<`
+  boundary gap were both flagged by Phase 5's final review and left
+  deferred at merge time — see §10.)
 - Buckets batches into **expired** (expiryDate before today) or **expiring
   soon** (expiryDate within **90 days** of today), parsed at local midnight
 - The Overview screen renders all four (`outOfStock`, `lowStock`, `expired`,
@@ -1272,65 +1335,9 @@ in `pages/App.tsx`, and a nav entry if needed.
     `colorScheme="green"` outside the severity-token system — pre-existing,
     predates this rollout, not in Phase 3's scope; needs a ruling in a
     future phase.
-- **Minor/Important items from the Frontend Design Convention rollout's
-  Phase 5 final review, deferred rather than fixed (see §5.2.3) — this was
-  the rollout's last phase, so nothing downstream absorbs these:**
-  - **`SignalList` rows are mouse-only** — the clickable row is a bare
-    `HStack` with `onClick`, no `as="button"`/`role`/`tabIndex`/key
-    handler, so it's not keyboard-reachable. This is a repo-wide pattern,
-    not unique to this component — `OrdersList.tsx`'s and
-    `ResourceListPage.tsx`'s clickable table rows have the same gap, while
-    clickable *cards* elsewhere (`CatalogHub.tsx`, `AddNewModal.tsx`,
-    `AppSidebar.tsx`) correctly use `as="button"`. Worth a repo-wide
-    follow-up, not a Phase-5-only fix.
-  - **The light-mode row-hover tint is nearly imperceptible** (`bg.subtle`
-    on `bg.surface` measures ~1.05:1 in light mode, ~1.36:1 in dark) — the
-    only affordance signalling a `SignalList` row is clickable. Root cause
-    is a Phase 1 token choice (Chakra's `gray.50` substituted for the
-    doc's darker OKLCH neutral for `bg.subtle` light), which every earlier
-    phase's hover states also inherited; Phase 5 is just the first caller
-    to lean on it for primary interaction feedback.
-  - **Row context text (`text.secondary`, `fontSize="xs"`) is below WCAG AA**
-    in light mode (~4.02:1 on white, ~3.83:1 on the hover background;
-    normal-size text needs 4.5:1) — another inherited Phase 1 token value,
-    not introduced by this phase, but this is the first component to make
-    that text the most information-dense element in the row.
-  - **Header icon renders at 20px** (`boxSize={5}`); doc §3.5 specifies 24px
-    for severity-group headers — an internal doc tension between §3.5's
-    icon-sizing table and the `SignalList` brief's own reference code,
-    not resolved either way.
-  - **`outOfStock` silently omits variants with no `lowStockThreshold`
-    configured** — the threshold-validity guard runs before the qty=0
-    check, so a variant with zero stock and an unset/zero threshold never
-    appears in the critical Out-of-stock list. Behavior carried over
-    unchanged from the pre-Phase-5 `lowStock` computation; worth a
-    conscious decision (should "out of stock" require a configured
-    threshold at all?) rather than leaving it as inherited behavior.
-  - **Low-stock boundary is strict `<`, not `≤`** — a variant at exactly
-    `quantity === threshold` appears in neither `outOfStock` nor
-    `lowStock`. The doc's prose describes low-stock as "qty > 0 but ≤
-    threshold"; the implementation (unchanged from before this phase)
-    uses `<`. Pre-existing, reproduced deliberately rather than
-    reconciled with the doc wording.
-  - **No tooltip/title on truncated row labels** — `SignalList` rows use
-    `noOfLines={1}` on both label and context with no recovery mechanism;
-    the old `DataTable` cells wrapped instead of truncating. A long
-    variant label or batch context is unrecoverable without opening the
-    row.
-  - **No cap or scroll on list length** — all 4 `SignalList`s render every
-    matching row with no `maxH`/overflow. On a large catalog, one long
-    list (most likely Out of stock, now that it's split out) could push
-    the other 3 cards far down the page. Not a regression — the old Low
-    Stock table was equally unbounded — but worth revisiting once real
-    data volume is known.
-  - **Click-through leaves the Inventory Dashboard's own section** — Out of
-    stock/Low stock/Expired/Expiring-soon rows navigate to
-    `/plugins/inventory-catalog/...`, which switches Strapi's active menu
-    section, rather than staying inside the plugin's own resource-detail
-    route (`App.tsx` already mounts an in-app `r/:resource/:id` route that
-    would have kept the user in Inventory). Consistent with how
-    `AppSidebar` already links to catalog entities, so likely a deliberate
-    choice, but worth confirming rather than assuming.
+- **Items from the Frontend Design Convention rollout's Phase 5 final
+  review — 8 of 9 were fixed in a post-merge follow-up fix-wave (see
+  §5.2.3, commits `8f51d3f`/`a2ab84b`/`e98839b`); what remains open:**
   - **Backend change is invisible if a deploy skips rebuilding the plugin**
     — the plugin's server code loads from a gitignored prebuilt bundle
     (`dist/server/index.js`, produced by `npm run build --prefix
@@ -1338,7 +1345,46 @@ in `pages/App.tsx`, and a nav entry if needed.
     without rebuilding, `data.outOfStock` stays `undefined`,
     `Overview.tsx`'s `?? []` fallback swallows it silently, and the
     critical Out-of-stock card renders a false all-clear ("Nothing out of
-    stock") instead of surfacing an error. Worth a build-step check in
-    whatever deploy process this project eventually adopts (§8).
+    stock") instead of surfacing an error. Not fixable by changing this
+    branch's code — worth a build-step check in whatever deploy process
+    this project eventually adopts (§8). The only Phase 5 finding not
+    addressed by the fix-wave.
+  - **Repo-wide keyboard-accessibility gap on clickable table rows** is
+    still open outside `SignalList` — `OrdersList.tsx`'s and
+    `ResourceListPage.tsx`'s clickable rows are still bare `HStack`/`Tr`
+    with `onClick` and no `as="button"`/keyboard handling. `SignalList`
+    itself was fixed by the fix-wave; this is now the last unfixed
+    instance of that pattern.
+  - **`text.secondary` theme token still resolves below the doc's spec**
+    (`gray.500` ≈ 4.0:1 vs. the doc's `oklch(52% .016 258)` ≈ 5.5:1) for
+    every one of its 13+ consumers app-wide except `SignalList`, which now
+    has a local, component-scoped override instead. Raising the shared
+    token is an intentionally out-of-scope, app-wide visual change; until
+    it happens, `SignalList`'s context/metric text (now `gray.600`/`400`)
+    will look slightly darker than every other secondary-text instance in
+    the app, including the "Updated: {date}" caption on the same Overview
+    page.
+  - **`SignalList`'s new `Tooltip` (added to fix truncated-label recovery)
+    has 3 of its own gaps**, all Minor, none reverted: its content portals
+    to `document.body`, outside `ChakraRoot`'s `dir="rtl"` root — the same
+    class of gotcha already logged for Modal/Drawer/Popover, so Arabic
+    tooltip text can render with reordered numerals, and Chakra v2's
+    `Tooltip` doesn't expose a `dir`/`portalProps` escape hatch the way
+    Popover/Menu do; it's bound to the non-focusable inner `Text`, not the
+    new outer `<button>`, so keyboard-focused rows don't reveal it (mouse
+    hover only); and it fires unconditionally rather than only when the
+    text actually clamps (no truncation detection).
+  - **UA focus ring on `SignalList`'s new button rows could be clipped**
+    by the fix-wave's own `overflowY="auto"` scroll cap, browser-dependent.
+    No themed `_focusVisible` box-shadow convention exists anywhere in this
+    codebase yet to swap in instead of relying on the default outline.
+  - **`outOfStock` is now larger in practice** — every qty=0 variant
+    qualifies regardless of whether a threshold is configured (the
+    fix-wave's own intended change), so on a catalog with many
+    zero-stock/no-threshold variants this list could be materially bigger
+    than before. Same unbounded-list shape as the pre-existing
+    `expired`/`expiringSoon` arrays (not a regression), mitigated on
+    screen by the fix-wave's `maxH="360px"` scroll cap, but a server-side
+    cap is worth considering if real data volume turns out to be large.
 
 ---
