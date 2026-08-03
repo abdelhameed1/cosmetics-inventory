@@ -7,6 +7,8 @@ export const en = {
   'common.new': 'New',
   'common.loading': 'Loading…',
 
+  'wizard.stepIndicator': '{stepLabel} — step {n} of {total}',
+
   'theme.lightMode': 'Light mode',
   'theme.darkMode': 'Dark mode',
   'fontSize.label': 'Text size',

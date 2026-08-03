@@ -9,6 +9,8 @@ export const ar: Record<keyof typeof en, string> = {
   'common.new': 'جديد',
   'common.loading': 'جارٍ التحميل…',
 
+  'wizard.stepIndicator': '{stepLabel} — الخطوة {n} من {total}',
+
   'theme.lightMode': 'الوضع الفاتح',
   'theme.darkMode': 'الوضع الداكن',
   'fontSize.label': 'حجم النص',

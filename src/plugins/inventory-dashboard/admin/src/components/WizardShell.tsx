@@ -34,6 +34,12 @@ export function WizardShell({ steps, onSubmit, submitLabel, isSubmitting, submit
 
   return (
     <Box>
+      <Text fontSize="sm" color="text.secondary" mb={2}>
+        {intl.formatMessage(
+          { id: 'wizard.stepIndicator', defaultMessage: '{stepLabel} — step {n} of {total}' },
+          { stepLabel: steps[activeStep]?.label ?? '', n: activeStep + 1, total: steps.length }
+        )}
+      </Text>
       <Stepper index={activeStep} size="sm" mb={8}>
         {steps.map((step, i) => (
           <Step key={step.label} onClick={() => jumpTo(i)} cursor={i < activeStep ? 'pointer' : 'default'}>
