@@ -55,7 +55,7 @@ export function WizardShell({ steps, onSubmit, submitLabel, isSubmitting, submit
       <Box>{steps[activeStep]?.content}</Box>
 
       {submitError && isLastStep && (
-        <Text color="red.600" pt={4}>{submitError}</Text>
+        <Text color="severity.critical.fg" pt={4}>{submitError}</Text>
       )}
 
       <HStack spacing={2} pt={6}>

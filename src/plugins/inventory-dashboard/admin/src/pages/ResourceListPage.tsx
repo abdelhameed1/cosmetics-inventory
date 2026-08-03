@@ -92,7 +92,7 @@ export default function ResourceListPage() {
         </InputGroup>
       </Box>
 
-      {displayError && <Text color="red.600" pb={4}>{displayError}</Text>}
+      {displayError && <Text color="severity.critical.fg" pb={4}>{displayError}</Text>}
 
       <DataTable
         columns={[

@@ -39,7 +39,7 @@ export default function Overview() {
     if (error) {
       return (
         <Box p={{ base: 4, md: 8 }}>
-          <Text color="red.600">{intl.formatMessage({ id: 'overview.loadError', defaultMessage: 'Could not load overview data' })}</Text>
+          <Text color="severity.critical.fg">{intl.formatMessage({ id: 'overview.loadError', defaultMessage: 'Could not load overview data' })}</Text>
         </Box>
       );
     }
@@ -51,7 +51,7 @@ export default function Overview() {
       <PageHeader title={intl.formatMessage({ id: 'nav.overview', defaultMessage: 'Overview' })} />
 
       {error != null && (
-        <Text color="red.600" pb={4}>
+        <Text color="severity.critical.fg" pb={4}>
           {intl.formatMessage({ id: 'overview.reloadError', defaultMessage: 'Could not refresh overview data — showing last loaded data' })}
         </Text>
       )}
@@ -70,7 +70,7 @@ export default function Overview() {
             {intl.formatMessage({ id: 'overview.updatedLabel', defaultMessage: 'Updated: {date}' }, { date: exchangeRateUpdatedAt })}
           </Text>
         )}
-        {saveError && <Text color="red.600" pt={1}>{saveError}</Text>}
+        {saveError && <Text color="severity.critical.fg" pt={1}>{saveError}</Text>}
       </Box>
 
       <SimpleGrid columns={{ base: 1, sm: 2, lg: 4 }} spacing={4}>

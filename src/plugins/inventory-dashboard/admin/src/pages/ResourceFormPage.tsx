@@ -71,7 +71,7 @@ export default function ResourceFormPage() {
             : intl.formatMessage({ id: 'addNew.newItemTitle', defaultMessage: 'New {label}' }, { label: resourceLabel })
         }
       />
-      {error && <Text color="red.600" pb={2}>{error}</Text>}
+      {error && <Text color="severity.critical.fg" pb={2}>{error}</Text>}
       <Card>
         <CardBody>
           <Grid templateColumns="repeat(12, 1fr)" gap={4}>
