@@ -606,13 +606,13 @@ all). Three pieces, all under `admin/src/loading/` and `admin/src/hooks/`:
   `error && (...)` alone fails TypeScript's JSX-children check; always
   `!= null` it first). See §10 for the pages that still don't follow this.
 
-#### 5.2.3 Design system rollout (Frontend Design Convention, Phases 1-3 of 5)
+#### 5.2.3 Design system rollout (Frontend Design Convention, Phases 1-4 of 5)
 
 `docs/Frontend Design Convention.md` is a 5-phase design-system rollout for
 the plugin's Chakra theme, executed via `superpowers:subagent-driven-development`
 with plans under `docs/superpowers/plans/2026-08-03-design-convention-0{1..5}-*.md`.
-Phases 1 ("Foundations"), 2 ("Layout & Navigation Shell"), and 3 ("Core
-Components") have landed on `main`.
+Phases 1 ("Foundations"), 2 ("Layout & Navigation Shell"), 3 ("Core
+Components"), and 4 ("Wizard") have landed on `main`.
 
 **Phase 1** touches only `theme/index.ts` (plus 2 call sites) and had no
 visible effect on its own until Phase 2/later phases wired up consumers.
@@ -779,6 +779,80 @@ component conventions plus the rest of §3.3's spacing table:
   sizing table). `OrderForm.tsx`'s "Confirm order" Button still uses a raw
   `colorScheme="green"` outside the severity system — pre-existing, predates
   this rollout, not in this phase's scope.
+
+**Phase 4** touches `theme/index.ts`, `WizardShell.tsx`, `AddNewModal.tsx`,
+`QuickCreateSelect.tsx`, `ProductVariantsForm.tsx`, and 4 more form pages —
+doc §6's wizard chrome. Most of §6 (the `WizardStep`/`WizardShell` contract,
+field-step/repeatable-row recipes, and `ProductVariantsForm`'s partial-failure
+retry contract — `savedProductId`/`variantsCreatedCount`/`variantsSnapshot`)
+was **already compliant** before this phase — verified during planning, no
+task touched any of it. This phase closes 4 remaining gaps plus a spacing
+sweep:
+
+- **Stepper indicator/separator colors** now come from a new
+  `components.Stepper` theme override (`theme/index.ts`) using Chakra's
+  `data-status` style hook on the `indicator`/`separator` parts, instead of
+  the `<Stepper>` instance's `colorScheme="brand"` prop (removed). Active/
+  complete dots: `bg`/`borderColor` = `accent.fg`, foreground text =
+  `chakra-inverse-text` (a Chakra built-in semantic token, not `white` —
+  `accent.fg` is a *light* tint in dark mode, so a hardcoded white
+  foreground would fail contrast there; this was caught and fixed during
+  this phase's final review, not shipped as originally written). Incomplete
+  dots/separator: `border.default`.
+- **Step-position subtitle** — "{step label} — step {n} of {N}" renders
+  above the stepper in `WizardShell.tsx` (new `wizard.stepIndicator` i18n
+  key), derived from the shell's existing `steps`/`activeStep` props, no
+  new `WizardShellProps` field. **Deviates from doc §6.5's literal
+  wording**, which places this text in the overlay *header* next to the
+  wizard title — the implementation puts it in the wizard *body* instead,
+  a deliberate choice so the subtitle also renders when a wizard is opened
+  standalone (no overlay header exists there at all). Doc and code
+  disagree on placement; the code's choice is the ruling for now.
+- **Wizard footer**: Back stays start-aligned, Next/Submit moved to
+  end-aligned (via two always-rendered `Box` wrappers around each side +
+  `HStack justify="space-between"` — both boxes must always render, even
+  when the button inside is conditionally absent, or `space-between`
+  collapses on step 1's Back-less footer), gap widened to 12px
+  (`spacing={3}`). RTL-correct with no `dir`-aware code needed (`space-
+  between` already follows logical/writing-mode direction).
+- **Overlay container radius** — `AddNewModal.tsx`/`QuickCreateSelect.tsx`'s
+  `ModalContent` both get `radius.xl` (20px), the doc's two named
+  `radius.xl` exceptions extended to cover the wizard-hosting modals too.
+  `AddNewModal.tsx` needed a **responsive** value,
+  `borderRadius={{ base: 0, md: 'xl' }}`, not a flat `"xl"` — that modal is
+  `size={{ base: 'full', md: ... }}` (a true edge-to-edge sheet on mobile,
+  where Chakra's `full` size sets `borderRadius: 0`); a flat `"xl"` was
+  shipped first and silently rounded the mobile sheet's corners, caught
+  and fixed in this phase's final review. `QuickCreateSelect.tsx` is
+  `size="md"` at every breakpoint (never full-screen), so its flat `"xl"`
+  is correct as-is.
+- **Product wizard's review step**: the variants collection changed from
+  a comma-joined string to a `DataTable` (Label / Variant Type / Low-stock
+  Threshold columns), reusing the same label consts and empty-state i18n
+  id already used by the earlier editable-rows step — presentational only,
+  zero change to `ProductVariantsForm.tsx`'s save/retry logic.
+  `OrderForm.tsx`'s review step already used a `DataTable` (no change
+  needed); `StockPurchase.tsx`'s review step has no collection to show
+  (doc §6.3: a wizard with no collection step omits that half — already
+  correctly the case).
+- **Form grid gap** `gap={4}` → `gap={5}` (16px→20px, doc §3.3) at 8
+  twelve-column-grid sites across 5 files (the 3 wizards' own field steps
+  plus `InlineResourceForm.tsx`/`ResourceFormPage.tsx`, which share the
+  identical grid pattern). `Overview.tsx:101`'s matching grid is
+  untouched — reserved for Phase 5.
+- **Deferred, not fixed in this phase (flagged by its final review, none
+  block correctness):** the incomplete-step ring color (`border.default`)
+  may read as very low-contrast in light mode — spec-faithful to doc
+  §6.5's literal wording, but worth a visual check before calling it
+  final. Dropping `colorScheme="brand"` from `<Stepper>` leaves a latent
+  unstyled-blue fallback if a future Chakra version adds a style consumer
+  this override doesn't cover — cheap optional hedge, not a current
+  defect. **A combined manual browser pass across this phase's changes
+  (stepper in light+dark, Add New modal at a phone width, footer on step
+  1 vs. a later step, footer in Arabic, review step with/without
+  variants) is still owed** — every task in this rollout has been
+  verified by type-check + diff-level/textual re-checks only, no dev
+  server has been reachable in any implementer/reviewer sandbox so far.
 
 ### 5.3 Admin panel access control (`src/admin/app.tsx`)
 
