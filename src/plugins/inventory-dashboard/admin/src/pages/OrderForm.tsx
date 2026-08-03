@@ -367,7 +367,7 @@ export default function OrderForm({ onDone, onCancel, embedded = false }: OrderF
   ];
 
   return (
-    <Box p={embedded ? 0 : { base: 4, md: 8 }}>
+    <Box p={embedded ? 0 : { base: 5, md: 10 }}>
       {!embedded && <PageHeader title={intl.formatMessage({ id: 'orderForm.pageTitle', defaultMessage: 'New order' })} />}
       {error && !isSubmitting && draftLines.length === 0 && <Text color="severity.critical.fg" pb={2}>{error}</Text>}
       <WizardShell
@@ -441,7 +441,7 @@ function ConfirmedOrderView({
   };
 
   return (
-    <Box p={{ base: 4, md: 8 }}>
+    <Box p={{ base: 5, md: 10 }}>
       <PageHeader
         title={intl.formatMessage({ id: 'orderForm.confirmed.orderTitle', defaultMessage: 'Order {id}' }, { id: order.documentId.slice(0, 8) })}
         badge={<SeverityBadge severity={orderStatusToSeverity(order.status)} fontSize="sm">{order.status}</SeverityBadge>}

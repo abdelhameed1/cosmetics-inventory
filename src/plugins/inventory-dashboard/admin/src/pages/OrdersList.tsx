@@ -63,7 +63,7 @@ export default function OrdersList() {
   if (isInitialLoading) return <LoadingState />;
 
   return (
-    <Box p={{ base: 4, md: 8 }}>
+    <Box p={{ base: 5, md: 10 }}>
       <PageHeader title={intl.formatMessage({ id: 'nav.orders', defaultMessage: 'Orders' })} />
 
       {displayError && <Text color="severity.critical.fg" pb={4}>{displayError}</Text>}

@@ -63,7 +63,7 @@ export default function ResourceListPage() {
   if (isInitialLoading) return <LoadingState />;
 
   return (
-    <Box p={{ base: 4, md: 8 }}>
+    <Box p={{ base: 5, md: 10 }}>
       <PageHeader
         title={getResourceLabel(intl, resource)}
         actions={<Button onClick={() => navigate('new')}>{intl.formatMessage({ id: 'common.new', defaultMessage: 'New' })}</Button>}

@@ -63,7 +63,7 @@ export default function ResourceFormPage() {
   const resourceLabel = getResourceLabel(intl, resource);
 
   return (
-    <Box p={{ base: 4, md: 8 }}>
+    <Box p={{ base: 5, md: 10 }}>
       <PageHeader
         title={
           isEdit

@@ -181,7 +181,7 @@ export default function StockPurchase({ onDone, onCancel, embedded = false }: St
   ];
 
   return (
-    <Box p={embedded ? 0 : { base: 4, md: 8 }}>
+    <Box p={embedded ? 0 : { base: 5, md: 10 }}>
       {!embedded && <PageHeader title={intl.formatMessage({ id: 'stockPurchase.pageTitle', defaultMessage: 'Record stock purchase' })} />}
       <WizardShell
         steps={steps}

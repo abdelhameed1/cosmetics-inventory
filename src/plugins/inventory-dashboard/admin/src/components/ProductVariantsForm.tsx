@@ -291,7 +291,7 @@ export default function ProductVariantsForm({ onDone, onCancel, embedded = false
   ];
 
   return (
-    <Box p={embedded ? 0 : { base: 4, md: 8 }}>
+    <Box p={embedded ? 0 : { base: 5, md: 10 }}>
       {!embedded && <PageHeader title={intl.formatMessage({ id: 'productWizard.pageTitle', defaultMessage: 'New product' })} />}
       <WizardShell
         steps={steps}

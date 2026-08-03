@@ -38,7 +38,7 @@ export default function Overview() {
   if (isInitialLoading || !data) {
     if (error) {
       return (
-        <Box p={{ base: 4, md: 8 }}>
+        <Box p={{ base: 5, md: 10 }}>
           <Text color="severity.critical.fg">{intl.formatMessage({ id: 'overview.loadError', defaultMessage: 'Could not load overview data' })}</Text>
         </Box>
       );
@@ -47,7 +47,7 @@ export default function Overview() {
   }
 
   return (
-    <Box p={{ base: 4, md: 8 }}>
+    <Box p={{ base: 5, md: 10 }}>
       <PageHeader title={intl.formatMessage({ id: 'nav.overview', defaultMessage: 'Overview' })} />
 
       {error != null && (

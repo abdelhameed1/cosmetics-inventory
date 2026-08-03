@@ -36,7 +36,7 @@ export default function CatalogHub() {
   }
 
   return (
-    <Box p={{ base: 4, md: 8 }}>
+    <Box p={{ base: 5, md: 10 }}>
       <PageHeader title={intl.formatMessage({ id: 'nav.catalog', defaultMessage: 'Catalog' })} />
       {CATALOG_GROUPS.map((group) => (
         <Box key={group.labelId} pb={8}>
