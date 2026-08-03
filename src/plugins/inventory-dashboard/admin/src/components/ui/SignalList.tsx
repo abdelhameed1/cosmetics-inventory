@@ -47,7 +47,7 @@ export function SignalList({
                       <Text fontSize="xs" color={contextColor} noOfLines={1}>{row.context}</Text>
                     </Tooltip>
                   </VStack>
-                  {row.metric && <Text fontSize="sm" color="text.secondary" flexShrink={0}>{row.metric}</Text>}
+                  {row.metric && <Text fontSize="sm" color={contextColor} flexShrink={0}>{row.metric}</Text>}
                 </>
               );
 
