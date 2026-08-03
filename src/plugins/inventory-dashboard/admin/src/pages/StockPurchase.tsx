@@ -88,7 +88,7 @@ export default function StockPurchase({ onDone, onCancel, embedded = false }: St
   const productStep = (
     <Card>
       <CardBody>
-        <Grid templateColumns="repeat(12, 1fr)" gap={4}>
+        <Grid templateColumns="repeat(12, 1fr)" gap={5}>
           <GridItem colSpan={{ base: 12, sm: 6, md: 4 }}>
             <FormField label={intl.formatMessage({ id: 'field.product', defaultMessage: 'Product' })} required>
               <Select

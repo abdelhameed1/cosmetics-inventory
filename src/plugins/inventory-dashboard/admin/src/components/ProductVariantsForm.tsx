@@ -134,7 +134,7 @@ export default function ProductVariantsForm({ onDone, onCancel, embedded = false
   const productInfoStep = (
     <Card>
       <CardBody>
-        <Grid templateColumns="repeat(12, 1fr)" gap={4}>
+        <Grid templateColumns="repeat(12, 1fr)" gap={5}>
           <GridItem colSpan={{ base: 12, sm: 6, md: 4 }}>
             <FormField label={nameLabel} required>
               <Input value={name} onChange={(e) => setName(e.target.value)} />
@@ -181,7 +181,7 @@ export default function ProductVariantsForm({ onDone, onCancel, embedded = false
         <Card>
           <CardBody>
             {rows.map((row, i) => (
-              <Grid templateColumns="repeat(12, 1fr)" gap={4} key={i} pt={i === 0 ? 0 : 4}>
+              <Grid templateColumns="repeat(12, 1fr)" gap={5} key={i} pt={i === 0 ? 0 : 4}>
                 <GridItem colSpan={{ base: 12, sm: 6, md: 4 }}>
                   <FormField label={rowLabelLabel}>
                     <Input value={row.label} onChange={(e) => updateRow(i, { label: e.target.value })} />

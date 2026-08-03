@@ -44,7 +44,7 @@ export function InlineResourceForm({ resource, onDone, onCancel }: InlineResourc
   return (
     <Box>
       {error && <Text color="severity.critical.fg" pb={2}>{error}</Text>}
-      <Grid templateColumns="repeat(12, 1fr)" gap={4}>
+      <Grid templateColumns="repeat(12, 1fr)" gap={5}>
         {editableFields.map((f) => (
           <GridItem key={f.name} colSpan={{ base: 12, md: 6 }}>
             <FieldRenderer field={f} value={values[f.name]} onChange={(v) => setField(f.name, v)} />

@@ -163,7 +163,7 @@ export default function OrderForm({ onDone, onCancel, embedded = false }: OrderF
   const customerStep = (
     <Card>
       <CardBody>
-        <Grid templateColumns="repeat(12, 1fr)" gap={4}>
+        <Grid templateColumns="repeat(12, 1fr)" gap={5}>
           <GridItem colSpan={{ base: 12, sm: 6, md: 4 }}>
             <QuickCreateSelect
               resource="customers"
@@ -192,7 +192,7 @@ export default function OrderForm({ onDone, onCancel, embedded = false }: OrderF
       </Text>
       <Card>
         <CardBody>
-          <Grid templateColumns="repeat(12, 1fr)" gap={4}>
+          <Grid templateColumns="repeat(12, 1fr)" gap={5}>
             <GridItem colSpan={{ base: 12, sm: 6, md: 4 }}>
               <FormField label={intl.formatMessage({ id: 'field.product', defaultMessage: 'Product' })}>
                 <Select
@@ -294,7 +294,7 @@ export default function OrderForm({ onDone, onCancel, embedded = false }: OrderF
         </DataTable>
       </Box>
 
-      <Grid templateColumns="repeat(12, 1fr)" gap={4} pt={6}>
+      <Grid templateColumns="repeat(12, 1fr)" gap={5} pt={6}>
         <GridItem colSpan={{ base: 12, sm: 6, md: 4 }}>
           <FormField label={intl.formatMessage({ id: 'orderForm.discountLabel', defaultMessage: 'Discount (EGP)' })}>
             <NumberInput value={discount ?? ''} onChange={(_, v) => setDiscount(Number.isNaN(v) ? undefined : v)}>
