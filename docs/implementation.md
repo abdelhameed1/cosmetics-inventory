@@ -1161,13 +1161,14 @@ cd src/plugins/inventory-dashboard
 npm run build              # strapi-plugin build → dist/server + dist/admin (MUST run before jest/dev pick up changes)
 npm run test:ts:back       # tsc -p server/tsconfig.json --noEmit — authoritative server/plugin type gate
 npm run test:ts:front      # tsc -p admin/tsconfig.json --noEmit — authoritative admin type gate (strict; catches noImplicitAny)
+npm run test:front         # tsc (test:ts:front) + 26-suite RTL/jsdom admin UI test suite — see "Admin UI test suite" below
 cd ../../..
 npx tsc --noEmit            # whole-app type check
 npm test                    # full suite (app + plugin tests)
 ```
 
 There is no `npm run lint` script in this plugin (the `@strapi/sdk-plugin` v6
-scaffold ships without one) — `test:ts:front`/`test:ts:back` are the real
+scaffold ships without one) — `test:ts:*` plus `test:front` are the real
 gates. All of the above must be clean before considering plugin work done.
 
 Plugin-only test suites (`src/plugins/inventory-dashboard/server/tests/`):
@@ -1176,10 +1177,11 @@ Plugin-only test suites (`src/plugins/inventory-dashboard/server/tests/`):
 
 **Admin UI test suite** — `npm run test:front` (runnable from either the
 app root or `src/plugins/inventory-dashboard`) is the admin UI's real Jest
-suite: React Testing Library components rendered under jsdom, run via
-`cd src/plugins/inventory-dashboard && ts-jest` under the hood
-(`admin/jest.config.js`), distinct from the plugin-only *server* suites
-above. It now covers 26 test files / 103 test cases, spanning both the
+suite: React Testing Library components rendered under jsdom. The plugin-local
+`test:front` script runs `test:ts:front` (`tsc --noEmit`) then
+`test:unit:front` (`cross-env NODE_ENV=test jest --config=admin/jest.config.js`,
+with `ts-jest` as the transform inside that Jest config — not a separately-run
+step), distinct from the plugin-only *server* suites above. It now covers 26 test files / 103 test cases, spanning both the
 pre-existing primitives/hooks suites (13 files landed in commit `91f8d34`)
 and, as of this plan, the full wizard system (`WizardShell`,
 `FieldRenderer`, `RelationSelect`, `QuickCreateSelect`,
