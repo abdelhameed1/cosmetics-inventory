@@ -14,8 +14,8 @@ function field(overrides: Partial<FieldMeta>): FieldMeta {
 describe('FieldRenderer', () => {
   it('renders nothing when the field is hidden', () => {
     render(<FieldRenderer field={field({ name: 'notes', hidden: true })} value="" onChange={jest.fn()} />);
-    // Component returns null, so no input/textarea/select should be rendered for this field
-    expect(screen.queryByDisplayValue('')).not.toBeInTheDocument();
+    // Component returns null, so no form control should be rendered for this field
+    expect(screen.queryByLabelText('Notes')).not.toBeInTheDocument();
   });
 
   it('renders a Textarea for type "text"', () => {
