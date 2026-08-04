@@ -119,4 +119,65 @@ describe('ProductVariantsForm', () => {
     // The retry also completes step 3 (delete the auto-created default variant).
     expect(del).toHaveBeenCalledWith('/inventory-dashboard/resources/variants/auto-1');
   });
+
+  it('retries only the variant that failed, without re-posting one that already succeeded', async () => {
+    const get = jest.fn()
+      .mockImplementationOnce(() => listGet([{ documentId: 'br-1', name: 'Chanel' }]))
+      .mockImplementationOnce(() => listGet([{ documentId: 'ct-1', name: 'Skincare' }]))
+      .mockImplementationOnce(() => listGet([{ documentId: 'vt-1', name: 'Size' }]))
+      .mockImplementationOnce(() => listGet([]))
+      .mockImplementationOnce(() => listGet([{ documentId: 'auto-1', product: { documentId: 'p-1' }, isDefault: true }]));
+    const post = jest.fn()
+      .mockResolvedValueOnce({ data: { documentId: 'p-1', name: 'Serum' } })
+      .mockResolvedValueOnce({ data: { documentId: 'v-1' } })
+      .mockRejectedValueOnce(new Error('Network blip'))
+      .mockResolvedValueOnce({ data: { documentId: 'v-2' } });
+    const del = jest.fn().mockResolvedValue({ data: {} });
+    const onDone = jest.fn();
+    setupFetchClient(get, post, del);
+
+    render(<ProductVariantsForm onDone={onDone} />);
+
+    fireEvent.change(await screen.findByLabelText(/^Name/), { target: { value: 'Serum' } });
+    await waitFor(() => expect(screen.getByRole('option', { name: 'Chanel' })).toBeInTheDocument());
+    fireEvent.change(screen.getByLabelText(/^Brand/), { target: { value: 'br-1' } });
+    fireEvent.change(screen.getByLabelText(/^Category/), { target: { value: 'ct-1' } });
+    fireEvent.click(screen.getByRole('button', { name: /next/i }));
+
+    // Row 0 — will succeed
+    fireEvent.click(screen.getByRole('button', { name: /add variant/i }));
+    let labels = screen.getAllByLabelText('Label');
+    fireEvent.change(labels[0], { target: { value: '50ml' } });
+    await waitFor(() => expect(screen.getAllByRole('option', { name: 'Size' }).length).toBeGreaterThan(0));
+    let variantTypeSelects = screen.getAllByLabelText('Variant Type');
+    fireEvent.change(variantTypeSelects[0], { target: { value: 'vt-1' } });
+
+    // Row 1 — will fail on first attempt, succeed on retry
+    fireEvent.click(screen.getByRole('button', { name: /add variant/i }));
+    labels = screen.getAllByLabelText('Label');
+    fireEvent.change(labels[1], { target: { value: '100ml' } });
+    variantTypeSelects = screen.getAllByLabelText('Variant Type');
+    fireEvent.change(variantTypeSelects[1], { target: { value: 'vt-1' } });
+
+    fireEvent.click(screen.getByRole('button', { name: /next/i }));
+    fireEvent.click(screen.getByRole('button', { name: /next/i }));
+    fireEvent.click(screen.getByRole('button', { name: /create product/i }));
+
+    await screen.findByText(/Product was saved/);
+    const retryBtn = await screen.findByRole('button', { name: /retry remaining steps/i });
+    fireEvent.click(retryBtn);
+
+    await waitFor(() => expect(onDone).toHaveBeenCalledTimes(1));
+    // 4 POSTs total: product, the 50ml variant (succeeds once, never repeated), the failed
+    // 100ml attempt, and the successful retry of that same 100ml row. If the resume logic
+    // were broken and re-posted everything, this would be 5 (product + 2 variants twice).
+    expect(post).toHaveBeenCalledTimes(4);
+    expect(post).toHaveBeenNthCalledWith(2, '/inventory-dashboard/resources/variants', {
+      label: '50ml', variantType: 'vt-1', isDefault: false, product: 'p-1',
+    });
+    expect(post).toHaveBeenNthCalledWith(4, '/inventory-dashboard/resources/variants', {
+      label: '100ml', variantType: 'vt-1', isDefault: false, product: 'p-1',
+    });
+    expect(del).toHaveBeenCalledWith('/inventory-dashboard/resources/variants/auto-1');
+  });
 });
