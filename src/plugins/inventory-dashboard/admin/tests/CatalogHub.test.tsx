@@ -27,7 +27,7 @@ describe('CatalogHub', () => {
     render(<CatalogHub />);
 
     expect(await screen.findByText('12')).toBeInTheDocument();
-    expect(screen.getAllByText('Catalog').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Catalog')).toHaveLength(2);
     expect(screen.getByText('Partners & Pricing')).toBeInTheDocument();
     expect(screen.getByText('Brands')).toBeInTheDocument();
     expect(screen.getByText('9')).toBeInTheDocument();
