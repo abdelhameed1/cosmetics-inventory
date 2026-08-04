@@ -89,3 +89,72 @@ describe('OrderForm — new draft order', () => {
     });
   });
 });
+
+const confirmedOrder = {
+  documentId: 'o1abcdef', status: 'confirmed',
+  lines: [{ documentId: 'l1', stockBatch: { documentId: 'batch12345' }, quantitySold: 2, sellPrice: 150, costPriceUsdSnapshot: 2, belowCost: false }],
+  totals: { subtotal: 300, finalTotal: 300, netProfit: 250, totalPaid: 0, balanceDue: 300 },
+};
+
+function mockConfirmedClient() {
+  const get = jest.fn().mockResolvedValue({ data: { results: [] } });
+  const post = jest.fn().mockResolvedValue({ data: {} });
+  (useFetchClient as jest.Mock).mockReturnValue({ get, post, put: jest.fn(), del: jest.fn() });
+  return { get, post };
+}
+
+describe('OrderForm — confirmed order view', () => {
+  beforeEach(() => jest.clearAllMocks());
+
+  it('renders totals, payment summary, and hides the below-cost flag when not below cost', () => {
+    mockConfirmedClient();
+    (useOrder as jest.Mock).mockReturnValue({ order: confirmedOrder, reload: jest.fn(), confirm: jest.fn(), cancel: jest.fn() });
+
+    render(<OrderForm />);
+
+    expect(screen.getByText('Subtotal: 300 | Final: 300 | Profit: 250')).toBeInTheDocument();
+    expect(screen.getByText('Paid: 0 | Balance due: 300')).toBeInTheDocument();
+    expect(screen.queryByText('Below cost')).not.toBeInTheDocument();
+  });
+
+  it('records a payment and reloads the order', async () => {
+    const { post } = mockConfirmedClient();
+    const mockReload = jest.fn();
+    (useOrder as jest.Mock).mockReturnValue({ order: confirmedOrder, reload: mockReload, confirm: jest.fn(), cancel: jest.fn() });
+
+    render(<OrderForm />);
+    fireEvent.change(screen.getByLabelText('Amount'), { target: { value: '100' } });
+    fireEvent.click(screen.getByRole('button', { name: /add payment/i }));
+
+    await waitFor(() =>
+      expect(post).toHaveBeenCalledWith('/inventory-dashboard/resources/payments', {
+        amount: 100, method: 'cash', paymentDate: expect.any(String), order: 'o1abcdef',
+      })
+    );
+    expect(mockReload).toHaveBeenCalledTimes(1);
+  });
+
+  it('cancels the order after confirming in the dialog', async () => {
+    mockConfirmedClient();
+    const mockCancel = jest.fn().mockResolvedValue({});
+    (useOrder as jest.Mock).mockReturnValue({ order: confirmedOrder, reload: jest.fn(), confirm: jest.fn(), cancel: mockCancel });
+
+    render(<OrderForm />);
+    fireEvent.click(screen.getByRole('button', { name: /cancel order/i }));
+    const dialog = await screen.findByRole('alertdialog');
+    fireEvent.click(within(dialog).getByRole('button', { name: /cancel order/i }));
+
+    await waitFor(() => expect(mockCancel).toHaveBeenCalledTimes(1));
+  });
+
+  it('hides the cancel action and payment form for a cancelled order', () => {
+    mockConfirmedClient();
+    (useOrder as jest.Mock).mockReturnValue({
+      order: { ...confirmedOrder, status: 'cancelled' }, reload: jest.fn(), confirm: jest.fn(), cancel: jest.fn(),
+    });
+
+    render(<OrderForm />);
+    expect(screen.queryByRole('button', { name: /cancel order/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /add payment/i })).not.toBeInTheDocument();
+  });
+});
