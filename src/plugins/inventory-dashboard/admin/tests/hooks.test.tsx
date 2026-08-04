@@ -3,6 +3,8 @@ import React from 'react';
 import { useFetchClient } from '@strapi/strapi/admin';
 import { useSettings } from '../src/hooks/useSettings';
 import { useSchema } from '../src/hooks/useSchema';
+import { useOverview } from '../src/hooks/useOverview';
+import { useResources } from '../src/hooks/useResources';
 import { LoadingProvider } from '../src/loading/LoadingProvider';
 
 jest.mock('@strapi/strapi/admin', () => ({
@@ -87,6 +89,51 @@ describe('Admin Custom Hooks', () => {
         '/inventory-dashboard/resources/products/schema',
         { params: undefined }
       );
+    });
+  });
+
+  describe('useOverview', () => {
+    it('fetches the overview payload', async () => {
+      mockGet.mockResolvedValueOnce({ data: { totalStockUnits: 10 } });
+
+      const { result } = renderHook(() => useOverview(), { wrapper });
+
+      await waitFor(() => {
+        expect(result.current.data).toEqual({ totalStockUnits: 10 });
+      });
+      expect(mockGet).toHaveBeenCalledWith('/inventory-dashboard/overview', { params: undefined });
+      expect(result.current.isInitialLoading).toBe(false);
+    });
+
+    it('exposes the fetch error and lets reload retry', async () => {
+      mockGet.mockRejectedValueOnce(new Error('network down'));
+      const { result } = renderHook(() => useOverview(), { wrapper });
+
+      await waitFor(() => expect(result.current.error).toBeInstanceOf(Error));
+
+      mockGet.mockResolvedValueOnce({ data: { totalStockUnits: 5 } });
+      await act(async () => {
+        result.current.reload();
+      });
+      await waitFor(() => expect(result.current.data).toEqual({ totalStockUnits: 5 }));
+    });
+  });
+
+  describe('useResources', () => {
+    it('unwraps the resources array from the response', async () => {
+      mockGet.mockResolvedValueOnce({ data: { resources: ['brands', 'categories'] } });
+
+      const { result } = renderHook(() => useResources(), { wrapper });
+
+      await waitFor(() => {
+        expect(result.current.resources).toEqual(['brands', 'categories']);
+      });
+    });
+
+    it('defaults to an empty array while loading', () => {
+      mockGet.mockReturnValue(new Promise(() => {}));
+      const { result } = renderHook(() => useResources(), { wrapper });
+      expect(result.current.resources).toEqual([]);
     });
   });
 });

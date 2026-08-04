@@ -1174,6 +1174,23 @@ Plugin-only test suites (`src/plugins/inventory-dashboard/server/tests/`):
 `resource`, `metadata`, `settings`, `overview`, `fifo`, `pricing`, `confirm`
 (includes a concurrent-confirm race test).
 
+**Admin UI test suite** — `npm run test:front` (runnable from either the
+app root or `src/plugins/inventory-dashboard`) is the admin UI's real Jest
+suite: React Testing Library components rendered under jsdom, run via
+`cd src/plugins/inventory-dashboard && ts-jest` under the hood
+(`admin/jest.config.js`), distinct from the plugin-only *server* suites
+above. It now covers 26 test files / 103 test cases, spanning both the
+pre-existing primitives/hooks suites (13 files landed in commit `91f8d34`)
+and, as of this plan, the full wizard system (`WizardShell`,
+`FieldRenderer`, `RelationSelect`, `QuickCreateSelect`,
+`InlineResourceForm`, `AddNewModal`, `ProductVariantsForm`) and every CRUD
+page (`OrdersList`, `OrderForm` — covering both its draft-order wizard and
+its confirmed-order view, `ResourceListPage`, `ResourceFormPage`,
+`CatalogHub`, `StockPurchase`), plus `useOverview`/`useResources` coverage
+added to the existing `hooks.test.tsx`. This closes out the
+wizard-system/CRUD-pages coverage gap this plan set out to fix — the admin
+UI is no longer gated by `test:ts:front`/manual click-through alone.
+
 ---
 
 ## 9. Extending the system
@@ -1293,10 +1310,6 @@ in `pages/App.tsx`, and a nav entry if needed.
     `PageHeader` primitive (it needs a right-aligned status badge next to
     the title) — visually slightly different from every other screen's
     heading.
-  - There is no frontend automated test harness for the admin UI (no
-    change from the Strapi-DS era) — admin screens are gated by
-    `test:ts:front`/`build` plus manual browser click-through, not unit
-    tests.
 - **Minor items from the Frontend Design Convention rollout's Phase 1 final
   review, deferred rather than fixed (see §5.2.3):**
   - `theme/index.ts`'s new `radii` scale only overrides `sm`/`md`/`lg`/`xl`;
