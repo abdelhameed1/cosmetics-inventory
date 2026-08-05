@@ -11,7 +11,16 @@ export function LogoutButton() {
   const logout = useAuth('LogoutButton', (state) => state.logout);
 
   const handleLogout = () => {
-    logout();
+    // useAuth() is built on use-context-selector: if this component renders
+    // before AuthProvider's context value is populated (a timing edge case
+    // that only surfaces in production builds, not dev — see
+    // @strapi/admin's own Auth.mjs comment and strapi/strapi#24384), it
+    // silently returns undefined instead of throwing. Guard the call the
+    // same way Strapi's own core does for its checkUserHasPermissions
+    // consumer, so a stale/undefined `logout` can't crash the whole shell.
+    if (typeof logout === 'function') {
+      logout();
+    }
     navigate('/auth/login');
   };
 
