@@ -1184,23 +1184,36 @@ App-level Jest suites (`tests/*.test.ts`, run via
 `cross-env NODE_ENV=test jest --runInBand --forceExit`): `smoke`,
 `master-types`, `seed`, `order-totals`, `order-lifecycle`, `order-guards`,
 `admin-get-stored-token` (new, pure-logic — see §5.3's bug-fix note) —
-counting the plugin suites below (app Jest config also picks up the
-plugin's `server/tests/*.test.ts`).
+currently 15 suites / 56 tests passing counting the plugin suites below
+(app Jest config also picks up the plugin's `server/tests/*.test.ts`).
 
-**Known broken (discovered current session, not yet fixed):** root
-`npm test` / `npx jest` currently fails immediately with `Cannot find
-module 'jest-util'` — the root `package-lock.json` has dozens of
-`"jest-util": "^29.7.0"` dependency *references* but zero actual
-`"node_modules/jest-util"` package entries, so nothing can ever resolve
-it regardless of `npm install`/`npm ci`. Root `package-lock.json` lost 591
-lines in commit `85c98b8` ("update configs for package and jest") — that's
-the likely point this broke. Needs a proper lockfile regen
-(`rm package-lock.json && npm install`, reviewed for unrelated version
-drift) as its own task; not attempted here since it's a large-blast-radius
-change outside this session's scope. Until fixed, root-level Jest changes
-(including the new `admin-get-stored-token` suite above) can only be
-verified by reading/manual logic-tracing, not by actually running
-`npm test`.
+**Root `npm test` breakage — found and fixed (current session):** root
+`npm test`/`npx jest` was failing immediately with `Cannot find module
+'jest-util'`. Root `package-lock.json` had dozens of `"jest-util":
+"^29.7.0"` dependency *references* under other packages but zero
+top-level `"node_modules/jest-util"` entry to actually hoist to — every
+consumer had its own nested copy except the ones (like `ts-jest`) that
+needed the hoisted one, which didn't exist. Traced to commit `85c98b8`
+("update configs for package and jest"), which dropped 591 lines from
+this lockfile. Fixed with `npm dedupe` (added 15 / removed 205 / changed
+15 packages — all within the test/build-tooling subtree; `git diff`
+confirms `@strapi/strapi`, `mysql2`, `react`/`react-dom`, and package.json
+itself were untouched). That surfaced a second, previously-masked issue:
+ts-jest was resolving the root `tsconfig.json`, which excludes
+`src/admin/` and has no `DOM` lib (it's the Strapi-server-only build
+config, see tsconfig.json) — so importing `src/admin/getStoredToken.ts`
+from a test failed to typecheck (`Cannot find name 'window'/'document'`).
+Fixed with a dedicated `tests/tsconfig.json` (extends root, adds `"DOM"`
+to `lib`) wired into `jest.config.js`'s `ts-jest` transform options —
+root's own whole-app `tsc --noEmit` gate (§8, unaffected by this) still
+uses the original DOM-less config. A third, separate issue surfaced once
+suites could actually run to completion: no `testTimeout` was configured,
+so the default 5000ms Jest hook timeout failed `beforeAll` before
+`compileStrapi()` + `createStrapi().load()` (paid fresh per suite file —
+`helpers/strapi.ts`'s `instance` singleton doesn't survive across files)
+could finish. Fixed with `testTimeout: 30000` in `jest.config.js`. All
+three were pre-existing and unrelated to each other; `npm test` now
+passes cleanly (15/15 suites) from this state.
 
 **Plugin quality gate** (run after changing plugin source — the app's own
 `tsc`/`build` do NOT check plugin code):
