@@ -9,33 +9,45 @@ export const themeConfig: ThemeConfig = {
 
 const fontStack = `'Noto Sans Arabic', -apple-system, BlinkMacSystemFont, 'Segoe UI', Tahoma, Roboto, sans-serif`;
 
+// Chakra's default 'lg' and '2xl' breakpoints: sizes hold steady below 992px,
+// then grow fluidly and land on the bumped value by 1536px+ screens.
+const GROWTH_START_PX = 992;
+const GROWTH_END_PX = 1536;
+
+function fluidFontSize(minRem: number, maxRem: number): string {
+  const slope = (maxRem - minRem) / (GROWTH_END_PX - GROWTH_START_PX);
+  const vw = slope * 100;
+  const intercept = minRem - slope * GROWTH_START_PX;
+  return `clamp(${minRem}rem, ${intercept.toFixed(4)}rem + ${vw.toFixed(4)}vw, ${maxRem}rem)`;
+}
+
 const fontSizeScales: Record<FontSizePreset, Record<string, string>> = {
   small: {
-    xs: '0.75rem',
-    sm: '0.875rem',
-    md: '1rem',
-    lg: '1.125rem',
-    xl: '1.25rem',
-    '2xl': '1.5rem',
-    '3xl': '1.875rem',
+    xs: fluidFontSize(0.8125, 0.875),
+    sm: fluidFontSize(0.9375, 1),
+    md: fluidFontSize(1.0625, 1.125),
+    lg: fluidFontSize(1.1875, 1.25),
+    xl: fluidFontSize(1.375, 1.5),
+    '2xl': fluidFontSize(1.625, 1.75),
+    '3xl': fluidFontSize(2, 2.125),
   },
   medium: {
-    xs: '0.8125rem',
-    sm: '0.9375rem',
-    md: '1.0625rem',
-    lg: '1.1875rem',
-    xl: '1.375rem',
-    '2xl': '1.625rem',
-    '3xl': '2rem',
+    xs: fluidFontSize(0.875, 0.9375),
+    sm: fluidFontSize(1, 1.0625),
+    md: fluidFontSize(1.125, 1.1875),
+    lg: fluidFontSize(1.25, 1.3125),
+    xl: fluidFontSize(1.5, 1.625),
+    '2xl': fluidFontSize(1.75, 1.875),
+    '3xl': fluidFontSize(2.125, 2.25),
   },
   large: {
-    xs: '0.875rem',
-    sm: '1rem',
-    md: '1.125rem',
-    lg: '1.25rem',
-    xl: '1.5rem',
-    '2xl': '1.75rem',
-    '3xl': '2.125rem',
+    xs: fluidFontSize(0.9375, 1),
+    sm: fluidFontSize(1.0625, 1.125),
+    md: fluidFontSize(1.1875, 1.25),
+    lg: fluidFontSize(1.3125, 1.375),
+    xl: fluidFontSize(1.625, 1.75),
+    '2xl': fluidFontSize(1.875, 2),
+    '3xl': fluidFontSize(2.25, 2.375),
   },
 };
 
