@@ -1,4 +1,5 @@
 import type { StrapiApp } from '@strapi/strapi/admin';
+import { getStoredToken } from './getStoredToken';
 
 const SUPER_ADMIN_ROLE_CODE = 'strapi-super-admin';
 const PLUGIN_HOME_PATH = '/admin/plugins/inventory-dashboard';
@@ -7,24 +8,23 @@ let cachedToken: string | null = null;
 let cachedIsSuperAdmin = false;
 
 async function resolveIsSuperAdmin(): Promise<boolean> {
-  const rawToken = window.localStorage.getItem('jwtToken');
-  if (!rawToken) {
+  const token = getStoredToken();
+  if (!token) {
     cachedToken = null;
     return false;
   }
-  if (rawToken === cachedToken) {
+  if (token === cachedToken) {
     return cachedIsSuperAdmin;
   }
 
   try {
-    const token = JSON.parse(rawToken);
     const res = await fetch('/admin/users/me', {
       headers: { Authorization: `Bearer ${token}` },
     });
     if (!res.ok) return false;
 
     const { data } = (await res.json()) as { data?: { roles?: Array<{ code?: string }> } };
-    cachedToken = rawToken;
+    cachedToken = token;
     cachedIsSuperAdmin = Boolean(data?.roles?.some((role) => role.code === SUPER_ADMIN_ROLE_CODE));
     return cachedIsSuperAdmin;
   } catch {

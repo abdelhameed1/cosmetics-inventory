@@ -1001,9 +1001,24 @@ logged-in user regardless of permissions (only Marketplace and
 plugin/content links are permission-gated). So this is a client-side visual
 toggle, not an access-control mechanism:
 
-- On `bootstrap`, fetches `GET /admin/users/me` (using the JWT already in
-  `localStorage['jwtToken']`) and checks `roles` for `code ===
-  'strapi-super-admin'`, caching the result per-token to avoid refetching.
+- On `bootstrap`, fetches `GET /admin/users/me` (using the JWT resolved by
+  `getStoredToken()`, see bug-fix note below) and checks `roles` for `code
+  === 'strapi-super-admin'`, caching the result per-token to avoid
+  refetching.
+- **Bug fix (current):** `resolveIsSuperAdmin` originally read the JWT from
+  `localStorage['jwtToken']` only. `@strapi/admin`'s login form defaults
+  "Remember me" to **unchecked**, and its `login` reducer only writes to
+  `localStorage` when that box is checked (`persist: true`) — otherwise the
+  token goes to a plain (non-httpOnly) cookie of the same name instead (see
+  `@strapi/admin/dist/admin/admin/src/reducer.mjs`). So on the default login
+  flow, `localStorage` was always empty, `resolveIsSuperAdmin` always
+  resolved `false`, and Strapi's built-in nav was hidden even for actual
+  Super Admins. Fixed by extracting `src/admin/getStoredToken.ts`, which
+  mirrors `@strapi/admin`'s own `getStoredToken()` fallback: localStorage
+  first, then the `jwtToken` cookie. Covered by
+  `tests/admin-get-stored-token.test.ts` (pure-logic test, stubs
+  `window`/`document` as plain objects — no jsdom needed since the root
+  Jest project is Node-only, see §8).
 - Strapi's nav has no stable selector to target (no `data-testid`, hashed
   styled-components classnames). It relies on one structural fact instead:
   Strapi's nav is always the **first** `<nav>` in the document (rendered by
@@ -1167,9 +1182,25 @@ npx tsc --noEmit           # whole-app type check (EXCLUDES src/plugins/**)
 
 App-level Jest suites (`tests/*.test.ts`, run via
 `cross-env NODE_ENV=test jest --runInBand --forceExit`): `smoke`,
-`master-types`, `seed`, `order-totals`, `order-lifecycle`, `order-guards` —
-currently 13 suites / 41 tests passing counting the plugin suites below (app
-Jest config also picks up the plugin's `server/tests/*.test.ts`).
+`master-types`, `seed`, `order-totals`, `order-lifecycle`, `order-guards`,
+`admin-get-stored-token` (new, pure-logic — see §5.3's bug-fix note) —
+counting the plugin suites below (app Jest config also picks up the
+plugin's `server/tests/*.test.ts`).
+
+**Known broken (discovered current session, not yet fixed):** root
+`npm test` / `npx jest` currently fails immediately with `Cannot find
+module 'jest-util'` — the root `package-lock.json` has dozens of
+`"jest-util": "^29.7.0"` dependency *references* but zero actual
+`"node_modules/jest-util"` package entries, so nothing can ever resolve
+it regardless of `npm install`/`npm ci`. Root `package-lock.json` lost 591
+lines in commit `85c98b8` ("update configs for package and jest") — that's
+the likely point this broke. Needs a proper lockfile regen
+(`rm package-lock.json && npm install`, reviewed for unrelated version
+drift) as its own task; not attempted here since it's a large-blast-radius
+change outside this session's scope. Until fixed, root-level Jest changes
+(including the new `admin-get-stored-token` suite above) can only be
+verified by reading/manual logic-tracing, not by actually running
+`npm test`.
 
 **Plugin quality gate** (run after changing plugin source — the app's own
 `tsc`/`build` do NOT check plugin code):
