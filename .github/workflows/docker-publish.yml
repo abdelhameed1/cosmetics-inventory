@@ -48,3 +48,24 @@ jobs:
           else
             echo "RENDER_DEPLOY_HOOK_URL secret not set, skipping deploy trigger"
           fi
+
+  deploy-droplet:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    steps:
+      - name: Pull and restart danone-live on the droplet
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+        run: |
+          if [ -z "$DEPLOY_SSH_KEY" ]; then
+            echo "DEPLOY_SSH_KEY secret not set, skipping droplet deploy"
+            exit 0
+          fi
+          mkdir -p ~/.ssh
+          printf '%s\n' "$DEPLOY_SSH_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H "$DEPLOY_HOST" >> ~/.ssh/known_hosts 2>/dev/null
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=yes "$DEPLOY_USER@$DEPLOY_HOST" \
+            "cd /home/em/danone-live && docker compose pull && docker compose up -d"

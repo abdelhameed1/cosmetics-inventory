@@ -1,0 +1,14 @@
+services:
+  app:
+    image: ghcr.io/abdelhameed1/cosmetics-inventory:latest
+    container_name: danone-live
+    restart: unless-stopped
+    network_mode: host
+    env_file:
+      - .env
+    volumes:
+      - uploads:/app/public/uploads
+    mem_limit: 500m
+
+volumes:
+  uploads:
