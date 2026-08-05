@@ -21,6 +21,7 @@ export const ar: Record<keyof typeof en, string> = {
   'addNew.buttonLabel': 'إضافة جديد',
 
   'nav.openMenuAria': 'فتح القائمة',
+  'nav.logout': 'تسجيل الخروج',
   'nav.overview': 'نظرة عامة',
   'nav.stockPurchase': 'شراء مخزون',
   'nav.newOrder': 'طلب جديد',

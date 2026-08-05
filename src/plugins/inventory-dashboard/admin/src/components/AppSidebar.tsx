@@ -9,6 +9,7 @@ import { AddNewModal } from './AddNewModal';
 import { ColorModeToggle } from './ColorModeToggle';
 import { FontSizeToggle } from './FontSizeToggle';
 import { LanguageToggle } from './LanguageToggle';
+import { LogoutButton } from './LogoutButton';
 
 function isLinkActive(pathname: string, to: string, exact?: boolean): boolean {
   if (exact) return pathname === to;
@@ -107,6 +108,7 @@ export function AppSidebar() {
       <LanguageToggle />
       <FontSizeToggle />
       <ColorModeToggle />
+      <LogoutButton />
 
       <AddNewModal isOpen={isAddNewOpen} onClose={() => setIsAddNewOpen(false)} />
     </Box>

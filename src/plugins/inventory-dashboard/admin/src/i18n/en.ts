@@ -19,6 +19,7 @@ export const en = {
   'addNew.buttonLabel': 'Add new',
 
   'nav.openMenuAria': 'Open menu',
+  'nav.logout': 'Log out',
   'nav.overview': 'Overview',
   'nav.stockPurchase': 'Stock Purchase',
   'nav.newOrder': 'New Order',

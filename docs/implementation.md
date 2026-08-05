@@ -966,6 +966,24 @@ With Phase 5 (and its follow-up fix-wave) merged, the entire
 are planned; remaining deferred items across all 5 phases are tracked in
 §10, not assigned to any task.
 
+#### 5.2.4 Sidebar nav trim + logout
+
+- **`config/navConfig.ts` — `TOP_LINKS`** — the "Stock Purchase" and "New
+  Order" entries are commented out (not deleted) so the left nav only shows
+  Overview/Orders plus the catalog groups. Both flows are still reachable
+  through the "Add new" picker (`AddNewModal.tsx`, which reads from the
+  separate `config/addNewConfig.ts` and was intentionally left untouched).
+  Re-enable by uncommenting the two `TOP_LINKS` entries.
+- **`components/LogoutButton.tsx`** — new sidebar-footer row (same
+  button/hover styling as `ColorModeToggle`/`FontSizeToggle`/`LanguageToggle`,
+  placed directly below them in `AppSidebar.tsx`). Calls `logout()` from
+  `useAuth('LogoutButton', ...)` (re-exported by `@strapi/strapi/admin` from
+  `@strapi/admin/strapi-admin`) then `navigate('/auth/login')` — the same
+  pattern Strapi's own core `NavUser` profile-menu logout item uses. Because
+  `AppShell.tsx` renders one shared `AppSidebar` for both the desktop rail and
+  the mobile drawer, this covers both without a separate edit. New i18n key
+  `nav.logout` added to `en.ts`/`ar.ts`.
+
 ### 5.3 Admin panel access control (`src/admin/app.tsx`)
 
 Strapi's own built-in left nav (`MainNav`/`LeftMenu`, rendered by
